@@ -60,8 +60,10 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        # base.htmlを追跡するために変更
         'APP_DIRS': True,
+        # 各アプリケーションのtemplatesディレクトリ内にあるテンプレートファイルを自動的に追跡する。
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
