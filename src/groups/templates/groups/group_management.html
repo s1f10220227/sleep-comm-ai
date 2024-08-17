@@ -1,11 +1,12 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8">
-  </head>
-  <body>
-    <h1>グループの設定</h1>
-    <a href="{% url 'group_menu' %}">グループ画面</a>
-</html>
-  </body>
-</html>
+{% extends 'base.html' %}
+<!-- base.htmlを継承 -->
+
+{% block title %}
+  プロファイル
+{% endblock %}
+<!-- タイトルブロックを定義 -->
+
+{% block content %}
+  <h1>グループの設定</h1>
+{% endblock %}
+<!-- コンテンツブロックを定義 -->

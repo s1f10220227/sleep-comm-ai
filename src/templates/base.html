@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- ドキュメントの文字エンコーディングをUTF-8に設定 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- モバイルデバイスでの適切な表示とタッチズームを確保 -->
+    <title>
+      {% block title %}
+        <!-- 各ページのタイトルのプレースホルダー -->
+        My Application
+      {% endblock %}
+    </title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous" />
+    <!-- スタイリングのためのBootstrap CSSへのリンク -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    <!-- インタラクティブなコンポーネントのためのBootstrap JSへのリンク -->
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <!-- ライト背景のナビバーコンポーネント -->
+      <div class="container-fluid">
+        <a class="navbar-brand" href="{% url 'dashboard' %}">Navbar</a>
+        <!-- ダッシュボードへのブランドリンク -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+        <!-- 小さな画面でナビバーを切り替えるためのボタン -->
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <!-- ナビバーの折りたたみ可能なコンテンツ -->
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <!-- 左揃えのナビバーアイテム -->
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'dashboard' %}">ダッシュボード</a>
+              <!-- ダッシュボードページへのリンク -->
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'group_menu' %}">グループ</a>
+              <!-- グループメニューページへのリンク -->
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'profile' %}">プロファイル</a>
+              <!-- プロファイルページへのリンク -->
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <main>
+      {% block content %}
+        <!-- 各ページのコンテンツのプレースホルダー -->
+      {% endblock %}
+    </main>
+
+    <footer>
+      <p>© 2024 My Application</p>
+      <!-- フッターコンテンツ -->
+    </footer>
+  </body>
+</html>
