@@ -7,7 +7,7 @@ import json
 import os
 
 # APIキーとベースURLを設定
-OPENAI_API_KEY = '' # YOUR_API_KEY
+OPENAI_API_KEY = ''  # YOUR_API_KEY
 OPENAI_API_BASE = 'https://api.openai.iniad.org/api/v1'
 
 # AIモデルの初期化
@@ -43,6 +43,7 @@ def load_advice_from_file(filename='sleep_advice.json'):
 
 # ビュー関数
 def feedback_chat(request):
+    advice = None
     if request.method == 'POST':
         url = request.POST.get('url')
         sleep_time = request.POST.get('sleep_time')
@@ -77,6 +78,5 @@ def feedback_chat(request):
         )
 
         advice = response['choices'][0]['message']['content']
-        return JsonResponse({'advice': advice})
-    
-    return render(request, 'chat/feedback_chat.html')
+
+    return render(request, 'chat/feedback_chat.html', {'advice': advice})
