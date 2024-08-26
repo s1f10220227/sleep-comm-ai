@@ -2,12 +2,32 @@
 <!-- base.htmlを継承 -->
 
 {% block title %}
-  プロファイル
+  グループ画面
 {% endblock %}
 <!-- タイトルブロックを定義 -->
 
 {% block content %}
   <h1>グループ画面</h1>
+
+  <!-- グループ作成フォーム -->
+  <h2>グループの作成</h2>
+  <form method="post" action="{% url 'group_create' %}">
+    {% csrf_token %}
+    <label for="is_private">プライベートグループ:</label>
+    <input type="checkbox" id="is_private" name="is_private">
+    <button type="submit">作成</button>
+  </form>
+
+  <!-- グループ参加フォーム -->
+  <h2>グループに参加</h2>
+  <form method="post" action="{% url 'group_join' %}">
+    {% csrf_token %}
+    <label for="invite_code">招待コード:</label>
+    <input type="text" id="invite_code" name="invite_code">
+    <button type="submit">参加</button>
+  </form>
+
+  <!-- グループの設定リンク -->
   <a href="{% url 'group_management' %}">グループの設定</a>
 {% endblock %}
 <!-- コンテンツブロックを定義 -->
