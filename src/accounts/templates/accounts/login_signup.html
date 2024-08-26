@@ -1,11 +1,56 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8">
-  </head>
-  <body>
-    <h1>ログイン機能</h1>
-    <a href="{% url 'privacy_policy' %}">ポリシー</a>
-</html>
-  </body>
+<head>
+    <title>ログイン / サインアップ</title>
+    <style>
+        .error-message {
+            color: red;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .content {
+            width: 60%;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        .scrollable-content {
+            max-height: 300px; /* スクロール可能な領域の高さ */
+            overflow: auto; /* スクロールバーを表示 */
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+            margin-top: 20px; /* 少しの余白を追加 */
+        }
+    </style>
+</head>
+<body>
+    <div class="content">
+        <h2>ログイン / サインアップ</h2>
+        <form method="post">
+            {% csrf_token %}
+            <label for="username">ユーザー名:</label>
+            <input type="text" id="username" name="username" required>
+            <br>
+            <label for="password">パスワード:</label>
+            <input type="password" id="password" name="password" required>
+            <br>
+            <button type="submit">ログイン</button>
+        </form>
+
+        {% if error_message %}
+            <p class="error-message">{{ error_message }}</p>
+        {% endif %}
+        
+        <div class="scrollable-content">
+            <h2>プライバシーポリシー</h2>
+            <!-- プライバシーポリシーの内容をここに表示 -->
+            {% include 'accounts/privacy_policy.html' %}
+        </div>
+    </div>
+</body>
 </html>
