@@ -11,7 +11,7 @@ def login_signup(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            return redirect('privacy_policy')
+            return redirect('profile')  # ログイン成功後にプロフィールページにリダイレクト
         else:
             # ログイン失敗時にエラーメッセージを渡す
             return render(request, 'accounts/login_signup.html', {'error_message': 'ログインに失敗しました。'})
