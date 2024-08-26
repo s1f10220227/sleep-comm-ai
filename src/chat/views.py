@@ -7,7 +7,7 @@ import json
 import os
 
 # APIキーとベースURLを設定
-OPENAI_API_KEY = '8Dj_JFyUPHLiJYxIvYT7xnrmQaOYycV8Tmiqlr7X_j7L1j9WLLEByssZSXldsmm8TkouBO5z4POtkc4BE_QcU4g' # YOUR_API_KEY
+OPENAI_API_KEY = '' # YOUR_API_KEY
 OPENAI_API_BASE = 'https://api.openai.iniad.org/api/v1'
 
 # AIモデルの初期化
