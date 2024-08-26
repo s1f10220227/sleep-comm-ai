@@ -7,6 +7,23 @@
 <!-- タイトルブロックを定義 -->
 
 {% block content %}
-  <h1>プロファイル</h1>
+<h1>プロファイル</h1>
+
+<div class="profile-container">
+    <!-- プロフィール情報の表示 -->
+    <div class="User">
+        <img src="{{ user.profile_picture }}" alt="プロフィール画像" class="profile-picture">
+        <p><strong>ユーザー名:</strong> {{ user.name }}</p>
+        <p><strong>メールアドレス:</strong> {{ user.email }}</p>
+        <p><strong>自己紹介:</strong> {{ user.bio }}</p>
+        <p><strong>初期睡眠質評価:</strong> {{ user.sleep_quality_initial }}</p>
+        <p><strong>最終睡眠質評価:</strong> {{ user.sleep_quality_final }}</p>
+        <p><strong>登録日時:</strong> {{ user.created_at }}</p>
+        <p><strong>更新日時:</strong> {{ user.updated_at }}</p>
+    </div>
+
+    <!-- プロフィール編集へのリンク -->
+    <a href="{% url 'profile_edit' %}" class="btn btn-primary">プロフィールを編集する</a>
+</div>
 {% endblock %}
 <!-- コンテンツブロックを定義 -->
