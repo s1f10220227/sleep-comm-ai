@@ -1,11 +1,17 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Login</title>
+    <title>ログイン / サインアップ</title>
+    <style>
+        .error-message {
+            color: red;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+    </style>
 </head>
 <body>
-    <h1>ログイン</h1>
+    <h2>ログイン / サインアップ</h2>
     <form method="post">
         {% csrf_token %}
         <label for="username">ユーザー名:</label>
@@ -16,5 +22,9 @@
         <br>
         <button type="submit">ログイン</button>
     </form>
+    
+    {% if error_message %}
+        <p class="error-message">{{ error_message }}</p>
+    {% endif %}
 </body>
 </html>
