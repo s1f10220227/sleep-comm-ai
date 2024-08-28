@@ -1,14 +1,18 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
-
-#追加
 from django.contrib.auth.models import User
+
 def signup(request):
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
         password_confirm = request.POST.get('password_confirm')
+        privacy_policy_checked = request.POST.get('privacy_policy')
 
+        # チェックボックスが選択されているか確認
+        if not privacy_policy_checked:
+            return render(request, 'accounts/signup.html', {'error_message': 'プライバシーポリシーに同意する必要があります。'})
+        
         if password == password_confirm:
             # ユーザーを作成
             user = User.objects.create_user(username=username, password=password)
@@ -17,7 +21,6 @@ def signup(request):
         else:
             return render(request, 'accounts/signup.html', {'error_message': 'パスワードが一致しません。'})
     return render(request, 'accounts/signup.html')
-
 
 def dashboard(request):
     return render(request, 'accounts/dashboard.html')
