@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>ログイン</title>
+    <title>サインアップ</title>
     <style>
         .error-message {
             color: red;
@@ -16,6 +16,15 @@
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             position: relative;
+        }
+        .scrollable-content {
+            max-height: 300px; /* スクロール可能な領域の高さ */
+            overflow: auto; /* スクロールバーを表示 */
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+            margin-top: 20px; /* 少しの余白を追加 */
         }
         .submit-button {
             margin-top: 20px;
@@ -34,7 +43,7 @@
 </head>
 <body>
     <div class="content">
-        <h2>ログイン</h2>
+        <h2>サインアップ</h2>
         <form method="post">
             {% csrf_token %}
             <label for="username">ユーザー名:</label>
@@ -43,8 +52,17 @@
             <label for="password">パスワード:</label>
             <input type="password" id="password" name="password" required>
             <br>
-            <button type="submit" class="submit-button">ログイン</button>
-            <p>まだアカウントをお持ちでない方は、<a href="{% url 'signup' %}">サインアップ</a>してください。</p>
+            <label for="password_confirm">パスワード確認:</label>
+            <input type="password" id="password_confirm" name="password_confirm" required>
+            <br>
+
+            <div class="scrollable-content">
+                <h2>プライバシーポリシー</h2>
+                <!-- プライバシーポリシーの内容をここに表示 -->
+                {% include 'accounts/privacy_policy.html' %}
+            </div>
+
+            <button type="submit" class="submit-button">サインアップ</button>
         </form>
 
         {% if error_message %}
