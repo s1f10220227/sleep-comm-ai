@@ -1,6 +1,6 @@
 import uuid
 from django.db import models
-from django.contrib.auth.models import User
+from accounts.models import CustomUser
 
 # グループモデル
 class Group(models.Model):
@@ -18,9 +18,9 @@ class GroupMember(models.Model):
     # グループへの外部キー
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
     # ユーザーへの外部キー
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     
     # オブジェクトの文字列表現
     def __str__(self):
-        return f"{self.user.username} in {self.group.name}"
+        return f"{self.user.username} in {self.group.id}"
 
