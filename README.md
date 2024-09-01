@@ -1,3 +1,6 @@
+## プロジェクトの内容
+### プロジェクトの詳細については[こちらのスライド](https://drive.google.com/file/d/1-cg-w1o8ChLe7OrUrruJjhZo_iL6T0X3/view?usp=sharing)をご参照ください。
+
 ## 動作確認
 
 ### 開始
