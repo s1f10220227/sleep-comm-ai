@@ -5,6 +5,9 @@ from django.contrib.auth.models import User
 def signup(request):
     if request.method == 'POST':
         username = request.POST.get('username')
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+        email = request.POST.get('email')
         password = request.POST.get('password')
         password_confirm = request.POST.get('password_confirm')
         privacy_policy_checked = request.POST.get('privacy_policy')
@@ -15,12 +18,19 @@ def signup(request):
         
         if password == password_confirm:
             # ユーザーを作成
-            user = User.objects.create_user(username=username, password=password)
+            user = User.objects.create_user(
+                username=username,
+                password=password,
+                first_name=first_name,
+                last_name=last_name,
+                email=email
+            )
             user.save()
             return redirect('login_signup')  # サインアップ成功後にログインページへリダイレクト
         else:
             return render(request, 'accounts/signup.html', {'error_message': 'パスワードが一致しません。'})
     return render(request, 'accounts/signup.html')
+
 
 def dashboard(request):
     return render(request, 'accounts/dashboard.html')
