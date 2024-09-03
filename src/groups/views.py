@@ -70,3 +70,24 @@ def group_join(request):
         return redirect('group_menu')
     # グループメニューのテンプレートをレンダリング
     return render(request, 'groups/group_menu.html')
+
+# グループ離脱のビュー
+@login_required
+def group_leave(request):
+    if request.method == 'POST':
+        try:
+            # 現在のユーザーのグループメンバーシップを取得
+            group_member = GroupMember.objects.get(user=request.user)
+            group = group_member.group
+            # グループメンバーシップを削除
+            group_member.delete()
+            # グループの人数をチェックし、0人ならグループを削除
+            if not GroupMember.objects.filter(group=group).exists():
+                group.delete()
+        except GroupMember.DoesNotExist:
+            # ユーザーがグループに参加していない場合の処理
+            pass
+        # グループメニューにリダイレクト
+        return redirect('group_menu')
+    # グループメニューのテンプレートをレンダリング
+    return render(request, 'groups/group_menu.html')

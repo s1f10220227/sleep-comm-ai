@@ -19,6 +19,11 @@
     {% endif %}
     <!-- グループの設定リンク -->
     <a href="{% url 'group_management' %}">グループの設定</a>
+    <!-- グループ離脱フォーム -->
+    <form method="post" action="{% url 'group_leave' %}">
+      {% csrf_token %}
+      <button type="submit">グループを離脱</button>
+  </form>
   {% else %}
     <!-- ユーザーがグループに参加していない場合の表示 -->
     <!-- グループ作成フォーム -->
