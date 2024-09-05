@@ -8,6 +8,7 @@ import os
 
 from django.contrib.auth.decorators import login_required
 from groups.models import GroupMember
+from .models import SleepAdvice
 
 # APIキーとベースURLを設定
 OPENAI_API_KEY = ''  # YOUR_API_KEY
@@ -86,6 +87,14 @@ def feedback_chat(request):
             )
 
             advice = response['choices'][0]['message']['content']
+            # 睡眠データをデータベースに保存
+            SleepAdvice.objects.create(
+                user=request.user,
+                sleep_time=sleep_time,
+                wake_time=wake_time,
+                pre_sleep_activities=pre_sleep_activities,
+                advice=advice,
+            )
 
         return render(request, 'chat/feedback_chat.html', {'advice': advice})
 
