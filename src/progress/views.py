@@ -20,7 +20,7 @@ def calculate_sleep_duration(sleep_time, wake_time, date):
     duration = wake_datetime - sleep_datetime
     return duration.total_seconds() / 3600
 
-def generate_plot(dates, values, ylabel, title, plot_type='scatter'):
+def generate_plot(dates, values, ylabel, title, plot_type='scatter', special_case=None):
     fig = go.Figure()
     
     # 月曜から日曜までの日付リストを作成
@@ -41,12 +41,18 @@ def generate_plot(dates, values, ylabel, title, plot_type='scatter'):
     else:
         y_axis = dict(range=[0, max(values or [0]) + 1])
 
-    if plot_type == 'bar':
+    if special_case == 'bedtime':
+        # 就寝時刻の特殊ケース: 点のみを表示
+        fig.add_trace(go.Scatter(x=[all_dates[i] for i in date_indices], y=values, mode='markers'))
+    elif plot_type == 'bar':
         fig.add_trace(go.Bar(x=all_dates, y=[0]*7, marker_color='rgba(0,0,0,0)'))  # 透明なバーを追加
         fig.add_trace(go.Bar(x=[all_dates[i] for i in date_indices], y=values))
     else:
         fig.add_trace(go.Scatter(x=all_dates, y=[None]*7, mode='lines+markers'))  # 空のラインを追加
         fig.add_trace(go.Scatter(x=[all_dates[i] for i in date_indices], y=values, mode='lines+markers'))
+
+    # 日本語の曜日を対応させる辞書
+    japanese_weekdays = ['月', '火', '水', '木', '金', '土', '日']
 
     fig.update_layout(
         title=title,
@@ -56,8 +62,8 @@ def generate_plot(dates, values, ylabel, title, plot_type='scatter'):
         xaxis=dict(
             tickmode='array',
             tickvals=all_dates,
-            ticktext=[d.strftime('%a') for d in all_dates],  # 曜日を表示
-            tickangle=0
+            ticktext=[f"{d.strftime('%m/%d')} ({japanese_weekdays[d.weekday()]})" for d in all_dates],  # 日本語の曜日を表示
+            tickangle=-90  # ラベルを回転
         ),
         showlegend=False
     )
@@ -83,7 +89,7 @@ def progress_check(request):
         sleep_times = [data.sleep_time for data in sleep_data]
         wake_times = [data.wake_time for data in sleep_data]
         sleep_time_plot = generate_plot(
-            dates, sleep_times, '就寝時刻', '就寝時刻のグラフ'
+            dates, sleep_times, '就寝時刻', '就寝時刻のグラフ', special_case='bedtime'
         )
         wake_time_plot = generate_plot(
             dates, wake_times, '起床時刻', '起床時刻のグラフ'
