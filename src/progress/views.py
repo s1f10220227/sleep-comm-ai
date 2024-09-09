@@ -26,27 +26,23 @@ def calculate_sleep_duration(sleep_time, wake_time, date):
     logger.debug(f"Calculated sleep duration: {duration.total_seconds() / 3600} hours for date: {date}")
     return duration.total_seconds() / 3600
 
-def generate_plot(dates, values, ylabel, title, plot_type='scatter', special_case=None):
+def generate_plot(start_week, dates, values, ylabel, title, plot_type='scatter', special_case=None):
     logger.debug(f"Generating plot: {title}, with dates: {dates} and values: {values}")
     
     fig = go.Figure()
-    # Todayの日付から週の始まりと終わりを計算
-    today = datetime.today().date()
-    start_of_week = today - timedelta(days=today.weekday())  # 月曜日
-    end_of_week = start_of_week + timedelta(days=6)  # 日曜日
-    logger.debug(f"Start of the week: {start_of_week}, End of the week: {end_of_week}")
-    
-    all_dates = [start_of_week + timedelta(days=i) for i in range(7)]
+
+    # 受け取ったstart_weekから週の日付を計算
+    all_dates = [start_week + timedelta(days=i) for i in range(7)]
     date_indices = [all_dates.index(date) if date in all_dates else None for date in dates]
+    
     logger.debug(f"All dates for the week: {all_dates}, Date indices: {date_indices}")
     
     if not date_indices or all(index is None for index in date_indices):
         logger.debug("No valid dates found in the selected week.")
         return pio.to_html(fig, full_html=False)
-    
+
     if values and isinstance(values[0], time):
         values = [time_to_float(v) for v in values]
-        logger.debug(f"Converted time values to float: {values}")
         y_axis = dict(
             tickmode='array',
             tickvals=list(range(25)),
@@ -63,9 +59,7 @@ def generate_plot(dates, values, ylabel, title, plot_type='scatter', special_cas
     else:
         y_axis = dict(range=[0, max(values or [0]) + 1])
         text_labels = [None] * len(values)
-    
-    logger.debug(f"Y-axis setup complete with labels: {y_axis}")
-    
+
     if special_case == 'bedtime':
         fig.add_trace(go.Scatter(
             x=all_dates,
@@ -76,7 +70,6 @@ def generate_plot(dates, values, ylabel, title, plot_type='scatter', special_cas
             hoverinfo='text',
             hovertext=[text_labels[date_indices.index(i)] if i in date_indices and i is not None else None for i in range(7)]
         ))
-        logger.debug("Bedtime scatter plot created.")
     elif plot_type == 'bar':
         fig.add_trace(go.Bar(
             x=all_dates,
@@ -87,7 +80,6 @@ def generate_plot(dates, values, ylabel, title, plot_type='scatter', special_cas
             hoverinfo='text',
             hovertext=[text_labels[date_indices.index(i)] if i in date_indices and i is not None else None for i in range(7)]
         ))
-        logger.debug("Bar plot created.")
     else:
         fig.add_trace(go.Scatter(
             x=all_dates,
@@ -103,7 +95,6 @@ def generate_plot(dates, values, ylabel, title, plot_type='scatter', special_cas
             hoverinfo='text',
             hovertext=[text_labels[date_indices.index(i)] if i in date_indices and i is not None else None for i in range(7)]
         ))
-        logger.debug("Line plot with markers created.")
 
     japanese_weekdays = ['月', '火', '水', '木', '金', '土', '日']
     fig.update_layout(
@@ -129,46 +120,50 @@ def progress_check(request):
     today = datetime.now().date()
     logger.debug(f"Today's date: {today}")
     
+    # Handle the `week_start` parameter from the request
     week_start_str = request.GET.get('week_start')
-    logger.debug(f"Received week_start: {week_start_str}")
-    
     if week_start_str:
         start_week = datetime.strptime(week_start_str, '%Y-%m-%d').date()
         logger.debug(f"Parsed start_week from request: {start_week}")
     else:
+        # Default to the start of the current week (Monday)
         start_week = today - timedelta(days=today.weekday())
         logger.debug(f"Calculated start_week from today: {start_week}")
-    
+
     end_week = start_week + timedelta(days=6)
     logger.debug(f"End of the week: {end_week}")
+
+    # Calculate previous and next weeks' start dates
+    prev_week = start_week - timedelta(weeks=1)
+    next_week = start_week + timedelta(weeks=1)
     
     sleep_data = SleepAdvice.objects.filter(
         user=user, created_at__date__range=[start_week, end_week]
     ).order_by('created_at')
     logger.debug(f"Sleep data for the week: {list(sleep_data)}")
-    
+
     dates = [data.created_at.date() for data in sleep_data]
     logger.debug(f"Sleep data dates: {dates}")
-    
+
     show = request.GET.get('show', 'duration')
     logger.debug(f"Show mode: {show}")
-    
+
     context = {}
-    
+
     if not dates:
         logger.debug("No data available for the selected week.")
         context['message'] = 'データがありません。'
         return render(request, 'progress/progress_check.html', context)
-    
+
     if show == 'times':
         sleep_times = [data.sleep_time for data in sleep_data]
         wake_times = [data.wake_time for data in sleep_data]
         logger.debug(f"Sleep times: {sleep_times}, Wake times: {wake_times}")
         sleep_time_plot = generate_plot(
-            dates, sleep_times, '就寝時刻', '就寝時刻のグラフ', special_case='bedtime'
+            start_week, dates, sleep_times, '就寝時刻', '就寝時刻のグラフ', special_case='bedtime'
         )
         wake_time_plot = generate_plot(
-            dates, wake_times, '起床時刻', '起床時刻のグラフ'
+            start_week, dates, wake_times, '起床時刻', '起床時刻のグラフ'
         )
         context.update({
             'sleep_time_plot': sleep_time_plot,
@@ -182,24 +177,29 @@ def progress_check(request):
         ]
         logger.debug(f"Sleep durations: {durations}")
         duration_plot = generate_plot(
-            dates, durations, '睡眠時間 (時間)', '睡眠時間のグラフ', plot_type='bar'
+            start_week, dates, durations, '睡眠時間 (時間)', '睡眠時間のグラフ', plot_type='bar'
         )
         context.update({
             'duration_plot': duration_plot,
             'show': 'duration',
         })
-    
+
     sleep_advice = SleepAdvice.objects.filter(
         user=user, created_at__date__range=[start_week, end_week]
     ).order_by('-created_at')
     logger.debug(f"Sleep advice: {list(sleep_advice)}")
-    
+
     advice_cards = [
         {'date': advice.created_at.date(), 'advice': advice.advice}
         for advice in sleep_advice
     ]
+
+    context.update({
+        'advice_cards': advice_cards,
+        'start_week': start_week.strftime('%Y-%m-%d'),
+        'prev_week': prev_week.strftime('%Y-%m-%d'),
+        'next_week': next_week.strftime('%Y-%m-%d'),
+    })
     
-    context['advice_cards'] = advice_cards
-    context['start_week'] = start_week.strftime('%Y-%m-%d')
     logger.debug("Rendering progress_check.html template with context.")
     return render(request, 'progress/progress_check.html', context)
