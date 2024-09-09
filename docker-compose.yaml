@@ -17,6 +17,13 @@ services:
       - POSTGRES_USER=iniad
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=testdb
+  mongo:
+    image: mongo:5.0.22
+    volumes:
+      - mongo-data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: iniad
+      MONGO_INITDB_ROOT_PASSWORD: password
   nginx:
     image: nginx:latest
     ports:
@@ -30,3 +37,4 @@ services:
 
 volumes:
   postgres-data:
+  mongo-data:
