@@ -11,14 +11,14 @@
 
     <!-- グラフ表示を切り替えるボタン -->
     <div class="nav-buttons">
-        <a href="?show=duration&week_start={{ start_week|date:"Y-m-d" }}" class="{% if show == 'duration' %}active{% endif %}">睡眠時間</a>
-        <a href="?show=times&week_start={{ start_week|date:"Y-m-d" }}" class="{% if show == 'times' %}active{% endif %}">就寝時刻と起床時刻</a>
+        <a href="?show=duration&week_start={{ start_week }}" class="{% if show == 'duration' %}active{% endif %}">睡眠時間</a>
+        <a href="?show=times&week_start={{ start_week }}" class="{% if show == 'times' %}active{% endif %}">就寝時刻と起床時刻</a>
     </div>
 
     <!-- 週のナビゲーションボタン -->
     <div class="navigation-buttons">
-        <a href="?week_start={{ start_week|date:"Y-m-d" }}&show={{ show }}" class="prev-week">＜</a>
-        <a href="?week_start={{ start_week|date:"Y-m-d" }}&show={{ show }}" class="next-week">＞</a>
+        <a href="?week_start={{ prev_week }}&show={{ show }}" class="prev-week">＜</a>
+        <a href="?week_start={{ next_week }}&show={{ show }}" class="next-week">＞</a>
     </div>
 
     <!-- 条件に応じたグラフの表示 -->
