@@ -139,16 +139,5 @@ DATABASES = {
         'PASSWORD': 'password',
         'HOST': 'db',
         'PORT': 5432,
-    },
-    'mongo': {
-        'ENGINE': 'djongo',
-        'NAME': 'testdb',
-        'ENFORCE_SCHEMA': False,
-        'CLIENT': {
-            'host': 'mongo',
-            'port': 27017,
-            'username': 'iniad',
-            'password': 'password',
-        }
     }
 }
