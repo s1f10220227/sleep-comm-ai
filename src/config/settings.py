@@ -148,3 +148,57 @@ CSRF_TRUSTED_ORIGINS = [
 
 # カスタムユーザーモデルの設定
 AUTH_USER_MODEL = 'accounts.CustomUser'
+
+LOGGING = {
+    # スキーマバージョンは1固定
+    'version': 1,
+    # すでに作成されているロガーを無効化しないための設定 
+    'disable_existing_loggers': False,
+ 
+    # ログの書式設定
+    'formatters': {
+        # 詳細ログの書式
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+        # 簡易ログの書式
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+ 
+    # ハンドラ
+    'handlers': {
+        # コンソール出力用のハンドラ
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+        # ファイル出力用のハンドラ
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'debug.log'),
+            'formatter': 'verbose',
+        },
+    },
+ 
+    # ロガー
+    'loggers': {
+        # djangoフレームワーク用のロガー
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        # 任意アプリケーション用のロガー
+        'progress': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
