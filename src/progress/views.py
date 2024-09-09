@@ -4,6 +4,7 @@ import plotly.io as pio
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from datetime import datetime, timedelta, time
+from django.utils import timezone
 from chat.models import SleepAdvice
 import logging
 
@@ -189,8 +190,9 @@ def progress_check(request):
     ).order_by('-created_at')
     logger.debug(f"Sleep advice: {list(sleep_advice)}")
 
+    # ローカルタイムに変換してからadvice_cardsを作成
     advice_cards = [
-        {'date': advice.created_at.date(), 'advice': advice.advice}
+        {'date': timezone.localtime(advice.created_at).strftime('%Y-%m-%d %H:%M:%S'), 'advice': advice.advice}
         for advice in sleep_advice
     ]
 
