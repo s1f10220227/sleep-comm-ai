@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from accounts.models import CustomUser
 
 def signup(request):
@@ -37,6 +37,10 @@ def login_signup(request):
             # ログイン失敗時にエラーメッセージを渡す
             return render(request, 'accounts/login_signup.html', {'error_message': 'ログインに失敗しました。'})
     return render(request, 'accounts/login_signup.html')
+
+def logout_view(request):
+    logout(request)
+    return redirect('login_signup')
 
 def privacy_policy(request):
     return render(request, 'accounts/privacy_policy.html')
