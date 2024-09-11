@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'progress',
     'chat',
     'results',
+    'channels',
 ]
 
 MIDDLEWARE = [
@@ -77,14 +78,31 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
+ASGI_APPLICATION = 'config.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [('redis', 6379)],
+        },
+    }
+}
+
+# 必要に応じて、Redisに接続する認証情報を追加する（パスワード、認証トークンなど）
+
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'testdb',
+        'USER': 'iniad',
+        'PASSWORD': 'password',
+        'HOST': 'db',
+        'PORT': 5432,
     }
 }
 
@@ -125,6 +143,10 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'collected_static/')
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'chat/static'),
+]
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field

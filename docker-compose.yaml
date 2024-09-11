@@ -17,6 +17,10 @@ services:
       - POSTGRES_USER=iniad
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=testdb
+  redis:
+    image: redis
+    ports:
+      - 6379:6379
   nginx:
     image: nginx:latest
     ports:
@@ -26,6 +30,7 @@ services:
       - ./src/collected_static:/static
     depends_on:
       - django
+      - redis
 
 
 volumes:
