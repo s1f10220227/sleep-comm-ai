@@ -1,0 +1,57 @@
+/* 全体レイアウト */
+.chat-container {
+    height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-box {
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    background-color: #f9f9f9;
+    padding: 10px;
+    height: 100%;
+}
+
+.messages {
+    display: flex;
+    flex-direction: column;
+}
+
+.message {
+    padding: 10px;
+    border-radius: 10px;
+    margin: 5px 0;
+    max-width: 60%;
+}
+
+/* 自分のメッセージは右側に表示 */
+.message.self {
+    background-color: #d1f7c4;
+    align-self: flex-end;
+}
+
+/* 他のユーザーのメッセージは左側に表示 */
+.message.other {
+    background-color: #f1f0f0;
+    align-self: flex-start;
+}
+
+/* メッセージ入力エリア */
+.input-box {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background-color: white;
+    padding: 10px;
+}
+
+/* スクロールバーのスタイル */
+.chat-box::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chat-box::-webkit-scrollbar-thumb {
+    background-color: #aaa;
+    border-radius: 10px;
+}
