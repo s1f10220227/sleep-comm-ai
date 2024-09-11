@@ -20,7 +20,7 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
       <!-- ライト背景のナビバーコンポーネント -->
       <div class="container-fluid">
-        <a class="navbar-brand" href="{% url 'dashboard' %}">Navbar</a>
+        <a class="navbar-brand" href="{% url 'home' %}">Navbar</a>
         <!-- ダッシュボードへのブランドリンク -->
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
         <!-- 小さな画面でナビバーを切り替えるためのボタン -->
@@ -29,7 +29,7 @@
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
             <!-- 左揃えのナビバーアイテム -->
             <li class="nav-item">
-              <a class="nav-link" href="{% url 'dashboard' %}">ダッシュボード</a>
+              <a class="nav-link" href="{% url 'home' %}">ホーム</a>
               <!-- ダッシュボードページへのリンク -->
             </li>
             <li class="nav-item">
@@ -42,8 +42,13 @@
             </li>
           </ul>
           <div class="navbar-right">
-            <span class="navbar-text">{{ user.username }}</span>
-            <a class="btn btn-outline-danger ms-2" href="{% url 'logout' %}">ログアウト</a>
+            {% if user.is_authenticated %}
+              <span class="navbar-text">{{ user.username }}</span>
+              <a class="btn btn-outline-danger ms-2" href="{% url 'logout' %}">ログアウト</a>
+            {% else %}
+              <a class="btn btn-outline-primary ms-2" href="{% url 'login' %}">ログイン</a>
+              <a class="btn btn-outline-success ms-2" href="{% url 'signup' %}">サインアップ</a>
+            {% endif %}
           </div>
         </div>
       </div>

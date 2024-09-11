@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 from accounts.models import CustomUser
 
 def signup(request):
@@ -17,15 +18,15 @@ def signup(request):
             # ユーザーを作成
             user = CustomUser.objects.create_user(username=username, password=password)
             user.save()
-            return redirect('login_signup')  # サインアップ成功後にログインページへリダイレクト
+            return redirect('login')  # サインアップ成功後にログインページへリダイレクト
         else:
             return render(request, 'accounts/signup.html', {'error_message': 'パスワードが一致しません。'})
     return render(request, 'accounts/signup.html')
 
-def dashboard(request):
-    return render(request, 'accounts/dashboard.html')
+def home(request):
+    return render(request, 'accounts/home.html')
 
-def login_signup(request):
+def login_view(request):
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
@@ -40,10 +41,11 @@ def login_signup(request):
 
 def logout_view(request):
     logout(request)
-    return redirect('login_signup')
+    return redirect('home')
 
 def privacy_policy(request):
     return render(request, 'accounts/privacy_policy.html')
 
+@login_required
 def profile(request):
     return render(request, 'accounts/profile.html')
