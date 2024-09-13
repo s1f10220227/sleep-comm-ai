@@ -58,6 +58,7 @@ def group_join(request):
         if GroupMember.objects.filter(user=request.user).exists():
             # 既に参加している場合はグループメニューにリダイレクト
             return redirect('group_menu')
+
         # グループ参加のリクエストを処理
         invite_code = request.POST.get('invite_code', None)
         if invite_code:
@@ -101,4 +102,3 @@ def group_leave(request):
         return redirect('group_menu')
     # グループメニューのテンプレートをレンダリング
     return render(request, 'groups/group_menu.html')
-

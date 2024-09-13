@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 from accounts.models import CustomUser
 
 def signup(request):
@@ -17,7 +18,7 @@ def signup(request):
             # ユーザーを作成
             user = CustomUser.objects.create_user(username=username, password=password)
             user.save()
-            return redirect('login_signup')  # サインアップ成功後にログインページへリダイレクト
+            return redirect('login')  # サインアップ成功後にログインページへリダイレクト
         else:
             return render(request, 'accounts/signup.html', {'error_message': 'パスワードが一致しません。'})
     return render(request, 'accounts/signup.html')
@@ -27,13 +28,13 @@ def signup(request):
 # パスワードが一致し、プライバシーポリシーが同意されていればユーザーを作成し、
 # ログインページにリダイレクトします。エラーがあれば、再度サインアップページを表示します。
 
-def dashboard(request):
-    return render(request, 'accounts/dashboard.html')
+def home(request):
+    return render(request, 'accounts/home.html')
 
-# ダッシュボードページのビューです。特に追加の処理はなく、
-# 単に`accounts/dashboard.html`テンプレートを表示します。
+# ホームページのビューです。特に追加の処理はなく、
+# 単に`accounts/home.html`テンプレートを表示します。
 
-def login_signup(request):
+def login_view(request):
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
@@ -46,15 +47,20 @@ def login_signup(request):
             return render(request, 'accounts/login_signup.html', {'error_message': 'ログインに失敗しました。'})
     return render(request, 'accounts/login_signup.html')
 
-# ログインとサインアップのページに対応するビューです。
+# ログインのページに対応するビューです。
 # POSTリクエストの場合、認証を試み、成功すればプロフィールページにリダイレクト、
 # 失敗すればエラーメッセージを表示します。
+
+def logout_view(request):
+    logout(request)
+    return redirect('home')
 
 def privacy_policy(request):
     return render(request, 'accounts/privacy_policy.html')
 
 # プライバシーポリシーページのビューです。単に`accounts/privacy_policy.html`テンプレートを表示します。
 
+@login_required
 def profile(request):
     return render(request, 'accounts/profile.html')
 
