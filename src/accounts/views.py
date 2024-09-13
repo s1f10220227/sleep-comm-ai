@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
-from django.contrib.auth.models import User
+from accounts.models import CustomUser
 
 def signup(request):
     if request.method == 'POST':
@@ -15,7 +15,7 @@ def signup(request):
         
         if password == password_confirm:
             # ユーザーを作成
-            user = User.objects.create_user(username=username, password=password)
+            user = CustomUser.objects.create_user(username=username, password=password)
             user.save()
             return redirect('login_signup')  # サインアップ成功後にログインページへリダイレクト
         else:
