@@ -33,6 +33,11 @@ def generate_invite_code(length=8):
 @login_required
 def group_create(request):
     if request.method == 'POST':
+        # ユーザーが既にグループに参加しているか確認
+        if GroupMember.objects.filter(user=request.user).exists():
+            # 既に参加している場合はグループメニューにリダイレクト
+            return redirect('group_menu')
+
         # グループ作成のリクエストを処理
         is_private = request.POST.get('is_private') == "on"
         invite_code = generate_invite_code() if is_private else None
@@ -49,6 +54,10 @@ def group_create(request):
 @login_required
 def group_join(request):
     if request.method == 'POST':
+        # ユーザーが既にグループに参加しているか確認
+        if GroupMember.objects.filter(user=request.user).exists():
+            # 既に参加している場合はグループメニューにリダイレクト
+            return redirect('group_menu')
         # グループ参加のリクエストを処理
         invite_code = request.POST.get('invite_code', None)
         if invite_code:
@@ -71,6 +80,7 @@ def group_join(request):
     # グループメニューのテンプレートをレンダリング
     return render(request, 'groups/group_menu.html')
 
+
 # グループ離脱のビュー
 @login_required
 def group_leave(request):
@@ -91,3 +101,4 @@ def group_leave(request):
         return redirect('group_menu')
     # グループメニューのテンプレートをレンダリング
     return render(request, 'groups/group_menu.html')
+
