@@ -12,8 +12,14 @@ def group_menu(request):
         # 参加しているグループの情報を取得
         group_member = GroupMember.objects.get(user=request.user)
         group = group_member.group
+        # グループメンバーのリストを取得
+        members = GroupMember.objects.filter(group=group).select_related('user')
         # グループ情報を含むテンプレートをレンダリング
-        return render(request, 'groups/group_menu.html', {'group': group, 'is_member': True})
+        return render(request, 'groups/group_menu.html', {
+            'group': group,
+            'is_member': True,
+            'members': members,
+        })
     else:
         # グループメニューのテンプレートをレンダリング
         return render(request, 'groups/group_menu.html', {'is_member': False})
