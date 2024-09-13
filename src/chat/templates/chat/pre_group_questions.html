@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 
 {% block title %}
-  睡眠のフィードバック
+  グループ加入前の質問
 {% endblock %}
 
 {% block content %}
-  <h1>睡眠のフィードバック</h1>
+  <h1>グループ加入前の質問</h1>
   <form method="post">
     {% csrf_token %}
     <label for="url">睡眠アドバイスのURL:</label>
@@ -19,6 +19,10 @@
     
     <label for="pre_sleep_activities">昨夜の寝る前に何をしましたか？ (例: テレビを見た):</label>
     <input type="text" id="pre_sleep_activities" name="pre_sleep_activities" required><br>
+    
+    <!-- トピック用の質問 -->
+    <label for="topic_question">最近睡眠を向上するために取り組んだこと、またはチームに入ってから取り組んでみたいことを教えてください:</label>
+    <input type="text" id="topic_question" name="topic_question" required><br>
     
     <input type="submit" value="アドバイスを取得">
   </form>

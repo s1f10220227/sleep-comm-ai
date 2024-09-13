@@ -6,6 +6,10 @@ from bs4 import BeautifulSoup
 import json
 import os
 
+from django.contrib.auth.decorators import login_required
+from groups.models import GroupMember
+from .models import SleepAdvice
+
 # APIキーとベースURLを設定
 OPENAI_API_KEY = ''  # YOUR_API_KEY
 OPENAI_API_BASE = 'https://api.openai.iniad.org/api/v1'
@@ -42,42 +46,98 @@ def load_advice_from_file(filename='sleep_advice.json'):
     return {}
 
 # ビュー関数
+@login_required
 def feedback_chat(request):
-    advice = None
-    if request.method == 'POST':
-        url = request.POST.get('url')
-        sleep_time = request.POST.get('sleep_time')
-        wake_time = request.POST.get('wake_time')
-        pre_sleep_activities = request.POST.get('pre_sleep_activities')
+    if GroupMember.objects.filter(user=request.user).exists():
+        # グループに加入している場合
+        advice = None
+        if request.method == 'POST':
+            url = request.POST.get('url')
+            sleep_time = request.POST.get('sleep_time')
+            wake_time = request.POST.get('wake_time')
+            pre_sleep_activities = request.POST.get('pre_sleep_activities')
 
-        # ローカルに保存されたアドバイスを確認
-        saved_advice = load_advice_from_file()
-        if url in saved_advice:
-            scraped_info = saved_advice[url]
-        else:
-            scraped_info = scrape_sleep_advice(url)
-            save_advice_to_file(url, scraped_info)
-            saved_advice = load_advice_from_file()  # 再読み込み
+            # ローカルに保存されたアドバイスを確認
+            saved_advice = load_advice_from_file()
+            if url in saved_advice:
+                scraped_info = saved_advice[url]
+            else:
+                scraped_info = scrape_sleep_advice(url)
+                save_advice_to_file(url, scraped_info)
+                saved_advice = load_advice_from_file()  # 再読み込み
 
-        all_advice = " ".join([str(value) for value in saved_advice.values()])
-        user_input = (
-            f"ユーザーは{sleep_time}に寝て、{wake_time}に起きました。"
-            f"寝る前は{pre_sleep_activities}をしていました。"
-            f"以下の情報も評価やアドバイスの参考にしてください: {all_advice}"
-            f"まず、これらの情報に基づいてユーザーの睡眠習慣に対する評価を簡潔に行ってください。その後、その評価に基づいて、ユーザーにとって最も重要で実行可能なアドバイス3つを簡潔に提供してください。"
-        )
+            all_advice = " ".join([str(value) for value in saved_advice.values()])
+            user_input = (
+                f"ユーザーは{sleep_time}に寝て、{wake_time}に起きました。"
+                f"寝る前は{pre_sleep_activities}をしていました。"
+                f"以下の情報も評価やアドバイスの参考にしてください: {all_advice}"
+                f"まず、これらの情報に基づいてユーザーの睡眠習慣に対する評価を簡潔に行ってください。"
+                f"その後、その評価に基づいて、ユーザーにとって最も重要で実行可能なアドバイス3つを簡潔に提供してください。"
+            )
 
-        # OpenAI APIでアドバイスを取得
-        response = chat.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "You are a sleep expert who provides advice on healthy sleep habits."},
-                {"role": "user", "content": user_input}
-            ],
-            api_key=OPENAI_API_KEY,
-            api_base=OPENAI_API_BASE
-        )
+            # OpenAI APIでアドバイスを取得
+            response = chat.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": "You are a sleep expert who provides advice on healthy sleep habits."},
+                    {"role": "user", "content": user_input}
+                ],
+                api_key=OPENAI_API_KEY,
+                api_base=OPENAI_API_BASE
+            )
 
-        advice = response['choices'][0]['message']['content']
+            advice = response['choices'][0]['message']['content']
+            # 睡眠データをデータベースに保存
+            SleepAdvice.objects.create(
+                user=request.user,
+                sleep_time=sleep_time,
+                wake_time=wake_time,
+                pre_sleep_activities=pre_sleep_activities,
+                advice=advice,
+            )
 
-    return render(request, 'chat/feedback_chat.html', {'advice': advice})
+        return render(request, 'chat/feedback_chat.html', {'advice': advice})
+
+    else:
+        # グループに加入していない場合
+        advice = None
+        if request.method == 'POST':
+            url = request.POST.get('url')
+            sleep_time = request.POST.get('sleep_time')
+            wake_time = request.POST.get('wake_time')
+            pre_sleep_activities = request.POST.get('pre_sleep_activities')
+            topic_question = request.POST.get('topic_question')  # トピック用の質問
+
+            # ローカルに保存されたアドバイスを確認
+            saved_advice = load_advice_from_file()
+            if url in saved_advice:
+                scraped_info = saved_advice[url]
+            else:
+                scraped_info = scrape_sleep_advice(url)
+                save_advice_to_file(url, scraped_info)
+                saved_advice = load_advice_from_file()  # 再読み込み
+
+            all_advice = " ".join([str(value) for value in saved_advice.values()])
+            user_input = (
+                f"ユーザーは{sleep_time}に寝て、{wake_time}に起きました。"
+                f"寝る前は{pre_sleep_activities}をしていました。"
+                f"最近睡眠に関して取り組んだこと、取り組んでみたいことは{topic_question}です。"
+                f"以下の情報も評価やアドバイスの参考にしてください: {all_advice}"
+                f"まず、これらの情報に基づいてユーザーの睡眠習慣に対する評価を簡潔に行ってください。"
+                f"その後、その評価に基づいて、ユーザーにとって最も重要で実行可能なアドバイス3つを簡潔に提供してください。"
+            )
+
+            # OpenAI APIでアドバイスを取得
+            response = chat.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": "You are a sleep expert who provides advice on healthy sleep habits."},
+                    {"role": "user", "content": user_input}
+                ],
+                api_key=OPENAI_API_KEY,
+                api_base=OPENAI_API_BASE
+            )
+
+            advice = response['choices'][0]['message']['content']
+
+        return render(request, 'chat/pre_group_questions.html', {'advice': advice})
