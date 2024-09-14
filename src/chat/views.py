@@ -1,6 +1,16 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from groups.models import Group, GroupMember
+from .models import Message
 
-def room(request, room_name):
+@login_required
+def room(request, group_id):
+    group = get_object_or_404(Group, id=group_id)
+    group_members = GroupMember.objects.filter(group=group)
+    messages = Message.objects.filter(group=group).order_by('-timestamp')[:50]
+
     return render(request, 'chat/room.html', {
-        'room_name': room_name
+        'group': group,
+        'group_members': group_members,
+        'messages': reversed(messages),
     })
