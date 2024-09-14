@@ -1,45 +1,43 @@
-document.addEventListener('DOMContentLoaded', function () {
-    const chatBox = document.getElementById('chat-box');
-    const messageInput = document.getElementById('message-input');
-    const sendButton = document.getElementById('send-button');
-    const messagesContainer = document.getElementById('messages');
+const chatSocket = new WebSocket(
+    'ws://' + window.location.host + '/ws/chat/' + groupId + '/'
+);
 
-    // roomName を取得
-    const roomName = window.roomName;
-    const ws = new ReconnectingWebSocket('ws://' + window.location.host + '/ws/chat/' + roomName + '/');
+chatSocket.onmessage = function(e) {
+    const data = JSON.parse(e.data);
+    const chatMessages = document.querySelector('#chat-messages');
+    const messageElement = document.createElement('div');
+    messageElement.className = 'message';
 
-    // WebSocketからメッセージを受信したときの処理
-    ws.onmessage = function (event) {
-        const data = JSON.parse(event.data);
-        const messageElement = document.createElement('div');
-        messageElement.classList.add('message');
-        messageElement.textContent = data.message; // ユーザー情報が含まれていない場合は data.message だけにする
+    const usernameSpan = document.createElement('span');
+    usernameSpan.className = 'username';
+    usernameSpan.textContent = data.username;
 
-        // メッセージを表示
-        messagesContainer.appendChild(messageElement);
+    const timestampSpan = document.createElement('span');
+    timestampSpan.className = 'timestamp';
+    timestampSpan.textContent = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
-        // メッセージ追加後に自動スクロール
-        chatBox.scrollTop = chatBox.scrollHeight;
-    };
+    const contentP = document.createElement('p');
+    contentP.textContent = data.message;
 
-    // メッセージ送信
-    function sendMessage() {
-        const message = messageInput.value.trim();
-        if (message.length > 0) {
-            ws.send(JSON.stringify({
-                'message': message
-            }));
-            messageInput.value = ''; // 送信後、入力フィールドをクリア
-        }
-    }
+    messageElement.appendChild(usernameSpan);
+    messageElement.appendChild(timestampSpan);
+    messageElement.appendChild(contentP);
 
-    // 送信ボタンをクリックしたとき
-    sendButton.addEventListener('click', sendMessage);
+    chatMessages.appendChild(messageElement);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+};
 
-    // Enterキーでメッセージ送信
-    messageInput.addEventListener('keypress', function (event) {
-        if (event.key === 'Enter') {
-            sendMessage();
-        }
-    });
-});
+chatSocket.onclose = function(e) {
+    console.error('Chat socket closed unexpectedly');
+};
+
+document.querySelector('#chat-form').onsubmit = function(e) {
+    e.preventDefault();
+    const messageInputDom = document.querySelector('#chat-message-input');
+    const message = messageInputDom.value;
+    chatSocket.send(JSON.stringify({
+        'message': message,
+        'username': username
+    }));
+    messageInputDom.value = '';
+};
