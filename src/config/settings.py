@@ -41,9 +41,9 @@ INSTALLED_APPS = [
     'accounts',
     'groups',
     'progress',
+    'channels',
     'chat',
     'results',
-    'channels',
 ]
 
 MIDDLEWARE = [
@@ -82,7 +82,7 @@ ASGI_APPLICATION = 'config.asgi.application'
 
 CHANNEL_LAYERS = {
     'default': {
-        'BACKEND': 'channels.layers.RedisChannelLayer',
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
             'hosts': [('redis', 6379)],
         },
