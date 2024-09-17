@@ -1,16 +1,15 @@
+import os
+
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from groups.models import Group, GroupMember
 from .models import Message
 
+import json
 from django.http import JsonResponse
 import openai
 import requests
 from bs4 import BeautifulSoup
-import json
-import os
-
-from django.contrib.auth.decorators import login_required
 from .models import SleepAdvice
 
 @login_required

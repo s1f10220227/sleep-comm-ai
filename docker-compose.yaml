@@ -9,6 +9,7 @@ services:
       - ./src:/code
     depends_on:
       - db
+      - redis
   db:
     image: postgres:15.4
     volumes:
@@ -31,7 +32,6 @@ services:
     depends_on:
       - django
       - redis
-
 
 volumes:
   postgres-data:

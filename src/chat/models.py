@@ -19,7 +19,6 @@ class Message(models.Model):
     # オブジェクトの文字列表現
     def __str__(self):
         return f"Message from {self.sender.username} in {self.group.id} at {self.timestamp}"
-from accounts.models import CustomUser
 
 class SleepAdvice(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
