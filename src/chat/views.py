@@ -11,7 +11,7 @@ from groups.models import GroupMember
 from .models import SleepAdvice
 
 # APIキーとベースURLを設定
-OPENAI_API_KEY = 'XO5TQ_P6Fh_4Gjq9UsRgeN4e93TM3s7inuc-aQhHS8yww5W9FenoPn8uc8zNfFCsylJeKVOpJCaV8KdI32Dn5TA'  # YOUR_API_KEY
+OPENAI_API_KEY = ''  # YOUR_API_KEY
 OPENAI_API_BASE = 'https://api.openai.iniad.org/api/v1'
 
 # AIモデルの初期化
