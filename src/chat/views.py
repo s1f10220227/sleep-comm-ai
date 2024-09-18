@@ -11,7 +11,7 @@ from groups.models import GroupMember
 from .models import SleepAdvice
 
 # APIキーとベースURLを設定
-OPENAI_API_KEY = ''  # YOUR_API_KEY
+OPENAI_API_KEY = 'XO5TQ_P6Fh_4Gjq9UsRgeN4e93TM3s7inuc-aQhHS8yww5W9FenoPn8uc8zNfFCsylJeKVOpJCaV8KdI32Dn5TA'  # YOUR_API_KEY
 OPENAI_API_BASE = 'https://api.openai.iniad.org/api/v1'
 
 # AIモデルの初期化
@@ -94,6 +94,7 @@ def feedback_chat(request):
                 wake_time=wake_time,
                 pre_sleep_activities=pre_sleep_activities,
                 advice=advice,
+                topic_question = None,
             )
 
         return render(request, 'chat/feedback_chat.html', {'advice': advice})
@@ -139,5 +140,14 @@ def feedback_chat(request):
             )
 
             advice = response['choices'][0]['message']['content']
+
+            SleepAdvice.objects.create(
+                user=request.user,
+                sleep_time=sleep_time,
+                wake_time=wake_time,
+                pre_sleep_activities=pre_sleep_activities,
+                advice=advice,
+                topic_question = topic_question,
+            )
 
         return render(request, 'chat/pre_group_questions.html', {'advice': advice})
