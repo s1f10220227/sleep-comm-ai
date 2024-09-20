@@ -42,6 +42,9 @@ def generate_plot(start_week, dates, values, ylabel, title, plot_type='scatter',
         logger.debug("No valid dates found in the selected week.")
         return pio.to_html(fig, full_html=False)
 
+    # 値が None の場合はデフォルト値を設定（ここでは0を使用）
+    values = [v if v is not None else 0 for v in values]
+    
     if values and isinstance(values[0], time):
         values = [time_to_float(v) for v in values]
         y_axis = dict(
@@ -138,33 +141,51 @@ def progress_check(request):
     prev_week = start_week - timedelta(weeks=1)
     next_week = start_week + timedelta(weeks=1)
     
+    # Get all dates from Monday to Sunday for the selected week
+    week_dates = [start_week + timedelta(days=i) for i in range(7)]
+    logger.debug(f"Week dates (Monday to Sunday): {week_dates}")
+
+    # Query for sleep data in the selected week
     sleep_data = SleepAdvice.objects.filter(
         user=user, created_at__date__range=[start_week, end_week]
     ).order_by('created_at')
     logger.debug(f"Sleep data for the week: {list(sleep_data)}")
 
-    dates = [data.created_at.date() for data in sleep_data]
-    logger.debug(f"Sleep data dates: {dates}")
+    # Create a dictionary to store sleep data with date keys
+    sleep_data_dict = {data.created_at.date(): data for data in sleep_data}
+    logger.debug(f"Sleep data dictionary: {sleep_data_dict}")
+
+    # Create lists for sleep times, wake times, and durations, initializing with None for missing data
+    sleep_times = []
+    wake_times = []
+    durations = []
+    for date in week_dates:
+        if date in sleep_data_dict:
+            data = sleep_data_dict[date]
+            sleep_times.append(data.sleep_time)
+            wake_times.append(data.wake_time)
+            duration = calculate_sleep_duration(data.sleep_time, data.wake_time, date)
+            durations.append(duration)
+        else:
+            sleep_times.append(None)  # No data for this date
+            wake_times.append(None)   # No data for this date
+            durations.append(None)    # No data for this date
+
+    logger.debug(f"Processed sleep times: {sleep_times}")
+    logger.debug(f"Processed wake times: {wake_times}")
+    logger.debug(f"Processed durations: {durations}")
 
     show = request.GET.get('show', 'duration')
     logger.debug(f"Show mode: {show}")
 
     context = {}
 
-    if not dates:
-        logger.debug("No data available for the selected week.")
-        context['message'] = 'データがありません。'
-        return render(request, 'progress/progress_check.html', context)
-
     if show == 'times':
-        sleep_times = [data.sleep_time for data in sleep_data]
-        wake_times = [data.wake_time for data in sleep_data]
-        logger.debug(f"Sleep times: {sleep_times}, Wake times: {wake_times}")
         sleep_time_plot = generate_plot(
-            start_week, dates, sleep_times, '就寝時刻', '就寝時刻のグラフ', special_case='bedtime'
+            start_week, week_dates, sleep_times, '就寝時刻', '就寝時刻のグラフ', special_case='bedtime'
         )
         wake_time_plot = generate_plot(
-            start_week, dates, wake_times, '起床時刻', '起床時刻のグラフ'
+            start_week, week_dates, wake_times, '起床時刻', '起床時刻のグラフ'
         )
         context.update({
             'sleep_time_plot': sleep_time_plot,
@@ -172,13 +193,8 @@ def progress_check(request):
             'show': 'times',
         })
     else:
-        durations = [
-            calculate_sleep_duration(data.sleep_time, data.wake_time, data.created_at.date())
-            for data in sleep_data
-        ]
-        logger.debug(f"Sleep durations: {durations}")
         duration_plot = generate_plot(
-            start_week, dates, durations, '睡眠時間 (時間)', '睡眠時間のグラフ', plot_type='bar'
+            start_week, week_dates, durations, '睡眠時間 (時間)', '睡眠時間のグラフ', plot_type='bar'
         )
         context.update({
             'duration_plot': duration_plot,
