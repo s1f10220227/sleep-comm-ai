@@ -34,9 +34,6 @@
               <!-- ダッシュボードページへのリンク -->
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="{% url 'group_menu' %}">グループ情報</a>
-              <!-- グループ情報ページへのリンク -->
-            <li class="nav-item">
               {% get_user_group request.user as user_group %}
               {% if user_group %}
                <a class="nav-link" href="{% url 'room' user_group.id %}">グループ</a>

@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+<!-- base.htmlを継承 -->
+
+{% block title %}
+  ホーム
+{% endblock %}
+<!-- タイトルブロックを定義 -->
+
+{% block content %}
+  {% if user.is_authenticated %}
+    {% if is_member %}
+      <!-- ユーザーがグループに参加している場合の表示 -->
+      <h1>Group Information</h1>
+      <p><strong>Group ID:</strong> {{ group.id }}</p>
+      <p><strong>Is Private:</strong> {{ group.is_private }}</p>
+      {% if group.invite_code %}
+          <!-- グループがプライベートで招待コードがある場合の表示 -->
+          <p><strong>Invite Code:</strong> {{ group.invite_code }}</p>
+      {% endif %}
+      <!-- グループ離脱フォーム -->
+      <form method="post" action="{% url 'group_leave' %}">
+        {% csrf_token %}
+        <button type="submit">グループを離脱</button>
+    </form>
+    {% else %}
+      <!-- ユーザーがグループに参加していない場合の表示 -->
+      <!-- グループ作成フォーム -->
+      <h2>グループの作成</h2>
+      <form method="post" action="{% url 'group_create' %}">
+        {% csrf_token %}
+        <label for="is_private">プライベートグループ:</label>
+        <input type="checkbox" id="is_private" name="is_private">
+        <button type="submit">作成</button>
+      </form>
+
+      <!-- グループ参加フォーム -->
+      <h2>グループに参加</h2>
+      <form method="post" action="{% url 'group_join' %}">
+        {% csrf_token %}
+        <label for="invite_code">招待コード:</label>
+        <input type="text" id="invite_code" name="invite_code">
+        <button type="submit">参加</button>
+      </form>
+    {% endif %}
+  {% else %}
+    <h1 class="mb-4">サービスの紹介</h1>
+    <p>このサービスでは、あなたの睡眠習慣を改善するための様々な機能を提供しています。ログインして、詳細を確認してください。</p>
+  {% endif %}
+{% endblock %}
+<!-- コンテンツブロックを定義 -->
