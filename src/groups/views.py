@@ -3,6 +3,7 @@ import random
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from .models import Group, GroupMember
+from chat.models import Message
 
 # HTMLテンプレートをレンダリングするビュー
 def home(request):
@@ -13,11 +14,29 @@ def home(request):
             # 参加しているグループの情報を取得
             group_member = GroupMember.objects.get(user=request.user)
             group = group_member.group
-            # グループ情報を含むテンプレートをレンダリング
-            return render(request, 'groups/home.html', {'group': group, 'is_member': True})
+            # 最新のメッセージを取得
+            latest_message = Message.objects.filter(group=group).order_by('-timestamp').first()
+            # パブリックグループとメンバーの一覧を取得（最大10件）
+            groups = Group.objects.filter(is_private=False).exclude(id=group.id)[:10]
+            group_members = {g.id: GroupMember.objects.filter(group=g) for g in groups}
+            # グループ情報と最新のメッセージ、他のグループとメンバーの一覧を含むテンプレートをレンダリング
+            return render(request, 'groups/home.html', {
+                'group': group,
+                'is_member': True,
+                'latest_message': latest_message,
+                'groups': groups,
+                'group_members': group_members
+            })
         else:
+            # パブリックグループとメンバーの一覧を取得（最大10件）
+            groups = Group.objects.filter(is_private=False)[:10]
+            group_members = {g.id: GroupMember.objects.filter(group=g) for g in groups}
             # グループメニューのテンプレートをレンダリング
-            return render(request, 'groups/home.html', {'is_member': False})
+            return render(request, 'groups/home.html', {
+                'is_member': False,
+                'groups': groups,
+                'group_members': group_members
+            })
     else:
         # ユーザーが認証されていない場合
         return render(request, 'groups/home.html')

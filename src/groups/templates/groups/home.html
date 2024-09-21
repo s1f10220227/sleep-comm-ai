@@ -1,50 +1,152 @@
 {% extends 'base.html' %}
 <!-- base.htmlを継承 -->
 
+{% load custom_filters %}
+<!-- 他のパブリックグループのメンバーを表示するために使うカスタムフィルター -->
+
 {% block title %}
   ホーム
 {% endblock %}
 <!-- タイトルブロックを定義 -->
 
 {% block content %}
-  {% if user.is_authenticated %}
-    {% if is_member %}
-      <!-- ユーザーがグループに参加している場合の表示 -->
-      <h1>Group Information</h1>
-      <p><strong>Group ID:</strong> {{ group.id }}</p>
-      <p><strong>Is Private:</strong> {{ group.is_private }}</p>
-      {% if group.invite_code %}
-          <!-- グループがプライベートで招待コードがある場合の表示 -->
-          <p><strong>Invite Code:</strong> {{ group.invite_code }}</p>
-      {% endif %}
-      <!-- グループ離脱フォーム -->
-      <form method="post" action="{% url 'group_leave' %}">
-        {% csrf_token %}
-        <button type="submit">グループを離脱</button>
-    </form>
-    {% else %}
-      <!-- ユーザーがグループに参加していない場合の表示 -->
-      <!-- グループ作成フォーム -->
-      <h2>グループの作成</h2>
-      <form method="post" action="{% url 'group_create' %}">
-        {% csrf_token %}
-        <label for="is_private">プライベートグループ:</label>
-        <input type="checkbox" id="is_private" name="is_private">
-        <button type="submit">作成</button>
-      </form>
+  <div class="container mt-4">
+    <div class="row g-4">
+    {% if user.is_authenticated %}
+      {% if is_member %}
+        <!-- ユーザーがグループに参加している場合の表示 -->
+        <div class="col-lg-6">
+          <div class="card h-100">
+            <div class="card-header">
+              <h2>グループの情報</h2>
+            </div>
+            <div class="card-body">
+              <p><strong>ミッション：</strong> </p>
+              <p><strong>グループの種類：</strong>
+                {% if group.is_private %}
+                  プライベート
+                {% else %}
+                  パブリック
+                {% endif %}
+              </p>
+              {% if group.invite_code %}
+                <!-- グループがプライベートで招待コードがある場合の表示 -->
+                <p><strong>招待コード：</strong> {{ group.invite_code }}</p>
+              {% endif %}
+            </div>
+            <div class="card-footer">
+              <!-- グループ離脱フォーム -->
+              <form method="post" action="{% url 'group_leave' %}">
+                {% csrf_token %}
+                <div class="d-grid gap-2">
+                  <button type="submit" class="btn btn-danger">グループを離脱</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
 
-      <!-- グループ参加フォーム -->
-      <h2>グループに参加</h2>
-      <form method="post" action="{% url 'group_join' %}">
-        {% csrf_token %}
-        <label for="invite_code">招待コード:</label>
-        <input type="text" id="invite_code" name="invite_code">
-        <button type="submit">参加</button>
-      </form>
+        <div class="col-lg-6">
+          <div class="card h-100">
+            <div class="card-header">
+              <h2>グループチャット</h2>
+            </div>
+            <div class="card-body">
+              <!-- グループチャットの最新メッセージ表示 -->
+              <h3>最新のメッセージ</h3>
+              {% if latest_message %}
+                <p class="card-text"><strong>{{ latest_message.sender.username }}</strong>: {{ latest_message.content }}</p>
+              {% else %}
+                <p class="card-text">まだメッセージがありません。</p>
+              {% endif %}
+            </div>
+            <div class="card-footer">
+              <div class="d-grid gap-2">
+                <!-- グループチャット画面へのボタン -->
+                <a href="{% url 'room' user_group.id %}" class="btn btn-primary">グループチャットへ</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% else %}
+        <!-- ユーザーがグループに参加していない場合の表示 -->
+        <div class="col-lg-6">
+          <div class="card h-100">
+            <div class="card-header">
+              <h2>グループの作成</h2>
+            </div>
+            <div class="card-body">
+              <form id="create-group-form" method="post" action="{% url 'group_create' %}">
+                {% csrf_token %}
+                <div class="form-check">
+                  <input type="checkbox" class="form-check-input" id="is_private" name="is_private">
+                  <label for="is_private" class="form-check-label"><strong>プライベートグループ</strong>（プライベートグループは招待コードを知っている人だけが参加できるグループです。）</label>
+                </div>
+              </form>
+            </div>
+            <div class="card-footer">
+              <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-success" onclick="document.getElementById('create-group-form').submit();">作成</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-6">
+          <div class="card h-100">
+            <div class="card-header">
+              <h2>グループに参加</h2>
+            </div>
+            <div class="card-body">
+              <form id="join-group-form" method="post" action="{% url 'group_join' %}">
+                {% csrf_token %}
+                <div class="mb-3">
+                  <label for="invite_code" class="form-label"><strong>招待コード</strong>（招待コードを持っている場合は入力してください。入力しない場合は、パブリックグループにランダムに参加します。）
+                  </label>
+                  <input type="text" class="form-control" id="invite_code" name="invite_code">
+                </div>
+              </form>
+            </div>
+            <div class="card-footer">
+              <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary" onclick="document.getElementById('join-group-form').submit();">参加</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+      <!-- 現在ある他のパブリックグループの一覧 -->
+      <div class="col-lg-12">
+        <div class="card h-100">
+          <div class="card-header">
+            <h2>他のパブリックグループ</h2>
+          </div>
+          <div class="card-body">
+            <ul class="list-group">
+              {% for group in groups %}
+                <li class="list-group-item">
+                  <strong>ミッション：</strong> <br>
+                  <strong>メンバー：</strong>
+                  <ul>
+                    {% with members=group_members|get_item:group.id %}
+                      {% for member in members %}
+                        <li>{{ member.user.username }}</li>
+                      {% endfor %}
+                    {% endwith %}
+                  </ul>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+    {% else %}
+      <div class="jumbotron">
+        <h1 class="display-4 mb-4">サービスの紹介</h1>
+        <p class="lead">このサービスでは、あなたの睡眠習慣を改善するための様々な機能を提供しています。ログインして、詳細を確認してください。</p>
+      </div>
     {% endif %}
-  {% else %}
-    <h1 class="mb-4">サービスの紹介</h1>
-    <p>このサービスでは、あなたの睡眠習慣を改善するための様々な機能を提供しています。ログインして、詳細を確認してください。</p>
-  {% endif %}
+    </div>
+  </div>
 {% endblock %}
 <!-- コンテンツブロックを定義 -->
