@@ -5,6 +5,7 @@ import requests
 from bs4 import BeautifulSoup
 import json
 import os
+from django.utils import timezone
 
 from django.contrib.auth.decorators import login_required
 from groups.models import GroupMember
@@ -45,12 +46,22 @@ def load_advice_from_file(filename='sleep_advice.json'):
             return json.load(file)
     return {}
 
+# 今日のデータが既に存在するか確認
+def check_today_data(user):
+    today = timezone.now().date()
+    return SleepAdvice.objects.filter(user=user, created_at__date=today).exists()
+
 # ビュー関数
 @login_required
 def feedback_chat(request):
     if GroupMember.objects.filter(user=request.user).exists():
         # グループに加入している場合
         advice = None
+
+        if check_today_data(request.user):
+            # 今日のデータが既にある場合
+            return render(request, 'chat/feedback_chat.html', {'advice': '今日は回答済みです。'})
+
         if request.method == 'POST':
             url = request.POST.get('url')
             sleep_time = request.POST.get('sleep_time')
@@ -101,6 +112,11 @@ def feedback_chat(request):
     else:
         # グループに加入していない場合
         advice = None
+        
+        if check_today_data(request.user):
+            # 今日のデータが既にある場合
+            return render(request, 'chat/pre_group_questions.html', {'advice': '今日は回答済みです。'})
+        
         if request.method == 'POST':
             url = request.POST.get('url')
             sleep_time = request.POST.get('sleep_time')
