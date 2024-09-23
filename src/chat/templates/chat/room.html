@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Chat Room{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'chat/css/room.css' %}">
+
+<div class="chat-container">
+    <div class="sidebar">
+        <h2>{{ group.name }}</h2>
+        <a href="{% url 'group_menu' %}">グループ情報</a>
+        <h3>Members</h3>
+        <ul id="member-list">
+            {% for member in group_members %}
+                <li>{{ member.user.username }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="chat-area">
+        <div id="chat-messages">
+            {% for message in messages %}
+                <div class="message">
+                    <span class="username">{{ message.sender.username }}</span>
+                    <span class="timestamp">{{ message.timestamp|date:"H:i" }}</span>
+                    <p>{{ message.content }}</p>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="message-input">
+            <form id="chat-form">
+                <input type="text" id="chat-message-input" placeholder="Type a message...">
+                <button type="submit">Send</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    const groupId = '{{ group.id }}';
+    const username = '{{ request.user.username }}';
+</script>
+<script src="{% static 'chat/js/room.js' %}"></script>
+{% endblock %}

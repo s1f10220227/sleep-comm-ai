@@ -1,15 +1,29 @@
-from django.shortcuts import render
+import os
+
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from groups.models import Group, GroupMember
+from .models import Message
+
+import json
 from django.http import JsonResponse
 import openai
 import requests
 from bs4 import BeautifulSoup
-import json
-import os
 from django.utils import timezone
-
-from django.contrib.auth.decorators import login_required
-from groups.models import GroupMember
 from .models import SleepAdvice
+
+@login_required
+def room(request, group_id):
+    group = get_object_or_404(Group, id=group_id)
+    group_members = GroupMember.objects.filter(group=group)
+    messages = Message.objects.filter(group=group).order_by('-timestamp')[:50]
+
+    return render(request, 'chat/room.html', {
+        'group': group,
+        'group_members': group_members,
+        'messages': reversed(messages),
+    })
 
 # APIキーとベースURLを設定
 OPENAI_API_KEY = ''  # YOUR_API_KEY

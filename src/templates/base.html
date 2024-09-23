@@ -1,3 +1,4 @@
+{% load group_tags %}
 <!DOCTYPE html>
 <html lang="ja">
   <head>
@@ -33,9 +34,17 @@
               <!-- ダッシュボードページへのリンク -->
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="{% url 'group_menu' %}">グループ</a>
-              <!-- グループメニューページへのリンク -->
+              <a class="nav-link" href="{% url 'group_menu' %}">グループ情報</a>
+              <!-- グループ情報ページへのリンク -->
+            <li class="nav-item">
+              {% get_user_group request.user as user_group %}
+              {% if user_group %}
+               <a class="nav-link" href="{% url 'room' user_group.id %}">グループ</a>
+              {% else %}
+                <span class="nav-link disabled">グループ (未参加)</span>
+                {% endif %}
             </li>
+            <!-- グループメニューページへのリンク -->
             <li class="nav-item">
               <a class="nav-link" href="{% url 'progress_check' %}">睡眠データ</a>
               <!-- 睡眠データへのリンク -->

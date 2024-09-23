@@ -19,8 +19,7 @@ class GroupMember(models.Model):
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
     # ユーザーへの外部キー
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    
+
     # オブジェクトの文字列表現
     def __str__(self):
         return f"{self.user.username} in {self.group.id}"
-

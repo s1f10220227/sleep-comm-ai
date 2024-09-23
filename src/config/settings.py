@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'accounts',
     'groups',
     'progress',
+    'channels',
     'chat',
     'results',
 ]
@@ -76,14 +77,31 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
+ASGI_APPLICATION = 'config.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [('redis', 6379)],
+        },
+    }
+}
+
+# 必要に応じて、Redisに接続する認証情報を追加する（パスワード、認証トークンなど）
+
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'testdb',
+        'USER': 'iniad',
+        'PASSWORD': 'password',
+        'HOST': 'db',
+        'PORT': 5432,
     }
 }
 
@@ -125,21 +143,12 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'collected_static/')
 
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'testdb',
-        'USER': 'iniad',
-        'PASSWORD': 'password',
-        'HOST': 'db',
-        'PORT': 5432,
-    }
-}
 
 CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:8080',
@@ -152,9 +161,9 @@ AUTH_USER_MODEL = 'accounts.CustomUser'
 LOGGING = {
     # スキーマバージョンは1固定
     'version': 1,
-    # すでに作成されているロガーを無効化しないための設定 
+    # すでに作成されているロガーを無効化しないための設定
     'disable_existing_loggers': False,
- 
+
     # ログの書式設定
     'formatters': {
         # 詳細ログの書式
@@ -168,7 +177,7 @@ LOGGING = {
             'style': '{',
         },
     },
- 
+
     # ハンドラ
     'handlers': {
         # コンソール出力用のハンドラ
@@ -185,7 +194,7 @@ LOGGING = {
             'formatter': 'verbose',
         },
     },
- 
+
     # ロガー
     'loggers': {
         # djangoフレームワーク用のロガー
@@ -202,4 +211,3 @@ LOGGING = {
         },
     },
 }
-

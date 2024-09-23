@@ -1,6 +1,8 @@
 Django
+channels
+channels-redis
 psycopg2-binary
-uvicorn
+uvicorn[standard]
 openai==0.28
 requests
 beautifulsoup4
