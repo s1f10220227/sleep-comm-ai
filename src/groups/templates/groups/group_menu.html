@@ -17,6 +17,12 @@
         <!-- グループがプライベートで招待コードがある場合の表示 -->
         <p><strong>Invite Code:</strong> {{ group.invite_code }}</p>
     {% endif %}
+    <h2>Group Members</h2>
+    <ul>
+      {% for member in members %}
+        <li>{{ member.user.username }}</li>
+      {% endfor %}
+    </ul>
     <!-- グループの設定リンク -->
     <a href="{% url 'group_management' %}">グループの設定</a>
     <!-- グループ離脱フォーム -->
