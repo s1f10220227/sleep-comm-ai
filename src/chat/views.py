@@ -119,6 +119,7 @@ def feedback_chat(request):
                 wake_time=wake_time,
                 pre_sleep_activities=pre_sleep_activities,
                 advice=advice,
+                topic_question = None,
             )
 
         return render(request, 'chat/feedback_chat.html', {'advice': advice})
@@ -169,5 +170,14 @@ def feedback_chat(request):
             )
 
             advice = response['choices'][0]['message']['content']
+
+            SleepAdvice.objects.create(
+                user=request.user,
+                sleep_time=sleep_time,
+                wake_time=wake_time,
+                pre_sleep_activities=pre_sleep_activities,
+                advice=advice,
+                topic_question = topic_question,
+            )
 
         return render(request, 'chat/pre_group_questions.html', {'advice': advice})
