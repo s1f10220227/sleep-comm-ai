@@ -17,11 +17,11 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
-from accounts.views import home # home ビューのインポート
+from groups.views import home # home ビューのインポート
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', home, name='home'),
+    path('', home, name='home'), # グループ作成・参加機能を含むホーム
     path('accounts/', include('accounts.urls')),
     path('groups/', include('groups.urls')),
     path('chat/', include('chat.urls')),

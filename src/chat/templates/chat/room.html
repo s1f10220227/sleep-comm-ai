@@ -9,7 +9,7 @@
 <div class="chat-container">
     <div class="sidebar">
         <h2>{{ group.name }}</h2>
-        <a href="{% url 'group_menu' %}">グループ情報</a>
+        <a href="{% url 'home' %}">ホームへ戻る</a>
         <h3>Members</h3>
         <ul id="member-list">
             {% for member in group_members %}

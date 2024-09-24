@@ -3,32 +3,43 @@ import random
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from .models import Group, GroupMember
+from chat.models import Message
 
 # HTMLテンプレートをレンダリングするビュー
-@login_required
-def group_menu(request):
-    # ユーザーが既にグループに参加しているか確認
-    if GroupMember.objects.filter(user=request.user).exists():
-        # 参加しているグループの情報を取得
-        group_member = GroupMember.objects.get(user=request.user)
-        group = group_member.group
-        # グループメンバーのリストを取得
-        members = GroupMember.objects.filter(group=group).select_related('user')
-        # グループ情報を含むテンプレートをレンダリング
-        return render(request, 'groups/group_menu.html', {
-            'group': group,
-            'is_member': True,
-            'members': members,
-        })
+def home(request):
+    # ユーザーが認証されているか確認
+    if request.user.is_authenticated:
+        # ユーザーが既にグループに参加しているか確認
+        if GroupMember.objects.filter(user=request.user).exists():
+            # 参加しているグループの情報を取得
+            group_member = GroupMember.objects.get(user=request.user)
+            group = group_member.group
+            # 最新のメッセージを取得
+            latest_message = Message.objects.filter(group=group).order_by('-timestamp').first()
+            # パブリックグループとメンバーの一覧を取得（最大10件）
+            groups = Group.objects.filter(is_private=False).exclude(id=group.id)[:10]
+            group_members = {g.id: GroupMember.objects.filter(group=g) for g in groups}
+            # グループ情報と最新のメッセージ、他のグループとメンバーの一覧を含むテンプレートをレンダリング
+            return render(request, 'groups/home.html', {
+                'group': group,
+                'is_member': True,
+                'latest_message': latest_message,
+                'groups': groups,
+                'group_members': group_members
+            })
+        else:
+            # パブリックグループとメンバーの一覧を取得（最大10件）
+            groups = Group.objects.filter(is_private=False)[:10]
+            group_members = {g.id: GroupMember.objects.filter(group=g) for g in groups}
+            # グループメニューのテンプレートをレンダリング
+            return render(request, 'groups/home.html', {
+                'is_member': False,
+                'groups': groups,
+                'group_members': group_members
+            })
     else:
-        # グループメニューのテンプレートをレンダリング
-        return render(request, 'groups/group_menu.html', {'is_member': False})
-
-# グループ管理のビュー
-@login_required
-def group_management(request):
-    # グループ管理のテンプレートをレンダリング
-    return render(request, 'groups/group_management.html')
+        # ユーザーが認証されていない場合
+        return render(request, 'groups/home.html')
 
 # 招待コードを生成する関数
 def generate_invite_code(length=8):
@@ -42,7 +53,7 @@ def group_create(request):
         # ユーザーが既にグループに参加しているか確認
         if GroupMember.objects.filter(user=request.user).exists():
             # 既に参加している場合はグループメニューにリダイレクト
-            return redirect('group_menu')
+            return redirect('home')
 
         # グループ作成のリクエストを処理
         is_private = request.POST.get('is_private') == "on"
@@ -51,10 +62,10 @@ def group_create(request):
         group = Group.objects.create(is_private=is_private, invite_code=invite_code)
         # 現在のユーザーをグループメンバーとして追加
         GroupMember.objects.create(group=group, user=request.user)
-        # グループメニューにリダイレクト
-        return redirect('group_menu')
-    # グループメニューのテンプレートをレンダリング
-    return render(request, 'groups/group_menu.html')
+        # ホームにリダイレクト
+        return redirect('home')
+    # ホームのテンプレートをレンダリング
+    return render(request, 'groups/home.html')
 
 # グループ参加のビュー
 @login_required
@@ -62,8 +73,8 @@ def group_join(request):
     if request.method == 'POST':
         # ユーザーが既にグループに参加しているか確認
         if GroupMember.objects.filter(user=request.user).exists():
-            # 既に参加している場合はグループメニューにリダイレクト
-            return redirect('group_menu')
+            # 既に参加している場合はホームにリダイレクト
+            return redirect('home')
 
         # グループ参加のリクエストを処理
         invite_code = request.POST.get('invite_code', None)
@@ -82,10 +93,10 @@ def group_join(request):
             if group:
                 # 現在のユーザーをグループメンバーとして追加
                 GroupMember.objects.create(group=group, user=request.user)
-        # グループメニューにリダイレクト
-        return redirect('group_menu')
+        # ホームにリダイレクト
+        return redirect('home')
     # グループメニューのテンプレートをレンダリング
-    return render(request, 'groups/group_menu.html')
+    return render(request, 'groups/home.html')
 
 
 # グループ離脱のビュー
@@ -104,7 +115,7 @@ def group_leave(request):
         except GroupMember.DoesNotExist:
             # ユーザーがグループに参加していない場合の処理
             pass
-        # グループメニューにリダイレクト
-        return redirect('group_menu')
+        # ホームにリダイレクト
+        return redirect('home')
     # グループメニューのテンプレートをレンダリング
-    return render(request, 'groups/group_menu.html')
+    return render(request, 'groups/home.html')

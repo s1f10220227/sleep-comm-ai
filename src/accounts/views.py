@@ -28,12 +28,6 @@ def signup(request):
 # パスワードが一致し、プライバシーポリシーが同意されていればユーザーを作成し、
 # ログインページにリダイレクトします。エラーがあれば、再度サインアップページを表示します。
 
-def home(request):
-    return render(request, 'accounts/home.html')
-
-# ホームページのビューです。特に追加の処理はなく、
-# 単に`accounts/home.html`テンプレートを表示します。
-
 def login_view(request):
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -41,7 +35,7 @@ def login_view(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            return redirect('profile')  # ログイン成功後にプロフィールページにリダイレクト
+            return redirect('home')  # ログイン成功後にホームへリダイレクト
         else:
             # ログイン失敗時にエラーメッセージを渡す
             return render(request, 'accounts/login_signup.html', {'error_message': 'ログインに失敗しました。'})
