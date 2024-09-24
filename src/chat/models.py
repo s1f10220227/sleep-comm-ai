@@ -26,6 +26,7 @@ class SleepAdvice(models.Model):
     wake_time = models.TimeField()   # 起床時刻データを保存
     pre_sleep_activities = models.TextField()    # 例: "テレビを見た"
     advice = models.TextField()                  # 睡眠AIのアドバイス
+    topic_question = models.TextField(null=True) 
     created_at = models.DateTimeField(auto_now_add=True)  # 保存日時
 
     def __str__(self):
