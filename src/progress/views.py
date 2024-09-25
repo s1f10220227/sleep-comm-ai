@@ -71,7 +71,7 @@ def generate_plot(start_week, dates, values, ylabel, title, plot_type='scatter',
         text_labels = [float_to_time_str(v) if v is not None else None for v in converted_values]
     elif ylabel == '睡眠時間 (時間)':
         y_axis = dict(tickmode='array', tickvals=list(range(int(max_value) + 1)), ticktext=[f"{h:02d}:00" for h in range(int(max_value) + 1)])
-        text_labels = [f"{v:.2f}時間" if v is not None else None for v in converted_values]  # 睡眠時間を小数点付きで表示
+        text_labels = [float_to_time_str(v) if v is not None else None for v in converted_values]
     else:
         y_axis = dict(range=[0, max_value + 1])
         text_labels = [None] * len(converted_values)
