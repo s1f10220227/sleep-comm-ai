@@ -10,26 +10,34 @@ import logging
 logger = logging.getLogger(__name__)
 
 def time_to_float(t):
+    """時間（時:分）を浮動小数点数に変換する関数"""
     return t.hour + t.minute / 60
 
 def float_to_time_str(value):
+    """浮動小数点数の時間を「時:分」形式に変換する関数"""
     hours = int(value)
     minutes = int((value - hours) * 60)
     return f"{hours:02d}:{minutes:02d}"
 
 def calculate_sleep_duration(sleep_time, wake_time, date):
+    """睡眠時間を計算する関数"""
     if sleep_time is None or wake_time is None:
         logger.warning(f"Sleep time or wake time is None for date: {date}")
         return 0
 
+    # 同じ日の日付で結合
     sleep_datetime = datetime.combine(date, sleep_time)
     wake_datetime = datetime.combine(date, wake_time)
+    
+    # 起床時刻が就寝時刻よりも早い場合は翌日の起床とみなす
     if wake_datetime < sleep_datetime:
         wake_datetime += timedelta(days=1)
     
+    # 睡眠時間を計算
     duration = wake_datetime - sleep_datetime
     duration_hours = duration.total_seconds() / 3600
     
+    # 負の値を回避
     if duration_hours < 0:
         logger.error(f"Negative duration calculated for date: {date}, sleep_time: {sleep_time}, wake_time: {wake_time}")
         return 0
@@ -38,8 +46,11 @@ def calculate_sleep_duration(sleep_time, wake_time, date):
     return duration_hours
 
 def generate_plot(start_week, dates, values, ylabel, title, plot_type='scatter', special_case=None):
+    """Plotlyを用いてグラフを生成する関数"""
     logger.debug(f"Generating plot: {title}, with dates: {dates} and values: {values}")
     fig = go.Figure()
+
+    # 週の日付リストを作成
     all_dates = [start_week + timedelta(days=i) for i in range(7)]
     date_indices = [all_dates.index(date) if date in all_dates else None for date in dates]
     logger.debug(f"All dates for the week: {all_dates}, Date indices: {date_indices}")
@@ -48,20 +59,24 @@ def generate_plot(start_week, dates, values, ylabel, title, plot_type='scatter',
         logger.debug("No valid dates found in the selected week.")
         return pio.to_html(fig, full_html=False)
 
+    # 値を浮動小数点数に変換（時間形式の場合）
     converted_values = [time_to_float(v) if isinstance(v, time) else v for v in values]
     
+    # 最大値を取得
     max_value = max((v for v in converted_values if v is not None), default=0)
 
+    # 日本語の時刻フォーマット
     if ylabel == '就寝時刻' or special_case == 'bedtime':
         y_axis = dict(tickmode='array', tickvals=list(range(0, 25)), ticktext=[f"{h:02d}:00" for h in range(0, 25)])
         text_labels = [float_to_time_str(v) if v is not None else None for v in converted_values]
     elif ylabel == '睡眠時間 (時間)':
         y_axis = dict(tickmode='array', tickvals=list(range(int(max_value) + 1)), ticktext=[f"{h:02d}:00" for h in range(int(max_value) + 1)])
-        text_labels = [float_to_time_str(v) if v is not None else None for v in converted_values]  # 修正部分
+        text_labels = [f"{v:.2f}時間" if v is not None else None for v in converted_values]  # 睡眠時間を小数点付きで表示
     else:
         y_axis = dict(range=[0, max_value + 1])
         text_labels = [None] * len(converted_values)
 
+    # 特別なケース（就寝時刻など）の処理
     if special_case == 'bedtime':
         fig.add_trace(go.Scatter(
             x=all_dates,
@@ -93,6 +108,7 @@ def generate_plot(start_week, dates, values, ylabel, title, plot_type='scatter',
             hovertext=[text_labels[i] if i in date_indices and date_indices[i] is not None else None for i in range(7)]
         ))
 
+    # 日本語の曜日を使用
     japanese_weekdays = ['月', '火', '水', '木', '金', '土', '日']
     fig.update_layout(
         title=title,
@@ -112,6 +128,7 @@ def generate_plot(start_week, dates, values, ylabel, title, plot_type='scatter',
 
 @login_required
 def progress_check(request):
+    """進捗チェックページの表示"""
     user = request.user
     logger.debug(f"User: {user}")
     today = datetime.now().date()
@@ -133,18 +150,21 @@ def progress_check(request):
     week_dates = [start_week + timedelta(days=i) for i in range(7)]
     logger.debug(f"Week dates (Monday to Sunday): {week_dates}")
 
+    # データの取得とフィルタリング
     sleep_data = SleepAdvice.objects.filter(
         user=user, created_at__date__range=[start_week, end_week]
     ).order_by('created_at')
     logger.debug(f"Sleep data for the week: {list(sleep_data)}")
 
-    sleep_data_dict = {data.created_at.date(): data for data in sleep_data}
+    # created_atをローカルタイムに変換してから日付を取得
+    sleep_data_dict = {timezone.localtime(data.created_at).date(): data for data in sleep_data}
     logger.debug(f"Sleep data dictionary: {sleep_data_dict}")
 
     sleep_times = []
     wake_times = []
     durations = []
 
+    # 日付ごとのデータを処理
     for date in week_dates:
         if date in sleep_data_dict:
             data = sleep_data_dict[date]
@@ -159,7 +179,6 @@ def progress_check(request):
 
     logger.debug(f"Processed sleep times: {sleep_times}")
     logger.debug(f"Processed wake times: {wake_times}")
-    logger.debug(f"Processed durations: {durations}")
 
     show = request.GET.get('show', 'duration')
     logger.debug(f"Show mode: {show}")
