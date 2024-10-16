@@ -14,6 +14,8 @@ from django.utils import timezone
 from django.utils.timezone import localtime
 from .models import SleepAdvice
 
+import markdown
+
 @login_required
 def room(request, group_id):
     group = get_object_or_404(Group, id=group_id)
@@ -113,6 +115,8 @@ def feedback_chat(request):
             )
 
             advice = response['choices'][0]['message']['content']
+            html_advice = markdown.markdown(advice)  # markdownをHTMLに変換
+
             # 睡眠データをデータベースに保存
             SleepAdvice.objects.create(
                 user=request.user,
@@ -122,6 +126,8 @@ def feedback_chat(request):
                 advice=advice,
                 topic_question = None,
             )
+
+            return render(request, 'chat/feedback_chat.html', {'advice': html_advice})
 
         return render(request, 'chat/feedback_chat.html', {'advice': advice})
 
@@ -171,6 +177,9 @@ def feedback_chat(request):
             )
 
             advice = response['choices'][0]['message']['content']
+            html_advice = markdown.markdown(advice)  # markdownをHTMLに変換
+
+            return render(request, 'chat/feedback_chat.html', {'advice': html_advice})
 
             SleepAdvice.objects.create(
                 user=request.user,

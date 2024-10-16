@@ -51,7 +51,7 @@
         {% for advice in advice_cards %}
             <div class="advice-card">
                 <h3>{{ advice.date }}</h3>
-                <p>{{ advice.advice }}</p>
+                {{ advice.advice|safe }}
             </div>
         {% empty %}
             <p>睡眠アドバイスはまだありません。</p>
