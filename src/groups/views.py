@@ -4,6 +4,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from .models import Group, GroupMember
 from chat.models import Message
+from chat.views import check_today_data
 
 # HTMLテンプレートをレンダリングするビュー
 def home(request):
@@ -19,23 +20,27 @@ def home(request):
             # パブリックグループとメンバーの一覧を取得（最大10件）
             groups = Group.objects.filter(is_private=False).exclude(id=group.id)[:10]
             group_members = {g.id: GroupMember.objects.filter(group=g) for g in groups}
+            advice = check_today_data(request.user)
             # グループ情報と最新のメッセージ、他のグループとメンバーの一覧を含むテンプレートをレンダリング
             return render(request, 'groups/home.html', {
                 'group': group,
                 'is_member': True,
                 'latest_message': latest_message,
                 'groups': groups,
-                'group_members': group_members
+                'group_members': group_members,
+                'advice': advice
             })
         else:
             # パブリックグループとメンバーの一覧を取得（最大10件）
             groups = Group.objects.filter(is_private=False)[:10]
             group_members = {g.id: GroupMember.objects.filter(group=g) for g in groups}
+            advice = check_today_data(request.user)
             # グループメニューのテンプレートをレンダリング
             return render(request, 'groups/home.html', {
                 'is_member': False,
                 'groups': groups,
-                'group_members': group_members
+                'group_members': group_members,
+                'advice': advice
             })
     else:
         # ユーザーが認証されていない場合
@@ -50,6 +55,9 @@ def generate_invite_code(length=8):
 @login_required
 def group_create(request):
     if request.method == 'POST':
+        # 既に参加前の質問に回答しているかどうか確認
+        if not check_today_data(request.user):
+            return redirect('feedback_chat')
         # ユーザーが既にグループに参加しているか確認
         if GroupMember.objects.filter(user=request.user).exists():
             # 既に参加している場合はグループメニューにリダイレクト
@@ -71,6 +79,9 @@ def group_create(request):
 @login_required
 def group_join(request):
     if request.method == 'POST':
+        # 既に参加前の質問に回答しているかどうか確認
+        if not check_today_data(request.user):
+            return redirect('feedback_chat')
         # ユーザーが既にグループに参加しているか確認
         if GroupMember.objects.filter(user=request.user).exists():
             # 既に参加している場合はホームにリダイレクト
