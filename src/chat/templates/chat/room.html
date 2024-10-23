@@ -35,6 +35,13 @@
         </div>
     </div>
 </div>
+<div class="mission-section">
+    <form action="{% url 'create_mission' group.id %}" method="POST">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary">ミッションを生成</button>
+    </form>
+</div>
+
 
 <script>
     const groupId = '{{ group.id }}';
