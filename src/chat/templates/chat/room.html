@@ -10,12 +10,27 @@
     <div class="sidebar">
         <h2>{{ group.name }}</h2>
         <a href="{% url 'home' %}">ホームへ戻る</a>
+        <div class="mission-section">
+            <form action="{% url 'create_mission' group.id %}" method="POST">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary">ミッションを生成</button>
+            </form>
+        </div>
+        
         <h3>Members</h3>
         <ul id="member-list">
             {% for member in group_members %}
                 <li>{{ member.user.username }}</li>
             {% endfor %}
         </ul>
+        <div class="mission-container">
+            <h3>生成されたミッション</h3>
+            {% if mission %}
+                <p>{{ mission }}</p>
+            {% else %}
+                <p>ミッションを生成できませんでした。メンバーに適切なトピックがない可能性があります。</p>
+            {% endif %}
+        </div>
     </div>
     <div class="chat-area">
         <div id="chat-messages">
@@ -35,12 +50,7 @@
         </div>
     </div>
 </div>
-<div class="mission-section">
-    <form action="{% url 'create_mission' group.id %}" method="POST">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-primary">ミッションを生成</button>
-    </form>
-</div>
+
 
 
 <script>
