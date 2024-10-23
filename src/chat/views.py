@@ -187,6 +187,7 @@ def feedback_chat(request):
 def create_mission(request, group_id):
     group = get_object_or_404(Group, id=group_id)
     group_members = GroupMember.objects.filter(group=group)
+    messages = Message.objects.filter(group=group).order_by('-timestamp')[:50]
     
     # 各メンバーの最新のトピック質問を取得
     latest_topics = []
@@ -195,15 +196,12 @@ def create_mission(request, group_id):
         if latest_advice:
             latest_topics.append(latest_advice.topic_question)
 
-    if not latest_topics:
-        return render(request, 'chat/create_mission.html', {'mission': None})
-
     # ChatGPTに送信するためのプロンプトを作成
     combined_topics = "。".join(latest_topics)
     prompt = (
-        f"以下は、各メンバーが最近取り組んでいる睡眠に関する質問です：{combined_topics}。"
+        f"以下は、これから取り組みたい睡眠に関するトピックです：{combined_topics}。"
         "これらを元に、全員に共通する改善点や挑戦できるミッションを1つ生成してください。"
-        "ミッションは、全員が実行可能で協力して取り組む内容にしてください。"
+        "ミッションは、全員が実行可能で協力して取り組む内容にしてください。20文字程度で出力してください。"
     )
 
     # OpenAI APIにリクエストを送信してミッションを生成
@@ -219,11 +217,16 @@ def create_mission(request, group_id):
         )
         mission_text = response['choices'][0]['message']['content']
     except Exception as e:
-        return render(request, 'chat/create_mission.html', {'mission': None})
+        return render(request, 'chat/room.html', {
+            'mission': "もう一回お願いします。" ,
+            'group': group,
+            'group_members': group_members,
+            'messages': reversed(messages),})
 
     # 生成されたミッションを画面に表示
-    return render(request, 'chat/create_mission.html', {
+    return render(request, 'chat/room.html', {
         'mission': mission_text,
         'group': group,
         'group_members': group_members,
+        'messages': reversed(messages),
     })
