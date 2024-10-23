@@ -11,6 +11,7 @@ import openai
 import requests
 from bs4 import BeautifulSoup
 from django.utils import timezone
+from django.utils.timezone import localtime
 from .models import SleepAdvice
 
 @login_required
@@ -62,7 +63,7 @@ def load_advice_from_file(filename='sleep_advice.json'):
 
 # 今日のデータが既に存在するか確認
 def check_today_data(user):
-    today = timezone.now().date()
+    today = localtime(timezone.now()).date()  # 日本時間で今日の日付を取得
     return SleepAdvice.objects.filter(user=user, created_at__date=today).exists()
 
 # ビュー関数
@@ -119,6 +120,7 @@ def feedback_chat(request):
                 wake_time=wake_time,
                 pre_sleep_activities=pre_sleep_activities,
                 advice=advice,
+                topic_question = None,
             )
 
         return render(request, 'chat/feedback_chat.html', {'advice': advice})
@@ -169,6 +171,15 @@ def feedback_chat(request):
             )
 
             advice = response['choices'][0]['message']['content']
+
+            SleepAdvice.objects.create(
+                user=request.user,
+                sleep_time=sleep_time,
+                wake_time=wake_time,
+                pre_sleep_activities=pre_sleep_activities,
+                advice=advice,
+                topic_question = topic_question,
+            )
 
         return render(request, 'chat/pre_group_questions.html', {'advice': advice})
 
