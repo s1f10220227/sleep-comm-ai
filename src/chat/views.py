@@ -14,17 +14,24 @@ from django.utils import timezone
 from django.utils.timezone import localtime
 from .models import SleepAdvice
 
+from .models import Mission
+from datetime import datetime
+
 @login_required
 def room(request, group_id):
     group = get_object_or_404(Group, id=group_id)
     group_members = GroupMember.objects.filter(group=group)
     messages = Message.objects.filter(group=group).order_by('-timestamp')[:50]
+     # 最新のミッションを取得
+    latest_mission = Mission.objects.order_by('-mission_time').first()
+    no_mission_text = "ミッションを生成しましょう"
 
     return render(request, 'chat/room.html', {
+        'mission': latest_mission.mission if latest_mission else no_mission_text,
         'group': group,
         'group_members': group_members,
         'messages': reversed(messages),
-    })
+})
 
 # APIキーとベースURLを設定
 OPENAI_API_KEY = 'XO5TQ_P6Fh_4Gjq9UsRgeN4e93TM3s7inuc-aQhHS8yww5W9FenoPn8uc8zNfFCsylJeKVOpJCaV8KdI32Dn5TA'  # YOUR_API_KEY
@@ -216,16 +223,26 @@ def create_mission(request, group_id):
             api_base=OPENAI_API_BASE
         )
         mission_text = response['choices'][0]['message']['content']
+
+         # ミッションをMissionモデルに保存
+        Mission.objects.create(
+            mission_time=datetime.now().time(),  # 現在時刻をmission_timeに保存
+            mission=mission_text
+        )
+
     except Exception as e:
         return render(request, 'chat/room.html', {
             'mission': "もう一回お願いします。" ,
             'group': group,
             'group_members': group_members,
             'messages': reversed(messages),})
+    
+     # 最新のミッションを取得
+    latest_mission = Mission.objects.order_by('-mission_time').first()
 
-    # 生成されたミッションを画面に表示
+    # 生成されたミッションと最新のミッションを画面に表示
     return render(request, 'chat/room.html', {
-        'mission': mission_text,
+        'mission': latest_mission.mission if latest_mission else mission_text,
         'group': group,
         'group_members': group_members,
         'messages': reversed(messages),

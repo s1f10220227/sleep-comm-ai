@@ -10,12 +10,15 @@
     <div class="sidebar">
         <h2>{{ group.name }}</h2>
         <a href="{% url 'home' %}">ホームへ戻る</a>
+        {% if mission != "ミッションを生成しましょう" %}
+        {% else %}
         <div class="mission-section">
             <form action="{% url 'create_mission' group.id %}" method="POST">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-primary">ミッションを生成</button>
+            {% csrf_token %}
+                <button type="submit" class="btn btn-primary">ミッションを生成</button>
             </form>
         </div>
+        {% endif %}
         
         <h3>Members</h3>
         <ul id="member-list">
