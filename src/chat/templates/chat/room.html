@@ -20,11 +20,11 @@
     <div class="chat-area">
         <div id="chat-messages">
             {% for message in messages %}
-                <div class="message">
-                    <span class="username">{{ message.sender.username }}</span>
-                    <span class="timestamp">{{ message.timestamp|date:"H:i" }}</span>
-                    <p>{{ message.content }}</p>
-                </div>
+            <div class="message {% if message.sender.username == 'AI Assistant' %}ai-message{% endif %}">
+                <span class="username">{{ message.sender.username }}</span>
+                <span class="timestamp">{{ message.timestamp|date:"H:i" }}</span>
+                <p>{{ message.content }}</p>
+            </div>
             {% endfor %}
         </div>
         <div class="message-input">
