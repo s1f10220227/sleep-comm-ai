@@ -28,6 +28,7 @@ OPENAI_API_BASE = settings.OPENAI_API_BASE
 # AIモデルの初期化
 chat = openai.ChatCompletion
 
+
 @login_required
 def room(request, group_id):
     group = get_object_or_404(Group, id=group_id)

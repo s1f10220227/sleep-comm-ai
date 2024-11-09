@@ -1,5 +1,7 @@
+import os
 import json
-import openai
+import openai  # OpenAIライブラリを使用
+import logging
 from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import sync_to_async
 from .models import Message
@@ -10,11 +12,15 @@ from django.conf import settings
 # settings.pyで定義した環境変数OPENAI_API_KEY, OPENAI_API_BASEを参照する
 OPENAI_API_KEY = settings.OPENAI_API_KEY 
 OPENAI_API_BASE = settings.OPENAI_API_BASE
+# ログ設定
+logging.basicConfig(filename='debug.log', level=logging.DEBUG)
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.group_id = self.scope['url_route']['kwargs']['group_id']
         self.room_group_name = f'chat_{self.group_id}'
+
+        logging.debug(f"Connecting to group: {self.room_group_name}")
 
         # Join room group
         await self.channel_layer.group_add(
@@ -30,16 +36,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.room_group_name,
             self.channel_name
         )
+        logging.debug(f"Disconnected from group: {self.room_group_name}")
 
     async def receive(self, text_data):
+        logging.debug(f"Received message: {text_data}")
+
         text_data_json = json.loads(text_data)
         message = text_data_json['message']
         username = text_data_json['username']
 
-        # Save message to database
+        # Save user message to database
         await self.save_message(username, message)
+        logging.debug(f"Message saved to database by {username}")
 
-        # Send message to room group
+        # Send user message to room group
         await self.channel_layer.group_send(
             self.room_group_name,
             {
@@ -49,8 +59,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
             }
         )
 
+        # Check for triggering AI response
         if "@AI" in message:
             ai_response = await self.generate_ai_response(message) 
+            logging.debug(f"AI response generated: {ai_response}")
             await self.save_message('AI Assistant', ai_response) 
             await self.channel_layer.group_send( 
                 self.room_group_name, 
@@ -60,10 +72,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     'username': 'AI Assistant' 
                 } 
             )
+            logging.debug(f"AI message process completed for: {ai_response}")
 
     async def chat_message(self, event):
         message = event['message']
         username = event['username']
+
+        logging.debug(f"Broadcasting message from {username}: {message}")
 
         # Send message to WebSocket
         await self.send(text_data=json.dumps({
@@ -90,7 +105,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 temperature=0.2,
             )
             ai_response = response['choices'][0]['message']['content'].strip()
+            logging.debug(f"AI API response: {ai_response}")
             return ai_response
         except Exception as e:
-            print(f"Error generating AI response: {e}")
+            logging.error(f"Error in generate_ai_response: {str(e)}")
             return "AIによる応答生成に失敗しました。しばらく待ってからもう一度お試しください。"
