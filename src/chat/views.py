@@ -18,9 +18,12 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.contrib.auth import get_user_model
 
-# APIキーとベースURLを設定
-OPENAI_API_KEY = ''  # YOUR_API_KEY
-OPENAI_API_BASE = 'https://api.openai.iniad.org/api/v1'
+from django.conf import settings
+
+
+# settings.pyで定義した環境変数OPENAI_API_KEY, OPENAI_API_BASEを参照する
+OPENAI_API_KEY = settings.OPENAI_API_KEY
+OPENAI_API_BASE = settings.OPENAI_API_BASE
 
 # AIモデルの初期化
 chat = openai.ChatCompletion
@@ -45,7 +48,6 @@ def room(request, group_id):
         'group_members': group_members,
         'messages': reversed(messages),
     })
-
 
 # URLから情報を取得する関数
 def scrape_sleep_advice(url):
