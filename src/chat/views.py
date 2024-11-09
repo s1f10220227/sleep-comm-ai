@@ -18,19 +18,15 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.contrib.auth import get_user_model
 
-# APIキーとベースURLを設定
-OPENAI_API_KEY = ''  # YOUR_API_KEY
-OPENAI_API_BASE = 'https://api.openai.iniad.org/api/v1'
+from django.conf import settings
+
+
+# settings.pyで定義した環境変数OPENAI_API_KEY, OPENAI_API_BASEを参照する
+OPENAI_API_KEY = settings.OPENAI_API_KEY
+OPENAI_API_BASE = settings.OPENAI_API_BASE
 
 # AIモデルの初期化
 chat = openai.ChatCompletion
-
-def send_ai_message(group, content):
-    User = get_user_model()
-    ai_user, _ = User.objects.get_or_create(username='AI Assistant')
-    
-    # メッセージを保存
-    Message.objects.create(sender=ai_user, group=group, content=content)
 
 @login_required
 def room(request, group_id):
@@ -51,51 +47,6 @@ def room(request, group_id):
         'group_members': group_members,
         'messages': reversed(messages),
     })
-
-@csrf_exempt
-@require_POST
-def post_message(request, group_id):
-    group = get_object_or_404(Group, id=group_id)
-    user = request.user
-    content = request.POST.get('content')
-    
-    # ユーザーのメッセージを保存
-    user_message = Message.objects.create(sender=user, group=group, content=content)
-    
-    # 特定のキーワードが含まれている場合にAIが応答する
-    trigger_keywords = ["help", "assist", "question"]
-    if any(keyword in content.lower() for keyword in trigger_keywords):
-        # APIキーとベースURLを設定から取得
-        OPENAI_API_KEY = OPENAI_API_KEY
-        OPENAI_API_BASE = OPENAI_API_BASE
-
-        # AI応答を生成
-        response = openai.ChatCompletion.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "system", "content": "You are a sleep expert who provides advice on healthy sleep habits."},
-                      {"role": "user", "content": content}],
-            api_key=OPENAI_API_KEY,
-            api_base=OPENAI_API_BASE,
-            max_tokens=50,
-            temperature=0.7,
-        )
-
-        # AIメッセージの内容を取得
-        ai_response = response['choices'][0]['message']['content'].strip()
-
-        # AIメッセージを保存
-        send_ai_message(group, ai_response)
-
-        # WebSocketでAIのメッセージを送信
-        # `group.chat_group_name`は、WebSocketのグループ名に関連する名前です
-        group.chat_group_name.send({
-            'type': 'chat.message',
-            'message': ai_response,
-            'username': 'AI Assistant',
-        })
-    
-    return JsonResponse({"status": "success"})
-
 
 # URLから情報を取得する関数
 def scrape_sleep_advice(url):
