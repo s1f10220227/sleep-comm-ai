@@ -4,7 +4,7 @@ import openai  # OpenAIライブラリを使用
 import logging
 from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import sync_to_async
-from .models import Message
+from .models import Message, SleepAdvice
 from groups.models import Group
 from accounts.models import CustomUser
 from django.conf import settings
@@ -73,6 +73,19 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 } 
             )
             logging.debug(f"AI message process completed for: {ai_response}")
+            
+        # Check for triggering AI response
+        if "@共有" in message:  # 条件は必要に応じて変更
+            advice = await self.get_sleep_advice(username)
+            if advice:
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        'type': 'chat_message',
+                        'message': advice,
+                        'username': 'AI Assistant'
+                    }
+                )
 
     async def chat_message(self, event):
         message = event['message']
@@ -110,3 +123,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
         except Exception as e:
             logging.error(f"Error in generate_ai_response: {str(e)}")
             return "AIによる応答生成に失敗しました。しばらく待ってからもう一度お試しください。"
+        
+    @sync_to_async
+    def get_sleep_advice(self, username):
+        try:
+            user = CustomUser.objects.get(username=username)
+            # 最新のSleepAdviceを取得
+            advice_entry = SleepAdvice.objects.filter(user=user).latest('created_at')
+            advice = f"{user.username}さんのアドバイスです。ぜひ参考にしてください。: {advice_entry.advice}"
+            return advice
+        except SleepAdvice.DoesNotExist:
+            return "このユーザーのアドバイスはまだありません。"
