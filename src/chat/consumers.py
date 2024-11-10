@@ -78,6 +78,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if "@共有" in message:  # 条件は必要に応じて変更
             advice = await self.get_sleep_advice(username)
             if advice:
+                await self.save_message('AI Assistant', advice)
                 await self.channel_layer.group_send(
                     self.room_group_name,
                     {
