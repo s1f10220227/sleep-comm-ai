@@ -30,6 +30,11 @@
             <h3>生成されたミッション</h3>
             {% if mission %}
                 <p>{{ mission }}</p>
+                {% if days_since_creation %}
+                    <p>ミッション生成からの日数: {{ days_since_creation }} 日</p>  <!-- 追加 -->
+                {% else %}
+                    <p>ミッション生成からの日数:0日</p>  <!-- 追加 -->
+                {% endif %}
             {% else %}
                 <p>ミッションを生成できませんでした。メンバーに適切なトピックがない可能性があります。</p>
             {% endif %}

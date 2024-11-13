@@ -34,7 +34,6 @@ def room(request, group_id):
 })
 
 # APIキーとベースURLを設定
-OPENAI_API_KEY = 'XO5TQ_P6Fh_4Gjq9UsRgeN4e93TM3s7inuc-aQhHS8yww5W9FenoPn8uc8zNfFCsylJeKVOpJCaV8KdI32Dn5TA'  # YOUR_API_KEY
 OPENAI_API_BASE = 'https://api.openai.iniad.org/api/v1'
 
 # AIモデルの初期化
@@ -230,6 +229,10 @@ def create_mission(request, group_id):
             mission=mission_text
         )
 
+        # 日数をカウントするためにミッションの作成日時を保存
+        mission.created_at = timezone.now()  # 現在時刻をcreated_atに保存
+        mission.save()
+
     except Exception as e:
         return render(request, 'chat/room.html', {
             'mission': "もう一回お願いします。" ,
@@ -239,6 +242,12 @@ def create_mission(request, group_id):
     
      # 最新のミッションを取得
     latest_mission = Mission.objects.order_by('-mission_time').first()
+
+    # ミッション生成からの日数を計算
+    if latest_mission:
+        days_since_creation = (timezone.now() - latest_mission.created_at).days  # 日数を計算
+    else:
+        days_since_creation = 0  # ミッションが存在しない場合は0日
 
     # 生成されたミッションと最新のミッションを画面に表示
     return render(request, 'chat/room.html', {
