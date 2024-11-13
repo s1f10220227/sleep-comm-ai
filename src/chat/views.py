@@ -185,8 +185,6 @@ def feedback_chat(request):
             advice = response['choices'][0]['message']['content']
             html_advice = markdown.markdown(advice)  # markdownをHTMLに変換
 
-            return render(request, 'chat/feedback_chat.html', {'advice': html_advice})
-
             SleepAdvice.objects.create(
                 user=request.user,
                 sleep_time=sleep_time,
@@ -195,6 +193,8 @@ def feedback_chat(request):
                 advice=advice,
                 topic_question = topic_question,
             )
+
+            return render(request, 'chat/feedback_chat.html', {'advice': html_advice})
 
         return render(request, 'chat/pre_group_questions.html', {'advice': advice})
 
