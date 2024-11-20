@@ -1,7 +1,8 @@
 from celery import shared_task
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
-from .models import Group
+from .models import Group, Message
+from accounts.models import CustomUser
 import logging
 
 logger = logging.getLogger(__name__)
@@ -13,7 +14,9 @@ def send_daily_message():
         groups = Group.objects.all()
 
         message = "おはようございます！今日も良い一日をお過ごしください。昨日の睡眠はいかがでしたか？"
-
+        
+        ai_user = CustomUser.objects.get(username='AI Assistant')
+        
         for group in groups:
             room_group_name = f'chat_{group.id}'
 
@@ -25,6 +28,8 @@ def send_daily_message():
                     'username': 'AI Assistant'
                 }
             )
+            
+            Message.objects.create(sender=ai_user, group=group, content=message)
 
         logger.info("Daily message sent successfully")
         return "Daily message sent successfully"
