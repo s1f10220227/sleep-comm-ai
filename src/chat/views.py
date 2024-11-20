@@ -17,24 +17,33 @@ from .models import SleepAdvice
 from .models import Mission
 from datetime import datetime
 
+from django.urls import reverse
+from django.shortcuts import redirect
+import logging
+logger = logging.getLogger(__name__)
+
+
 @login_required
 def room(request, group_id):
     group = get_object_or_404(Group, id=group_id)
     group_members = GroupMember.objects.filter(group=group)
     messages = Message.objects.filter(group=group).order_by('-timestamp')[:50]
      # 最新のミッションを取得
-    latest_mission = Mission.objects.order_by('-mission_time').first()
+    latest_mission = Mission.objects.filter(group=group).order_by('-created_at').first()
     no_mission_text = "ミッションを生成しましょう"
+    mission_confirmed = latest_mission.confirmed if latest_mission else False
+
 
     return render(request, 'chat/room.html', {
         'mission': latest_mission.mission if latest_mission else no_mission_text,
         'group': group,
+        'mission_confirmed': mission_confirmed,
         'group_members': group_members,
         'messages': reversed(messages),
 })
 
 # APIキーとベースURLを設定
-OPENAI_API_KEY = 'XO5TQ_P6Fh_4Gjq9UsRgeN4e93TM3s7inuc-aQhHS8yww5W9FenoPn8uc8zNfFCsylJeKVOpJCaV8KdI32Dn5TA'  # YOUR_API_KEY
+OPENAI_API_KEY = 'JkfbDCICz4a-B01eP5b5XuRqZimTr3cp54KLO8WNW-ho3N1E8y6ndhYzj0Vof9jOa144WKFIqefwWrlaJVqTj4Q'  # YOUR_API_KEY
 OPENAI_API_BASE = 'https://api.openai.iniad.org/api/v1'
 
 # AIモデルの初期化
@@ -226,8 +235,8 @@ def create_mission(request, group_id):
 
          # ミッションをMissionモデルに保存
         Mission.objects.create(
-            mission_time=datetime.now().time(),  # 現在時刻をmission_timeに保存
-            mission=mission_text
+            mission=mission_text,
+            group = group,
         )
 
     except Exception as e:
@@ -237,8 +246,9 @@ def create_mission(request, group_id):
             'group_members': group_members,
             'messages': reversed(messages),})
     
-     # 最新のミッションを取得
-    latest_mission = Mission.objects.order_by('-mission_time').first()
+    # 最新のミッションを取得
+    latest_mission = Mission.objects.filter(group=group).order_by('-created_at').first()
+
 
     # 生成されたミッションと最新のミッションを画面に表示
     return render(request, 'chat/room.html', {
@@ -247,3 +257,15 @@ def create_mission(request, group_id):
         'group_members': group_members,
         'messages': reversed(messages),
     })
+@login_required
+def confirm_mission(request, group_id):
+    group = get_object_or_404(Group, id=group_id)
+    if request.method == 'POST':
+        # 最新のミッションを取得
+        latest_mission = Mission.objects.filter(group=group).order_by('-created_at').first()
+
+        if latest_mission:
+            latest_mission.confirmed = True
+            latest_mission.save()
+        # 確認後、同じページへリダイレクト
+        return redirect(reverse('room', args=[group_id]))

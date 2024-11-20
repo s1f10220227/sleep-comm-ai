@@ -10,31 +10,39 @@
     <div class="sidebar">
         <h2>{{ group.name }}</h2>
         <a href="{% url 'home' %}">ホームへ戻る</a>
-        {% if mission != "ミッションを生成しましょう" %}
-        {% else %}
-        <div class="mission-section">
-            <form action="{% url 'create_mission' group.id %}" method="POST">
-            {% csrf_token %}
-                <button type="submit" class="btn btn-primary">ミッションを生成</button>
-            </form>
-        </div>
-        {% endif %}
-        
+
         <h3>Members</h3>
         <ul id="member-list">
             {% for member in group_members %}
                 <li>{{ member.user.username }}</li>
             {% endfor %}
         </ul>
-        <div class="mission-container">
-            <h3>生成されたミッション</h3>
-            {% if mission %}
-                <p>{{ mission }}</p>
+
+        {% if mission == "ミッションを生成しましょう" %}
+            <form action="{% url 'create_mission' group.id %}" method="POST">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary">ミッションを生成</button>
+            </form>
             {% else %}
-                <p>ミッションを生成できませんでした。メンバーに適切なトピックがない可能性があります。</p>
+            <div class="mission-generated">
+                <h3>生成されたミッション</h3>
+                <p>{{ mission }}</p>
+                
+                {% if not mission_confirmed %}
+                <div id="mission-buttons">
+                    <!-- ミッション確定ボタン -->
+                    <form action="{% url 'confirm_mission' group.id %}" method="POST">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success">ミッション確定</button>
+                    </form>
+                <!-- ミッションボタ議論ン -->
+                <button class="btn btn-secondary" disabled>議論してミッションを決める</button>
+                </div>
+                {% endif %}
+            </div>
             {% endif %}
         </div>
-    </div>
+
     <div class="chat-area">
         <div id="chat-messages">
             {% for message in messages %}
