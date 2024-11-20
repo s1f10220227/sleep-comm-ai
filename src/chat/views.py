@@ -203,16 +203,12 @@ def feedback_chat(request):
 def create_mission(request, group_id):
     group = get_object_or_404(Group, id=group_id)
     group_members = GroupMember.objects.filter(group=group)
-    messages = Message.objects.filter(group=group).order_by('-timestamp')[:50]
-    
-    # 各メンバーの最新のトピック質問を取得
     latest_topics = []
     for member in group_members:
         latest_advice = SleepAdvice.objects.filter(user=member.user, topic_question__isnull=False).order_by('-created_at').first()
         if latest_advice:
             latest_topics.append(latest_advice.topic_question)
 
-    # ChatGPTに送信するためのプロンプトを作成
     combined_topics = "。".join(latest_topics)
     prompt = (
         f"以下は、これから取り組みたい睡眠に関するトピックです：{combined_topics}。"
@@ -220,7 +216,6 @@ def create_mission(request, group_id):
         "ミッションは、全員が実行可能で協力して取り組む内容にしてください。20文字程度で出力してください。"
     )
 
-    # OpenAI APIにリクエストを送信してミッションを生成
     try:
         response = chat.create(
             model="gpt-4o-mini",
@@ -233,30 +228,16 @@ def create_mission(request, group_id):
         )
         mission_text = response['choices'][0]['message']['content']
 
-         # ミッションをMissionモデルに保存
         Mission.objects.create(
             mission=mission_text,
-            group = group,
+            group=group,
         )
 
-    except Exception as e:
-        return render(request, 'chat/room.html', {
-            'mission': "もう一回お願いします。" ,
-            'group': group,
-            'group_members': group_members,
-            'messages': reversed(messages),})
-    
-    # 最新のミッションを取得
-    latest_mission = Mission.objects.filter(group=group).order_by('-created_at').first()
+    except Exception:
+        return redirect(reverse('room', args=[group_id]))
 
+    return redirect(reverse('room', args=[group_id]))
 
-    # 生成されたミッションと最新のミッションを画面に表示
-    return render(request, 'chat/room.html', {
-        'mission': latest_mission.mission if latest_mission else mission_text,
-        'group': group,
-        'group_members': group_members,
-        'messages': reversed(messages),
-    })
 @login_required
 def confirm_mission(request, group_id):
     group = get_object_or_404(Group, id=group_id)
