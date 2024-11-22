@@ -2,6 +2,8 @@ import string
 import random
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.db.models import Count
+from django.core.exceptions import ValidationError
 from .models import Group, GroupMember
 from chat.models import Message
 
@@ -82,15 +84,19 @@ def group_join(request):
             try:
                 # 招待コードでグループを検索
                 group = Group.objects.get(invite_code=invite_code)
-                # 現在のユーザーをグループメンバーとして追加
-                GroupMember.objects.create(group=group, user=request.user)
+                try:
+                    # 現在のユーザーをグループメンバーとして追加
+                    GroupMember.objects.create(group=group, user=request.user)
+                except ValidationError:
+                    # 既にメンバーが5人いる場合の処理
+                    pass
             except Group.DoesNotExist:
                 # グループが存在しない場合の処理
                 pass
         else:
-            # ランダムで参加待ちのグループに参加
-            group = Group.objects.filter(is_private=False).order_by('?').first()
-            if group:
+            # メンバーが5人未満のグループにランダム参加
+            group = Group.objects.filter(is_private=False).annotate(member_count=Count('members')).filter(member_count__lt=5).order_by('?').first()
+            if group and group.member_count < 5:
                 # 現在のユーザーをグループメンバーとして追加
                 GroupMember.objects.create(group=group, user=request.user)
         # ホームにリダイレクト
