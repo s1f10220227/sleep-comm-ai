@@ -18,6 +18,9 @@ from .models import Mission
 from datetime import datetime
 
 import markdown
+import logging
+
+logger = logging.getLogger(__name__)
 
 @login_required
 def room(request, group_id):
@@ -28,14 +31,29 @@ def room(request, group_id):
     latest_mission = Mission.objects.order_by('-mission_time').first()
     no_mission_text = "ミッションを生成しましょう"
 
+    logger.debug("これはテストログです。")
+    # ミッション生成からの日数を計算
+    if latest_mission:
+        days_since_creation = (localtime(timezone.now()).date() - localtime(latest_mission.created_at).date()).days
+        logger.debug("これはテストログです。")
+        logger.debug("生成日計算", days_since_creation)
+    else:
+        logger.debug("これはテストログです。")
+        days_since_creation = 1  # ミッションが存在しない場合は0日
+        logger.debug("生成日計算", days_since_creation)
+
+    logger.debug("生成日計算", days_since_creation)
+
     return render(request, 'chat/room.html', {
         'mission': latest_mission.mission if latest_mission else no_mission_text,
         'group': group,
         'group_members': group_members,
         'messages': reversed(messages),
+        'days_since_creation': days_since_creation,
 })
 
 # APIキーとベースURLを設定
+OPENAI_API_KEY = 'Ou1R3waJj1OD0iKlKBxGEf6Ym8K7o7cEYWmMuj2jwnXXOgOCl9l9PPPWf0e2eVUMYKCRrO3gOLbGybbnPEYEVVw'
 OPENAI_API_BASE = 'https://api.openai.iniad.org/api/v1'
 
 # AIモデルの初期化
@@ -232,15 +250,11 @@ def create_mission(request, group_id):
         )
         mission_text = response['choices'][0]['message']['content']
 
-         # ミッションをMissionモデルに保存
+        # ミッションをMissionモデルに保存
         Mission.objects.create(
             mission_time=datetime.now().time(),  # 現在時刻をmission_timeに保存
             mission=mission_text
         )
-
-        # 日数をカウントするためにミッションの作成日時を保存
-        mission.created_at = timezone.now()  # 現在時刻をcreated_atに保存
-        mission.save()
 
     except Exception as e:
         return render(request, 'chat/room.html', {
@@ -249,15 +263,9 @@ def create_mission(request, group_id):
             'group_members': group_members,
             'messages': reversed(messages),})
     
-     # 最新のミッションを取得
-    latest_mission = Mission.objects.order_by('-mission_time').first()
-
-    # ミッション生成からの日数を計算
-    if latest_mission:
-        days_since_creation = (timezone.now() - latest_mission.created_at).days  # 日数を計算
-    else:
-        days_since_creation = 0  # ミッションが存在しない場合は0日
-
+    # 最新のミッションを取得
+    latest_mission = Mission.objects.order_by('-mission_time').first()    
+    
     # 生成されたミッションと最新のミッションを画面に表示
     return render(request, 'chat/room.html', {
         'mission': latest_mission.mission if latest_mission else mission_text,
