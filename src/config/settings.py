@@ -204,7 +204,7 @@ LOGGING = {
             'propagate': True,
         },
         # 任意アプリケーション用のロガー
-        'progress': {
+        'chat': {
             'handlers': ['console', 'file'],
             'level': 'DEBUG',
             'propagate': True,

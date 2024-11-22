@@ -29,7 +29,7 @@
     
     {% if advice %}
       <h2>AIのアドバイス:</h2>
-      <p>{{ advice }}</p>
+      {{ advice|safe }}
     {% endif %}
   {% endif %}
 {% endblock %}

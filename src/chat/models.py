@@ -2,6 +2,7 @@ import uuid
 from django.db import models
 from groups.models import Group
 from accounts.models import CustomUser
+from django.utils import timezone
 
 # メッセージモデル
 class Message(models.Model):
@@ -35,5 +36,7 @@ class SleepAdvice(models.Model):
     
 
 class Mission(models.Model):
-    mission_time = models.TimeField()#時間を保存
     mission = models.TextField() #ミッションの内容を保存
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, null=True, blank=True)
+    confirmed = models.BooleanField(default=False)  # 確定状態を記録するフィールド
+    created_at = models.DateTimeField(auto_now_add=True)
