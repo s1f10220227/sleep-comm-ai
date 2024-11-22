@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}ミッション生成結果{% endblock %}
+
+{% block content %}
+<div class="mission-container">
+    <h2>生成されたミッション</h2>
+    {% if mission %}
+        <p>{{ mission }}</p>
+    {% else %}
+        <p>ミッションを生成できませんでした。メンバーに適切なトピックがない可能性があります。</p>
+    {% endif %}
+    <a href="{% url 'room' group.id %}">チャットルームに戻る</a>
+</div>
+{% endblock %}
