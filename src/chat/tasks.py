@@ -13,10 +13,10 @@ def send_daily_message():
         channel_layer = get_channel_layer()
         groups = Group.objects.all()
 
-        message = "おはようございます！今日も良い一日をお過ごしください。昨日の睡眠はいかがでしたか？"
-        
+        message = "http://127.0.0.1:8080/chat/feedback_chat/"
+
         ai_user = CustomUser.objects.get(username='AI Assistant')
-        
+
         for group in groups:
             room_group_name = f'chat_{group.id}'
 
@@ -28,7 +28,7 @@ def send_daily_message():
                     'username': 'AI Assistant'
                 }
             )
-            
+
             Message.objects.create(sender=ai_user, group=group, content=message)
 
         logger.info("Daily message sent successfully")
