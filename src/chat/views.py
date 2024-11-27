@@ -13,6 +13,9 @@ from bs4 import BeautifulSoup
 from django.utils import timezone
 from django.utils.timezone import localtime
 from .models import SleepAdvice
+import markdown
+from .models import Mission
+from datetime import datetime
 
 import markdown
 
@@ -21,15 +24,19 @@ def room(request, group_id):
     group = get_object_or_404(Group, id=group_id)
     group_members = GroupMember.objects.filter(group=group)
     messages = Message.objects.filter(group=group).order_by('-timestamp')[:50]
+     # 最新のミッションを取得
+    latest_mission = Mission.objects.order_by('-mission_time').first()
+    no_mission_text = "ミッションを生成しましょう"
 
     return render(request, 'chat/room.html', {
+        'mission': latest_mission.mission if latest_mission else no_mission_text,
         'group': group,
         'group_members': group_members,
         'messages': reversed(messages),
-    })
+})
 
 # APIキーとベースURLを設定
-OPENAI_API_KEY = ''  # YOUR_API_KEY
+OPENAI_API_KEY = 'XO5TQ_P6Fh_4Gjq9UsRgeN4e93TM3s7inuc-aQhHS8yww5W9FenoPn8uc8zNfFCsylJeKVOpJCaV8KdI32Dn5TA'  # YOUR_API_KEY
 OPENAI_API_BASE = 'https://api.openai.iniad.org/api/v1'
 
 # AIモデルの初期化
@@ -179,6 +186,7 @@ def feedback_chat(request):
             advice = response['choices'][0]['message']['content']
             html_advice = markdown.markdown(advice)  # markdownをHTMLに変換
 
+
             SleepAdvice.objects.create(
                 user=request.user,
                 sleep_time=sleep_time,
@@ -191,3 +199,61 @@ def feedback_chat(request):
             return render(request, 'chat/feedback_chat.html', {'advice': html_advice})
 
         return render(request, 'chat/pre_group_questions.html', {'advice': advice})
+
+@login_required
+def create_mission(request, group_id):
+    group = get_object_or_404(Group, id=group_id)
+    group_members = GroupMember.objects.filter(group=group)
+    messages = Message.objects.filter(group=group).order_by('-timestamp')[:50]
+    
+    # 各メンバーの最新のトピック質問を取得
+    latest_topics = []
+    for member in group_members:
+        latest_advice = SleepAdvice.objects.filter(user=member.user, topic_question__isnull=False).order_by('-created_at').first()
+        if latest_advice:
+            latest_topics.append(latest_advice.topic_question)
+
+    # ChatGPTに送信するためのプロンプトを作成
+    combined_topics = "。".join(latest_topics)
+    prompt = (
+        f"以下は、これから取り組みたい睡眠に関するトピックです：{combined_topics}。"
+        "これらを元に、全員に共通する改善点や挑戦できるミッションを1つ生成してください。"
+        "ミッションは、全員が実行可能で協力して取り組む内容にしてください。20文字程度で出力してください。"
+    )
+
+    # OpenAI APIにリクエストを送信してミッションを生成
+    try:
+        response = chat.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a sleep expert who generates collaborative missions based on multiple user inputs."},
+                {"role": "user", "content": prompt}
+            ],
+            api_key=OPENAI_API_KEY,
+            api_base=OPENAI_API_BASE
+        )
+        mission_text = response['choices'][0]['message']['content']
+
+         # ミッションをMissionモデルに保存
+        Mission.objects.create(
+            mission_time=datetime.now().time(),  # 現在時刻をmission_timeに保存
+            mission=mission_text
+        )
+
+    except Exception as e:
+        return render(request, 'chat/room.html', {
+            'mission': "もう一回お願いします。" ,
+            'group': group,
+            'group_members': group_members,
+            'messages': reversed(messages),})
+    
+     # 最新のミッションを取得
+    latest_mission = Mission.objects.order_by('-mission_time').first()
+
+    # 生成されたミッションと最新のミッションを画面に表示
+    return render(request, 'chat/room.html', {
+        'mission': latest_mission.mission if latest_mission else mission_text,
+        'group': group,
+        'group_members': group_members,
+        'messages': reversed(messages),
+    })
