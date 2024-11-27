@@ -23,7 +23,6 @@ from django.shortcuts import redirect
 import logging
 logger = logging.getLogger(__name__)
 from django.views.decorators.cache import cache_control
-from django.utils.decorators import method_decorator
 
 
 
