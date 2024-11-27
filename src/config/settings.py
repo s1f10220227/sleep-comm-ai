@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 import os
+import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,11 +21,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
+# read .env
+env = environ.Env()
+env.read_env(os.path.join(BASE_DIR, '.env'))
+
+# for openai
+OPENAI_API_KEY = env('OPENAI_API_KEY') 
+OPENAI_API_BASE = env('OPENAI_API_BASE')
+
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-n9##wlf_r(ll2+#^70&klm4#96wum^v-#cwcp$ssbo^4zv^azc'
+SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env('DEBUG')
 
 ALLOWED_HOSTS = ['*']
 
@@ -95,14 +104,7 @@ CHANNEL_LAYERS = {
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'testdb',
-        'USER': 'iniad',
-        'PASSWORD': 'password',
-        'HOST': 'db',
-        'PORT': 5432,
-    }
+    'default': env.db()
 }
 
 
