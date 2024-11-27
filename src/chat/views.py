@@ -17,6 +17,8 @@ import markdown
 from .models import Mission
 from datetime import datetime
 
+import markdown
+
 @login_required
 def room(request, group_id):
     group = get_object_or_404(Group, id=group_id)
@@ -184,7 +186,6 @@ def feedback_chat(request):
             advice = response['choices'][0]['message']['content']
             html_advice = markdown.markdown(advice)  # markdownをHTMLに変換
 
-            return render(request, 'chat/feedback_chat.html', {'advice': html_advice})
 
             SleepAdvice.objects.create(
                 user=request.user,
@@ -194,6 +195,8 @@ def feedback_chat(request):
                 advice=advice,
                 topic_question = topic_question,
             )
+
+            return render(request, 'chat/feedback_chat.html', {'advice': html_advice})
 
         return render(request, 'chat/pre_group_questions.html', {'advice': advice})
 
