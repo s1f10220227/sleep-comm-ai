@@ -15,6 +15,7 @@ class Message(models.Model):
     content = models.TextField()
     # メッセージの送信日時
     timestamp = models.DateTimeField(auto_now_add=True)
+    
 
     # オブジェクトの文字列表現
     def __str__(self):
@@ -26,7 +27,13 @@ class SleepAdvice(models.Model):
     wake_time = models.TimeField()   # 起床時刻データを保存
     pre_sleep_activities = models.TextField()    # 例: "テレビを見た"
     advice = models.TextField()                  # 睡眠AIのアドバイス
+    topic_question = models.TextField(null=True) 
     created_at = models.DateTimeField(auto_now_add=True)  # 保存日時
 
     def __str__(self):
         return f"{self.user.username} - {self.created_at}"
+    
+
+class Mission(models.Model):
+    mission_time = models.TimeField()#時間を保存
+    mission = models.TextField() #ミッションの内容を保存
