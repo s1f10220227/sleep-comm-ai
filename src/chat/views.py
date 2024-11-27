@@ -42,7 +42,7 @@ chat = openai.ChatCompletion
 def room(request, group_id):
     group = get_object_or_404(Group, id=group_id)
     group_members = GroupMember.objects.filter(group=group)
-    messages = Message.objects.filter(group=group).order_by('-timestamp')[:50
+    messages = Message.objects.filter(group=group).order_by('-timestamp')[:50]
     
     # AIアシスタントユーザーの取得または作成
     User = get_user_model()
