@@ -3,27 +3,44 @@ const chatSocket = new WebSocket(
 );
 
 chatSocket.onmessage = function(e) {
+    // 受信データを解析
     const data = JSON.parse(e.data);
-    const chatMessages = document.querySelector('#chat-messages');
-    const messageElement = document.createElement('div');
-    messageElement.className = 'message';
 
-    const usernameSpan = document.createElement('span');
-    usernameSpan.className = 'username';
+    // チャットメッセージの表示領域を取得
+    const chatMessages = document.querySelector('#chat-messages');
+
+    // メッセージ要素を作成
+    const messageElement = document.createElement('div');
+    messageElement.className = 'message mb-2';
+
+    // ユーザー名を作成
+    const usernameSpan = document.createElement('strong');
+    usernameSpan.className = 'username text-primary';
     usernameSpan.textContent = data.username;
 
-    const timestampSpan = document.createElement('span');
-    timestampSpan.className = 'timestamp';
+    // スペースを挿入
+    const spaceText = document.createTextNode(' ');
+
+    // タイムスタンプを作成
+    const timestampSpan = document.createElement('small');
+    timestampSpan.className = 'timestamp text-muted';
     timestampSpan.textContent = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
+    // メッセージ本文を作成
     const contentP = document.createElement('p');
+    contentP.className = 'mb-0'
     contentP.textContent = data.message;
 
+    // 作成した要素を親要素に追加
     messageElement.appendChild(usernameSpan);
+    messageElement.appendChild(spaceText); // ユーザー名とタイムスタンプの間にスペースを挿入
     messageElement.appendChild(timestampSpan);
     messageElement.appendChild(contentP);
 
+    // メッセージをチャット表示領域に追加
     chatMessages.appendChild(messageElement);
+
+    // スクロール位置を最新に調整
     chatMessages.scrollTop = chatMessages.scrollHeight;
 };
 
