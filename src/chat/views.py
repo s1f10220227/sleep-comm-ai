@@ -19,11 +19,35 @@ from datetime import datetime
 
 import markdown
 
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+from django.contrib.auth import get_user_model
+
+from django.conf import settings
+
+
+# settings.pyで定義した環境変数OPENAI_API_KEY, OPENAI_API_BASEを参照する
+OPENAI_API_KEY = settings.OPENAI_API_KEY
+OPENAI_API_BASE = settings.OPENAI_API_BASE
+
+# AIモデルの初期化
+chat = openai.ChatCompletion
+
+
 @login_required
 def room(request, group_id):
     group = get_object_or_404(Group, id=group_id)
     group_members = GroupMember.objects.filter(group=group)
-    messages = Message.objects.filter(group=group).order_by('-timestamp')[:50]
+    messages = Message.objects.filter(group=group).order_by('-timestamp')[:50
+    
+    # AIアシスタントユーザーの取得または作成
+    User = get_user_model()
+    ai_user, created = User.objects.get_or_create(username='AI Assistant')
+    
+    # AIアシスタントがグループのメンバーか確認し、いなければ追加
+    if not group_members.filter(user=ai_user).exists():
+        GroupMember.objects.create(group=group, user=ai_user)
+
      # 最新のミッションを取得
     latest_mission = Mission.objects.order_by('-mission_time').first()
     no_mission_text = "ミッションを生成しましょう"
@@ -35,8 +59,8 @@ def room(request, group_id):
         'messages': reversed(messages),
 })
 
-# APIキーとベースURLを設定
-OPENAI_API_KEY = 'XO5TQ_P6Fh_4Gjq9UsRgeN4e93TM3s7inuc-aQhHS8yww5W9FenoPn8uc8zNfFCsylJeKVOpJCaV8KdI32Dn5TA'  # YOUR_API_KEY
+
+OPENAI_API_KEY = ''  # YOUR_API_KEY
 OPENAI_API_BASE = 'https://api.openai.iniad.org/api/v1'
 
 # AIモデルの初期化
