@@ -18,6 +18,10 @@ from .models import Mission
 from datetime import datetime
 
 import markdown
+from django.urls import reverse
+from django.shortcuts import redirect
+import logging
+logger = logging.getLogger(__name__)
 
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -49,19 +53,32 @@ def room(request, group_id):
         GroupMember.objects.create(group=group, user=ai_user)
 
      # 最新のミッションを取得
-    latest_mission = Mission.objects.order_by('-mission_time').first()
+    latest_mission = Mission.objects.filter(group=group).order_by('-created_at').first()
     no_mission_text = "ミッションを生成しましょう"
+    mission_confirmed = latest_mission.confirmed if latest_mission else False
+
+
+    # ミッション生成からの日数を計算
+    if latest_mission:
+        days_since_creation = (localtime(timezone.now()).date() - localtime(latest_mission.created_at).date()).days
+        logger.debug(f"localtime(timezone.now()).date() {localtime(timezone.now()).date()}")
+        logger.debug(f"localtime(latest_mission.created_at).date() {localtime(latest_mission.created_at).date()}")
+        logger.debug(f"localtime(timezone.now()).date() - localtime(latest_mission.created_at).date() = {localtime(timezone.now()).date() - localtime(latest_mission.created_at).date()}")
+        logger.debug(f"生成日計算: {days_since_creation}")
+    else:
+        days_since_creation = '?'  # ミッションが存在しない場合は?日
+        logger.debug(f"生成日計算: {days_since_creation}")
 
     return render(request, 'chat/room.html', {
         'mission': latest_mission.mission if latest_mission else no_mission_text,
         'group': group,
+        'mission_confirmed': mission_confirmed,
         'group_members': group_members,
         'messages': reversed(messages),
+        'days_since_creation': days_since_creation,
 })
 
 
-OPENAI_API_KEY = ''  # YOUR_API_KEY
-OPENAI_API_BASE = 'https://api.openai.iniad.org/api/v1'
 
 # AIモデルの初期化
 chat = openai.ChatCompletion
@@ -228,16 +245,12 @@ def feedback_chat(request):
 def create_mission(request, group_id):
     group = get_object_or_404(Group, id=group_id)
     group_members = GroupMember.objects.filter(group=group)
-    messages = Message.objects.filter(group=group).order_by('-timestamp')[:50]
-    
-    # 各メンバーの最新のトピック質問を取得
     latest_topics = []
     for member in group_members:
         latest_advice = SleepAdvice.objects.filter(user=member.user, topic_question__isnull=False).order_by('-created_at').first()
         if latest_advice:
             latest_topics.append(latest_advice.topic_question)
 
-    # ChatGPTに送信するためのプロンプトを作成
     combined_topics = "。".join(latest_topics)
     prompt = (
         f"以下は、これから取り組みたい睡眠に関するトピックです：{combined_topics}。"
@@ -245,7 +258,6 @@ def create_mission(request, group_id):
         "ミッションは、全員が実行可能で協力して取り組む内容にしてください。20文字程度で出力してください。"
     )
 
-    # OpenAI APIにリクエストを送信してミッションを生成
     try:
         response = chat.create(
             model="gpt-4o-mini",
@@ -257,27 +269,30 @@ def create_mission(request, group_id):
             api_base=OPENAI_API_BASE
         )
         mission_text = response['choices'][0]['message']['content']
-
-         # ミッションをMissionモデルに保存
+        
+        logger.debug(f"mission_text: {mission_text}")
+        
+        # ミッションをMissionモデルに保存
         Mission.objects.create(
-            mission_time=datetime.now().time(),  # 現在時刻をmission_timeに保存
-            mission=mission_text
+            mission=mission_text,
+            group=group,
         )
 
-    except Exception as e:
-        return render(request, 'chat/room.html', {
-            'mission': "もう一回お願いします。" ,
-            'group': group,
-            'group_members': group_members,
-            'messages': reversed(messages),})
-    
-     # 最新のミッションを取得
-    latest_mission = Mission.objects.order_by('-mission_time').first()
+    except Exception:
+        return redirect(reverse('room', args=[group_id]))
 
-    # 生成されたミッションと最新のミッションを画面に表示
-    return render(request, 'chat/room.html', {
-        'mission': latest_mission.mission if latest_mission else mission_text,
-        'group': group,
-        'group_members': group_members,
-        'messages': reversed(messages),
-    })
+    return redirect(reverse('room', args=[group_id]))
+
+@login_required
+def confirm_mission(request, group_id):
+    group = get_object_or_404(Group, id=group_id)
+    if request.method == 'POST':
+        # 最新のミッションを取得
+        latest_mission = Mission.objects.filter(group=group).order_by('-created_at').first()
+
+        if latest_mission:
+            latest_mission.confirmed = True
+            latest_mission.save()
+        # 確認後、同じページへリダイレクト
+        return redirect(reverse('room', args=[group_id]))
+
