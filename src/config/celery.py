@@ -12,7 +12,7 @@ app.autodiscover_tasks()
 app.conf.beat_schedule = {
     'send-daily-message': {
         'task': 'chat.tasks.send_daily_message',
-        'schedule': crontab(hour=15, minute=43),
+        'schedule': crontab(hour=13, minute=15), # ex. 13:15 JST
     },
 }
 
