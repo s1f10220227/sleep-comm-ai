@@ -1,5 +1,6 @@
 import uuid
 from django.db import models
+from django.core.exceptions import ValidationError
 from accounts.models import CustomUser
 
 # グループモデル
@@ -16,10 +17,14 @@ class GroupMember(models.Model):
     # UUIDをプライマリキーとして使用
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     # グループへの外部キー
-    group = models.ForeignKey(Group, on_delete=models.CASCADE)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='members')
     # ユーザーへの外部キー
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
 
+    def save(self, *args, **kwargs):
+        if self.group.members.count() >= 5:
+            raise ValidationError("このグループは既に満員です。")
+        super().save(*args, **kwargs)
     # オブジェクトの文字列表現
     def __str__(self):
         return f"{self.user.username} in {self.group.id}"

@@ -10,13 +10,38 @@
     <div class="sidebar">
         <h2>{{ group.name }}</h2>
         <a href="{% url 'home' %}">ホームへ戻る</a>
+
         <h3>Members</h3>
         <ul id="member-list">
             {% for member in group_members %}
                 <li>{{ member.user.username }}</li>
             {% endfor %}
         </ul>
-    </div>
+
+        {% if mission == "ミッションを生成しましょう" %}
+            <form action="{% url 'create_mission' group.id %}" method="POST">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary">ミッションを生成</button>
+            </form>
+            {% else %}
+            <div class="mission-generated">
+                <h3>生成されたミッション</h3>
+                <p>{{ mission }}</p>
+                
+                {% if not mission_confirmed %}
+                <div id="mission-buttons">
+                    <form action="{% url 'confirm_mission' group.id %}" method="POST">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success">ミッション確定</button>
+                    </form>
+                <button class="btn btn-secondary" disabled>議論してミッションを決める</button>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+            <p>ミッション生成からの日数: {{ days_since_creation }} 日</p>
+        </div>
+
     <div class="chat-area">
         <div id="chat-messages">
             {% for message in messages %}

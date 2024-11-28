@@ -11,3 +11,4 @@ plotly
 django-environ
 celery
 redis
+markdown
