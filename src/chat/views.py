@@ -13,7 +13,7 @@ from bs4 import BeautifulSoup
 from django.utils import timezone
 from django.utils.timezone import localtime
 from .models import SleepAdvice
-
+import markdown
 from .models import Mission
 from datetime import datetime
 
@@ -24,6 +24,19 @@ import logging
 logger = logging.getLogger(__name__)
 from django.views.decorators.cache import cache_control
 
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+from django.contrib.auth import get_user_model
+
+from django.conf import settings
+
+
+# settings.pyで定義した環境変数OPENAI_API_KEY, OPENAI_API_BASEを参照する
+OPENAI_API_KEY = settings.OPENAI_API_KEY
+OPENAI_API_BASE = settings.OPENAI_API_BASE
+
+# AIモデルの初期化
+chat = openai.ChatCompletion
 
 
 @login_required
@@ -31,6 +44,15 @@ def room(request, group_id):
     group = get_object_or_404(Group, id=group_id)
     group_members = GroupMember.objects.filter(group=group)
     messages = Message.objects.filter(group=group).order_by('-timestamp')[:50]
+    
+    # AIアシスタントユーザーの取得または作成
+    User = get_user_model()
+    ai_user, created = User.objects.get_or_create(username='AI Assistant')
+    
+    # AIアシスタントがグループのメンバーか確認し、いなければ追加
+    if not group_members.filter(user=ai_user).exists():
+        GroupMember.objects.create(group=group, user=ai_user)
+
      # 最新のミッションを取得
     latest_mission = Mission.objects.filter(group=group).order_by('-created_at').first()
     no_mission_text = "ミッションを生成しましょう"
@@ -57,9 +79,7 @@ def room(request, group_id):
         'days_since_creation': days_since_creation,
 })
 
-# APIキーとベースURLを設定
-OPENAI_API_KEY = 'JkfbDCICz4a-B01eP5b5XuRqZimTr3cp54KLO8WNW-ho3N1E8y6ndhYzj0Vof9jOa144WKFIqefwWrlaJVqTj4Q'  # YOUR_API_KEY
-OPENAI_API_BASE = 'https://api.openai.iniad.org/api/v1'
+
 
 # AIモデルの初期化
 chat = openai.ChatCompletion
@@ -207,6 +227,7 @@ def feedback_chat(request):
 
             advice = response['choices'][0]['message']['content']
             html_advice = markdown.markdown(advice)  # markdownをHTMLに変換
+
 
             SleepAdvice.objects.create(
                 user=request.user,
