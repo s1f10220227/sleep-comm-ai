@@ -20,25 +20,42 @@
 
         {% if mission == "ミッションを生成しましょう" %}
             <form action="{% url 'create_mission' group.id %}" method="POST">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-primary">ミッションを生成</button>
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary">ミッションを生成</button>
             </form>
-            {% else %}
+        {% else %}
             <div class="mission-generated">
                 <h3>生成されたミッション</h3>
                 <p>{{ mission }}</p>
-                
-                {% if not mission_confirmed %}
+
+            {% if not mission_confirmed %}
                 <div id="mission-buttons">
-                    <form action="{% url 'confirm_mission' group.id %}" method="POST">
+                <!-- ミッション確定用のフォーム -->
+                <form action="{% url 'confirm_mission' group.id %}" method="POST">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success">ミッション確定</button>
+                </form>
+
+                {% if show_textbox %}
+                    <!-- テキストボックスが表示される -->
+                    <form action="{% url 'save_mission' group_id=group.id %}" method="POST">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-success">ミッション確定</button>
+                        <textarea name="mission" placeholder="ミッションを入力してください" rows="2" cols="20" required></textarea>
+                        <br>
+                        <button type="submit">ミッションを保存</button>
                     </form>
-                <button class="btn btn-secondary" disabled>議論してミッションを決める</button>
-                </div>
+                {% else %}
+                    <!-- 初期状態ではボタンが表示される -->
+                    <form action="{% url 'save_mission' group_id=group.id %}" method="POST">
+                        {% csrf_token %}
+                        <button type="submit">議論してミッションを決める</button>
+                    </form>
                 {% endif %}
+                </div>
+            {% endif %}
             </div>
             {% endif %}
+
             <p>ミッション生成からの日数: {{ days_since_creation }} 日</p>
         </div>
 
@@ -66,4 +83,5 @@
     const username = '{{ request.user.username }}';
 </script>
 <script src="{% static 'chat/js/room.js' %}"></script>
+
 {% endblock %}

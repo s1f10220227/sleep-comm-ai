@@ -22,6 +22,7 @@ from django.urls import reverse
 from django.shortcuts import redirect
 import logging
 logger = logging.getLogger(__name__)
+from django.views.decorators.cache import cache_control
 
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -296,3 +297,31 @@ def confirm_mission(request, group_id):
         # 確認後、同じページへリダイレクト
         return redirect(reverse('room', args=[group_id]))
 
+@login_required
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
+def save_mission(request, group_id):
+    group = get_object_or_404(Group, id=group_id)
+    group_members = GroupMember.objects.filter(group=group)
+    messages = Message.objects.filter(group=group).order_by('-timestamp')[:50]
+     # 最新のミッションを取得
+    latest_mission = Mission.objects.filter(group=group).order_by('-created_at').first()
+    no_mission_text = "ミッションを生成しましょう"
+    mission_confirmed = latest_mission.confirmed if latest_mission else False
+
+    if request.method == 'POST':
+        # ユーザーがテキストボックスを含むフォームを提出した場合の処理
+        mission_text = request.POST.get('mission')
+        if mission_text: #ミッションテキストがある場合の処理
+            Mission.objects.create(mission=mission_text, group=group)
+            return redirect(reverse('room', args=[group_id]))
+        else:
+            # show_textbox=Trueにしてテキストボックスを表示
+            return render(request, 'chat/room.html', {
+                'mission': latest_mission.mission if latest_mission else no_mission_text,
+                'group': group,
+                'mission_confirmed': mission_confirmed,
+                'group_members': group_members,
+                'messages': reversed(messages),
+                'show_textbox': True,
+            })
+    return redirect(reverse('room', args=[group_id]))
