@@ -9,4 +9,6 @@ beautifulsoup4
 langchain
 plotly
 django-environ
+celery
+redis
 markdown

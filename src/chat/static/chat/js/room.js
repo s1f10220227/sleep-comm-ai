@@ -17,7 +17,7 @@ chatSocket.onmessage = function(e) {
     timestampSpan.textContent = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
     const contentP = document.createElement('p');
-    contentP.textContent = data.message;
+    contentP.innerHTML = parseLinks(data.message); // メッセージ内のリンクを変換
 
     messageElement.appendChild(usernameSpan);
     messageElement.appendChild(timestampSpan);
@@ -41,3 +41,11 @@ document.querySelector('#chat-form').onsubmit = function(e) {
     }));
     messageInputDom.value = '';
 };
+
+// メッセージ内のリンクをHTMLリンクに変換
+function parseLinks(message) {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    return message.replace(urlRegex, function(url) {
+        return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+    });
+}

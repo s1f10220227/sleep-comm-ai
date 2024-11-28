@@ -10,7 +10,7 @@ from accounts.models import CustomUser
 from django.conf import settings
 
 # settings.pyで定義した環境変数OPENAI_API_KEY, OPENAI_API_BASEを参照する
-OPENAI_API_KEY = settings.OPENAI_API_KEY 
+OPENAI_API_KEY = settings.OPENAI_API_KEY
 OPENAI_API_BASE = settings.OPENAI_API_BASE
 # ログ設定
 logging.basicConfig(filename='debug.log', level=logging.DEBUG)
@@ -61,19 +61,19 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         # Check for triggering AI response
         if "@AI" in message:
-            ai_response = await self.generate_ai_response(message) 
+            ai_response = await self.generate_ai_response(message)
             logging.debug(f"AI response generated: {ai_response}")
-            await self.save_message('AI Assistant', ai_response) 
-            await self.channel_layer.group_send( 
-                self.room_group_name, 
-                { 
-                    'type': 'chat_message', 
-                    'message': ai_response, 
-                    'username': 'AI Assistant' 
-                } 
+            await self.save_message('AI Assistant', ai_response)
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'chat_message',
+                    'message': ai_response,
+                    'username': 'AI Assistant'
+                }
             )
             logging.debug(f"AI message process completed for: {ai_response}")
-            
+
         # Check for triggering AI response
         if "@共有" in message:  # 条件は必要に応じて変更
             advice = await self.get_sleep_advice(username)
@@ -124,7 +124,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         except Exception as e:
             logging.error(f"Error in generate_ai_response: {str(e)}")
             return "AIによる応答生成に失敗しました。しばらく待ってからもう一度お試しください。"
-        
+
     @sync_to_async
     def get_sleep_advice(self, username):
         try:
