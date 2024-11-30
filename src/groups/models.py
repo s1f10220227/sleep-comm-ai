@@ -22,7 +22,7 @@ class GroupMember(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
 
     def save(self, *args, **kwargs):
-        if self.group.members.count() >= 5:
+        if self.group.members.count() >= 6:
             raise ValidationError("このグループは既に満員です。")
         super().save(*args, **kwargs)
     # オブジェクトの文字列表現

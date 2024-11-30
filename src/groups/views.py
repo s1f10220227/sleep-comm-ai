@@ -106,8 +106,8 @@ def group_join(request):
                 pass
         else:
             # メンバーが5人未満のグループにランダム参加
-            group = Group.objects.filter(is_private=False).annotate(member_count=Count('members')).filter(member_count__lt=5).order_by('?').first()
-            if group and group.member_count < 5:
+            group = Group.objects.filter(is_private=False).annotate(member_count=Count('members')).filter(member_count__lt=6).order_by('?').first()
+            if group and group.member_count < 6:
                 # 現在のユーザーをグループメンバーとして追加
                 GroupMember.objects.create(group=group, user=request.user)
         # ホームにリダイレクト
@@ -126,8 +126,8 @@ def group_leave(request):
             group = group_member.group
             # グループメンバーシップを削除
             group_member.delete()
-            # グループの人数をチェックし、0人ならグループを削除
-            if not GroupMember.objects.filter(group=group).exists():
+            # グループの人数をチェックし、1人以下ならグループを削除 
+            if GroupMember.objects.filter(group=group).count() <= 1:
                 group.delete()
         except GroupMember.DoesNotExist:
             # ユーザーがグループに参加していない場合の処理
