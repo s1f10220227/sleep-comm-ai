@@ -3,7 +3,7 @@ import os
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from groups.models import Group, GroupMember
-from .models import Message
+from .models import Message, MissionOption, Vote
 
 import json
 from django.http import JsonResponse
@@ -52,11 +52,19 @@ def room(request, group_id):
     if not group_members.filter(user=ai_user).exists():
         GroupMember.objects.create(group=group, user=ai_user)
 
-     # 最新のミッションを取得
+    # 最新のミッションを取得
     latest_mission = Mission.objects.filter(group=group).order_by('-created_at').first()
-    no_mission_text = "ミッションを生成しましょう"
+    mission_options = MissionOption.objects.filter(group=group).order_by('-votes', 'id')
+    for option in mission_options:
+        logger.debug(f"generated mission option: {option.text}")
+    has_mission_options = mission_options.exists()
     mission_confirmed = latest_mission.confirmed if latest_mission else False
 
+    # ユーザーの最新の投票データを取得
+    user_vote = Vote.objects.filter(user=request.user, group=group).first()
+
+    # 投票締め切りを過ぎているかどうかを計算
+    is_vote_deadline_passed = timezone.now() > group.vote_deadline
 
     # ミッション生成からの日数を計算
     if latest_mission:
@@ -70,12 +78,16 @@ def room(request, group_id):
         logger.debug(f"生成日計算: {days_since_creation}")
 
     return render(request, 'chat/room.html', {
-        'mission': latest_mission.mission if latest_mission else no_mission_text,
+        'mission_options': mission_options,
+        'has_mission_options': has_mission_options,
         'group': group,
+        'mission': latest_mission,
         'mission_confirmed': mission_confirmed,
         'group_members': group_members,
         'messages': reversed(messages),
         'days_since_creation': days_since_creation,
+        'user_vote': user_vote,
+        'is_vote_deadline_passed': is_vote_deadline_passed,
 })
 
 
@@ -242,7 +254,7 @@ def feedback_chat(request):
         return render(request, 'chat/pre_group_questions.html', {'advice': advice})
 
 @login_required
-def create_mission(request, group_id):
+def create_missions(request, group_id):
     group = get_object_or_404(Group, id=group_id)
     group_members = GroupMember.objects.filter(group=group)
     latest_topics = []
@@ -253,10 +265,21 @@ def create_mission(request, group_id):
 
     combined_topics = "。".join(latest_topics)
     prompt = (
-        f"以下は、これから取り組みたい睡眠に関するトピックです：{combined_topics}。"
-        "これらを元に、全員に共通する改善点や挑戦できるミッションを1つ生成してください。"
-        "ミッションは、全員が実行可能で協力して取り組む内容にしてください。20文字程度で出力してください。"
+        f"以下は、これから取り組みたい睡眠に関するトピックです：{combined_topics}。\n\n"
+        "これらを元に、全員に共通する改善点や挑戦できるミッションを5つ、生成してください。\n"
+        "ミッションは以下の条件を満たすようにしてください：\n"
+        "1. 全員が実行可能であること。\n"
+        "2. 睡眠に関する具体的な内容であること。\n"
+        "3. 各ミッションは20文字程度で簡潔に表現すること。\n\n"
+        "以下のフォーマットに従って、改行で区切ったリスト形式で出力してください：\n"
+        "ミッション1\n"
+        "ミッション2\n"
+        "ミッション3\n"
+        "ミッション4\n"
+        "ミッション5\n\n"
+        "フォーマットを厳守し、必ず改行区切りで出力してください。"
     )
+
 
     try:
         response = chat.create(
@@ -268,18 +291,70 @@ def create_mission(request, group_id):
             api_key=OPENAI_API_KEY,
             api_base=OPENAI_API_BASE
         )
-        mission_text = response['choices'][0]['message']['content']
-        
-        logger.debug(f"mission_text: {mission_text}")
-        
-        # ミッションをMissionモデルに保存
-        Mission.objects.create(
-            mission=mission_text,
-            group=group,
-        )
+        mission_texts = response['choices'][0]['message']['content'].split("\n")  # 複数行で返されると仮定
 
-    except Exception:
+        for mission_text in mission_texts:
+            if mission_text.strip():  # 空白行を除外
+                MissionOption.objects.create(
+                    group=group,
+                    text=mission_text.strip()
+                )
+
+        # 投票締切時刻を現在時刻 + 2時間に設定
+        group.vote_deadline = localtime(timezone.now()) + timezone.timedelta(hours=2)
+        group.save()
+
+    except Exception as e:
+        logger.error(f"Error generating missions: {e}")
         return redirect(reverse('room', args=[group_id]))
+
+    return redirect(reverse('room', args=[group_id]))
+
+@login_required
+def vote_mission(request, group_id):
+    group = get_object_or_404(Group, id=group_id)
+    selected_option_id = request.POST.get("selected_mission")
+    selected_option = get_object_or_404(MissionOption, id=selected_option_id, group=group)
+
+    # ユーザーの現在の投票を確認
+    existing_vote = Vote.objects.filter(user=request.user, group=group).first()
+
+    if existing_vote:
+        current_option = existing_vote.mission_option
+        if current_option != selected_option:
+            # 現在の投票を取り消し
+            current_option.votes -= 1
+            current_option.save()
+
+            # 新たな投票に変更
+            existing_vote.mission_option = selected_option
+            existing_vote.save()
+
+            # 新しい投票先の票数を更新
+            selected_option.votes += 1
+            selected_option.save()
+    else:
+        # 新しい投票を登録
+        Vote.objects.create(user=request.user, mission_option=selected_option, group=group)
+
+        # 新しい投票先の票数を更新
+        selected_option.votes += 1
+        selected_option.save()
+    
+    # 全員が投票を完了したか確認
+    if check_all_votes_completed(group):
+        # 最も多い票数の選択肢を取得
+        top_voted_option = MissionOption.objects.filter(group=group).order_by('-votes', '?').first()
+
+        # ミッションを確定
+        if top_voted_option and not Mission.objects.filter(group=group, confirmed=True).exists():
+            Mission.objects.create(
+                mission=top_voted_option.text,
+                group=group,
+                confirmed=True
+            )
+
+            MissionOption.objects.filter(group=group).delete()
 
     return redirect(reverse('room', args=[group_id]))
 
@@ -296,3 +371,15 @@ def confirm_mission(request, group_id):
         # 確認後、同じページへリダイレクト
         return redirect(reverse('room', args=[group_id]))
 
+def check_all_votes_completed(group):
+    total_members = group.members.count()
+    total_votes = Vote.objects.filter(group=group).count()
+    return total_votes == total_members - 1 # AI Assistantは投票しないため-1
+
+@login_required
+def finalize_mission(request, group_id):
+    group = get_object_or_404(Group, id=group_id)
+    top_voted_option = MissionOption.objects.filter(group=group).order_by('-votes', '?').first()
+    if top_voted_option:
+        Mission.objects.create(mission=top_voted_option.text, group=group, confirmed=True)
+    return redirect(reverse('room', args=[group_id]))
