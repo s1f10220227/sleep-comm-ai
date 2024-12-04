@@ -47,7 +47,7 @@ services:
       - redis
 
   - type: database
-    name: postgres-db
+    name: db
     plan: free
     postgresVersion: 15
     envVars:
