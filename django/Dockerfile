@@ -19,4 +19,4 @@ COPY ./src /code/src
 ENV PYTHONPATH=/code/src:$PYTHONPATH
 
 # マイグレーションとサーバー起動
-CMD ["sh", "-c", "python src/manage.py migrate && uvicorn config.asgi:application --host 0.0.0.0 --port $PORT"]
+CMD ["sh", "-c", "python src/manage.py makemigrations && python src/manage.py migrate && uvicorn config.asgi:application --host 0.0.0.0 --port $PORT"]
