@@ -11,6 +11,8 @@ class Group(models.Model):
     is_private = models.BooleanField(default=False)
     # 招待コード（プライベートグループの場合に使用）
     invite_code = models.CharField(max_length=100, null=True, blank=True)
+    # 締切時刻を保存するフィールド
+    vote_deadline = models.DateTimeField(null=True, blank=True)
 
 # グループメンバーモデル
 class GroupMember(models.Model):

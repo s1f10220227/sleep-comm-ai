@@ -40,3 +40,18 @@ class Mission(models.Model):
     group = models.ForeignKey(Group, on_delete=models.CASCADE, null=True, blank=True)
     confirmed = models.BooleanField(default=False)  # 確定状態を記録するフィールド
     created_at = models.DateTimeField(auto_now_add=True)
+
+# ミッション案を保持するモデル
+class MissionOption(models.Model):
+    text = models.CharField(max_length=255)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE)
+    votes = models.PositiveIntegerField(default=0)
+
+# ユーザーの投票を管理するモデル
+class Vote(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    mission_option = models.ForeignKey(MissionOption, on_delete=models.CASCADE)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('user', 'group')  # ユーザーごとにグループ内で一度だけ投票可能
