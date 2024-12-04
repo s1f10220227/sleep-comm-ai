@@ -12,7 +12,7 @@
                 <form method="post">
                     {% csrf_token %}
                     <div class="mb-3">
-                        <label for="username" class="form-label">ユーザー名:</label>
+                        <label for="username" class="form-label {% if error_message %}text-danger{% endif %}">ユーザー名:</label>
                         <input type="text" id="username" name="username" class="form-control" value="{{ request.POST.username }}" required>
                     </div>
                 
