@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: django-web
+    name: sleep-comm-ai-test
     env: docker
     plan: free
     dockerfilePath: ./django/Dockerfile
