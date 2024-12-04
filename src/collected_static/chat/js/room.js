@@ -30,7 +30,6 @@ chatSocket.onmessage = function(e) {
     const contentP = document.createElement('p');
     contentP.innerHTML = parseLinks(data.message); // メッセージ内のリンクを変換
     contentP.className = 'mb-0'
-    contentP.textContent = data.message;
 
     // 作成した要素を親要素に追加
     messageElement.appendChild(usernameSpan);
