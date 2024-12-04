@@ -10,4 +10,4 @@ RUN pip install -r requirements.txt
 
 COPY . /code
 
-CMD ["uvicorn", "config.asgi:application", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "config.wsgi:application", "--host", "0.0.0.0", "--port", "8000"]
