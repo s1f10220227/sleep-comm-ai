@@ -7,7 +7,7 @@ services:
     dockerContext: .
     envVars:
       - key: DJANGO_SETTINGS_MODULE
-        value: config.settings
+        value: config.production
     autoDeploy: true
     buildCommand: |
       pip install -r requirements.txt
@@ -26,7 +26,7 @@ services:
     dockerContext: .
     envVars:
       - key: DJANGO_SETTINGS_MODULE
-        value: config.settings
+        value: config.production
     startCommand: |
       celery -A config worker --loglevel=info
     depends_on:
@@ -40,7 +40,7 @@ services:
     dockerContext: .
     envVars:
       - key: DJANGO_SETTINGS_MODULE
-        value: config.settings
+        value: config.production
     startCommand: |
       celery -A config beat --loglevel=info
     depends_on:
