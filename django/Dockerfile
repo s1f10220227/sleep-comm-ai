@@ -8,7 +8,7 @@ COPY ./requirements.txt /code
 
 RUN pip install -r requirements.txt
 
-COPY . /code
+COPY ./code
 
 # src ディレクトリを Python パスに追加
 ENV PYTHONPATH=/code/src:$PYTHONPATH
