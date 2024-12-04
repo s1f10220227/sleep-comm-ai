@@ -16,7 +16,7 @@ services:
     buildCommand: |
       "./build.sh"
     startCommand: |
-      uvicorn config.wsgi:application --host 0.0.0.0 --port $PORT
+      python src/manage.py migrate && uvicorn config.wsgi:application --host 0.0.0.0 --port $PORT
     
   - type: worker
     name: celery-worker
@@ -42,14 +42,10 @@ services:
     startCommand: |
       celery -A config beat --loglevel=info
 
-  - type: database
+  - type: db
     name: testdb
     plan: free
-    postgres:
-      version: "15"
-      user: iniad
-      password: password
-      dbName: testdb
+    version: "15"
 
   - type: redis
     name: redis-cache
