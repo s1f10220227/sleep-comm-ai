@@ -13,3 +13,5 @@ celery
 redis
 markdown
 dj-database-url
+whitenoise
+pytz
