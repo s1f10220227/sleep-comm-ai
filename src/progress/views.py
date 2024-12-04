@@ -122,6 +122,7 @@ def generate_plot(start_week, dates, values, ylabel, title, plot_type='scatter',
             ticktext=[f"{d.strftime('%m/%d')} ({japanese_weekdays[d.weekday()]})" for d in all_dates],
             tickangle=-90
         ),
+        template="plotly_dark",
         showlegend=False
     )
     logger.debug("Plot layout updated.")
