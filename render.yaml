@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: sleep-comm-ai
+    name: sleep-comm-ai-test
     env: docker
     plan: free
     dockerfilePath: ./django/Dockerfile
@@ -10,14 +10,16 @@ services:
         value: config.production
       - key: DATABASE_URL
         fromDatabase:
-          name: testdb
+          name: db
           property: connectionString
     autoDeploy: true
     buildCommand: |
       "./build.sh"
     startCommand: |
-      python src/manage.py migrate && uvicorn config.wsgi:application --host 0.0.0.0 --port $PORT
-    
+      uvicorn config.wsgi:application --host 0.0.0.0 --port 8000
+    depends_on:
+      - redis
+
   - type: worker
     name: celery-worker
     env: docker
@@ -27,8 +29,14 @@ services:
     envVars:
       - key: DJANGO_SETTINGS_MODULE
         value: config.production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: db
+          property: connectionString
     startCommand: |
       celery -A config worker --loglevel=info
+    depends_on:
+      - redis
 
   - type: worker
     name: celery-beat
@@ -39,22 +47,25 @@ services:
     envVars:
       - key: DJANGO_SETTINGS_MODULE
         value: config.production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: db
+          property: connectionString
     startCommand: |
       celery -A config beat --loglevel=info
+    depends_on:
+      - redis
 
-  - type: db
-    name: testdb
+  - type: database
+    name: db
     plan: free
-    version: "15"
+    postgresVersion: 15
 
   - type: redis
     name: redis-cache
     plan: free
 
-  - type: web
+  - type: static
     name: nginx-server
-    env: docker
-    plan: free
-    dockerfilePath: ./nginx/Dockerfile
-    dockerContext: .
+    staticPublishPath: ./src/collected_static
     autoDeploy: true
