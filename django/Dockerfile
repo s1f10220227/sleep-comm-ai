@@ -16,4 +16,4 @@ COPY ./src /code/src
 
 # マイグレーションとサーバーの起動をコマンドで実行
 CMD python src/manage.py migrate && \
-    uvicorn config.asgi:application --host 0.0.0.0 --port 8000
+    uvicorn config.wsgi:application --host 0.0.0.0 --port 8000

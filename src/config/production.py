@@ -10,9 +10,8 @@ MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 
 # データベース設定 (DATABASE_URL を利用)
 DATABASES = {
-    'default': dj_database_url.config(conn_max_age=600, ssl_require=True)
+    'default': dj_database_url.config(default=os.getenv('DATABASE_URL'))
 }
 
 # 静的ファイルの設定
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
