@@ -13,4 +13,4 @@ COPY ./src /code/src
 # src ディレクトリを Python パスに追加
 ENV PYTHONPATH=/code/src:$PYTHONPATH
 
-CMD ["uvicorn", "config.asgi:application", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "config.wsgi:application", "--host", "0.0.0.0", "--port", "8000"]
