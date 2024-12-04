@@ -4,12 +4,12 @@ services:
     env: docker
     plan: free
     dockerfilePath: ./django/Dockerfile
-    dockerContext: .
+    dockerContext: ./django  # ビルドコンテキストを django ディレクトリに変更
     envVars:
       - key: DATABASE_URL
-        value: postgres://iniad:password@<host>:5432/testdb  # <host> は適切なホスト名に置き換え
+        value: postgres://iniad:password@<host>:5432/testdb
       - key: REDIS_URL
         value: redis://redis:6379/0
       - key: DJANGO_SETTINGS_MODULE
-        value: config.settings  # Django の設定モジュールを明示
+        value: config.settings
     autoDeploy: true
