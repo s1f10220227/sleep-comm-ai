@@ -16,8 +16,9 @@ services:
     buildCommand: |
       "./build.sh"
     startCommand: |
-      uvicorn config.wsgi:application --host 0.0.0.0 --port 8000
+      python src/manage.py migrate && uvicorn config.wsgi:application --host 0.0.0.0 --port $PORT
     depends_on:
+      - db
       - redis
 
   - type: worker
@@ -36,6 +37,7 @@ services:
     startCommand: |
       celery -A config worker --loglevel=info
     depends_on:
+      - db
       - redis
 
   - type: worker
@@ -54,12 +56,13 @@ services:
     startCommand: |
       celery -A config beat --loglevel=info
     depends_on:
+      - db
       - redis
 
-  - type: database
+  - type: postgres
     name: db
     plan: free
-    postgresVersion: 15
+    version: "15"
 
   - type: redis
     name: redis-cache
