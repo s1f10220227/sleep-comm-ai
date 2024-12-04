@@ -64,7 +64,10 @@ def room(request, group_id):
     user_vote = Vote.objects.filter(user=request.user, group=group).first()
 
     # 投票締め切りを過ぎているかどうかを計算
-    is_vote_deadline_passed = timezone.now() > group.vote_deadline
+    if group.vote_deadline:
+        is_vote_deadline_passed = timezone.now() > group.vote_deadline
+    else:
+        is_vote_deadline_passed = False # 投票開始前
 
     # ミッション生成からの日数を計算
     if latest_mission:
@@ -380,6 +383,12 @@ def check_all_votes_completed(group):
 def finalize_mission(request, group_id):
     group = get_object_or_404(Group, id=group_id)
     top_voted_option = MissionOption.objects.filter(group=group).order_by('-votes', '?').first()
-    if top_voted_option:
-        Mission.objects.create(mission=top_voted_option.text, group=group, confirmed=True)
+    # ミッションを確定
+    if top_voted_option and not Mission.objects.filter(group=group, confirmed=True).exists():
+        Mission.objects.create(
+            mission=top_voted_option.text, 
+            group=group, 
+            confirmed=True
+        )
+        MissionOption.objects.filter(group=group).delete()
     return redirect(reverse('room', args=[group_id]))

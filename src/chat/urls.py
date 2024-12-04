@@ -7,4 +7,5 @@ urlpatterns = [
     path('chat/<uuid:group_id>/create_missions/', views.create_missions, name='create_missions'),
     path('chat/<uuid:group_id>/confirm_mission/', views.confirm_mission, name='confirm_mission'),
     path('chat/<uuid:group_id>/vote_mission/', views.vote_mission, name='vote_mission'),
+    path('chat/<uuid:group_id>/finalize_mission/', views.finalize_mission, name='finalize_mission'),
 ]
