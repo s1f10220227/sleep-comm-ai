@@ -46,11 +46,10 @@ services:
     depends_on:
       - redis
 
-  - type: postgres
+  - type: pserv
     name: db
     plan: free
-    ipAllowList: []
-    postgresMajorVersion: 15
+    env: postgres
     envVars:
       - key: POSTGRES_USER
         value: iniad
@@ -58,6 +57,8 @@ services:
         value: password
       - key: POSTGRES_DB
         value: testdb
+    options:
+      version: "15"
 
   - type: redis
     name: redis-cache
