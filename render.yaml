@@ -10,4 +10,6 @@ services:
         value: postgres://iniad:password@<host>:5432/testdb  # Render のデータベース URL
       - key: REDIS_URL
         value: redis://redis:6379/0
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings  # Django の設定モジュールを明示
     autoDeploy: true
