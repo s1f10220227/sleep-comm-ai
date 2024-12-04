@@ -55,3 +55,16 @@ class Vote(models.Model):
 
     class Meta:
         unique_together = ('user', 'group')  # ユーザーごとにグループ内で一度だけ投票可能
+
+
+# ミッション生成ボタンの投票状況を保持するモデル
+class Missiongenerate(models.Model):
+    group = models.ForeignKey(Group, on_delete=models.CASCADE)
+    votes = models.PositiveIntegerField(default=0)
+
+class MissiongenerateVote(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('user', 'group')  # ユーザーごとにグループ内で一度だけ投票可能

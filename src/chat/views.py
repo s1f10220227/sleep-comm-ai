@@ -3,7 +3,7 @@ import os
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from groups.models import Group, GroupMember
-from .models import Message, MissionOption, Vote
+from .models import Message, MissionOption, Missiongenerate, MissiongenerateVote, Vote
 
 import json
 from django.http import JsonResponse
@@ -17,7 +17,6 @@ import markdown
 from .models import Mission
 from datetime import datetime
 
-import markdown
 from django.urls import reverse
 from django.shortcuts import redirect
 import logging
@@ -29,6 +28,7 @@ from django.views.decorators.http import require_POST
 from django.contrib.auth import get_user_model
 
 from django.conf import settings
+from django.db.models import F
 
 
 # settings.pyで定義した環境変数OPENAI_API_KEY, OPENAI_API_BASEを参照する
@@ -267,50 +267,61 @@ def create_missions(request, group_id):
         if latest_advice:
             latest_topics.append(latest_advice.topic_question)
 
-    combined_topics = "。".join(latest_topics)
-    prompt = (
-        f"以下は、これから取り組みたい睡眠に関するトピックです：{combined_topics}。\n\n"
-        "これらを元に、全員に共通する改善点や挑戦できるミッションを5つ、生成してください。\n"
-        "ミッションは以下の条件を満たすようにしてください：\n"
-        "1. 全員が実行可能であること。\n"
-        "2. 睡眠に関する具体的な内容であること。\n"
-        "3. 各ミッションは20文字程度で簡潔に表現すること。\n\n"
-        "以下のフォーマットに従って、改行で区切ったリスト形式で出力してください：\n"
-        "ミッション1\n"
-        "ミッション2\n"
-        "ミッション3\n"
-        "ミッション4\n"
-        "ミッション5\n\n"
-        "フォーマットを厳守し、必ず改行区切りで出力してください。"
-    )
+    mission_generate, created = Missiongenerate.objects.get_or_create(group=group)
+    existing_vote = MissiongenerateVote.objects.filter(user=request.user, group=group).first()
+    if not existing_vote:
+        MissiongenerateVote.objects.create(user=request.user, group=group)
+        # 新しい投票先の票数を +1 更新
+        mission_generate.votes = F('votes') + 1
+        mission_generate.save()
 
+        # 新しい投票先の票数を更新
+    if check_all_MissiongenerateVote_completed(group):
 
-    try:
-        response = chat.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "You are a sleep expert who generates collaborative missions based on multiple user inputs."},
-                {"role": "user", "content": prompt}
-            ],
-            api_key=OPENAI_API_KEY,
-            api_base=OPENAI_API_BASE
+        combined_topics = "。".join(latest_topics)
+        prompt = (
+            f"以下は、これから取り組みたい睡眠に関するトピックです：{combined_topics}。\n\n"
+            "これらを元に、全員に共通する改善点や挑戦できるミッションを5つ、生成してください。\n"
+            "ミッションは以下の条件を満たすようにしてください：\n"
+            "1. 全員が実行可能であること。\n"
+            "2. 睡眠に関する具体的な内容であること。\n"
+            "3. 各ミッションは20文字程度で簡潔に表現すること。\n\n"
+            "以下のフォーマットに従って、改行で区切ったリスト形式で出力してください：\n"
+            "ミッション1\n"
+            "ミッション2\n"
+            "ミッション3\n"
+            "ミッション4\n"
+            "ミッション5\n\n"
+            "フォーマットを厳守し、必ず改行区切りで出力してください。"
         )
-        mission_texts = response['choices'][0]['message']['content'].split("\n")  # 複数行で返されると仮定
 
-        for mission_text in mission_texts:
-            if mission_text.strip():  # 空白行を除外
-                MissionOption.objects.create(
-                    group=group,
-                    text=mission_text.strip()
-                )
 
-        # 投票締切時刻を現在時刻 + 2時間に設定
-        group.vote_deadline = localtime(timezone.now()) + timezone.timedelta(hours=2)
-        group.save()
+        try:
+            response = chat.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": "You are a sleep expert who generates collaborative missions based on multiple user inputs."},
+                    {"role": "user", "content": prompt}
+                ],
+                api_key=OPENAI_API_KEY,
+                api_base=OPENAI_API_BASE
+            )
+            mission_texts = response['choices'][0]['message']['content'].split("\n")  # 複数行で返されると仮定
 
-    except Exception as e:
-        logger.error(f"Error generating missions: {e}")
-        return redirect(reverse('room', args=[group_id]))
+            for mission_text in mission_texts:
+                if mission_text.strip():  # 空白行を除外
+                    MissionOption.objects.create(
+                        group=group,
+                        text=mission_text.strip()
+                    )
+
+            # 投票締切時刻を現在時刻 + 2時間に設定
+            group.vote_deadline = localtime(timezone.now()) + timezone.timedelta(hours=2)
+            group.save()
+
+        except Exception as e:
+            logger.error(f"Error generating missions: {e}")
+            return redirect(reverse('room', args=[group_id]))
 
     return redirect(reverse('room', args=[group_id]))
 
@@ -375,7 +386,13 @@ def confirm_mission(request, group_id):
         # 確認後、同じページへリダイレクト
         return redirect(reverse('room', args=[group_id]))
 
+# ミッション生成前の全員が「ミッション生成ボタン」をおしているか管理する関数
+def check_all_MissiongenerateVote_completed(group):
+    total_members = group.members.count()
+    total_votes = MissiongenerateVote.objects.filter(group=group).count()
+    return total_votes >= total_members - 1 # AI Assistantは投票しないため-1
 
+# ミッション生成後の全員が投票しているか管理する関数
 def check_all_votes_completed(group):
     total_members = group.members.count()
     total_votes = Vote.objects.filter(group=group).count()
