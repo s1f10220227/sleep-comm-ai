@@ -4,7 +4,7 @@ services:
     env: docker
     plan: free
     dockerfilePath: ./django/Dockerfile
-    dockerContext: ./django  # ビルドコンテキストを django ディレクトリに変更
+    dockerContext: .  # ルートディレクトリをビルドコンテキストに変更
     envVars:
       - key: DATABASE_URL
         value: postgres://iniad:password@<host>:5432/testdb
