@@ -7,14 +7,17 @@ services:
     dockerContext: .
     envVars:
       - key: DJANGO_SETTINGS_MODULE
-        value: config.settings
+        value: config.settings.production
+      - key: PYTHON_VERSION
+        value: 3.11.4
     autoDeploy: true
     buildCommand: |
       pip install -r requirements.txt
     startCommand: |
-      uvicorn config.asgi:application --host 0.0.0.0 --port 8000
+      python src/manage.py migrate && \
+      uvicorn config.asgi:application --host 0.0.0.0 --port $PORT
     databases:
-      - testdb
+      - name: testdb
     depends_on:
       - redis
 
@@ -26,7 +29,7 @@ services:
     dockerContext: .
     envVars:
       - key: DJANGO_SETTINGS_MODULE
-        value: config.settings
+        value: config.settings.production
     startCommand: |
       celery -A config worker --loglevel=info
     depends_on:
@@ -40,23 +43,17 @@ services:
     dockerContext: .
     envVars:
       - key: DJANGO_SETTINGS_MODULE
-        value: config.settings
+        value: config.settings.production
     startCommand: |
       celery -A config beat --loglevel=info
     depends_on:
       - redis
 
-  - type: database
-    name: db
+databases:
+  - name: testdb
+    databaseName: testdb
+    user: iniad
     plan: free
-    postgresVersion: 15
-    envVars:
-      - key: POSTGRES_USER
-        value: iniad
-      - key: POSTGRES_PASSWORD
-        value: password
-      - key: POSTGRES_DB
-        value: testdb
 
   - type: redis
     name: redis-cache
