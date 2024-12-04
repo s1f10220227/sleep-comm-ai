@@ -4,34 +4,114 @@
 {% block title %}Chat Room{% endblock %}
 
 {% block content %}
-<link rel="stylesheet" href="{% static 'chat/css/room.css' %}">
-
-<div class="chat-container">
-    <div class="sidebar">
-        <h2>{{ group.name }}</h2>
-        <a href="{% url 'home' %}">ホームへ戻る</a>
-        <h3>Members</h3>
-        <ul id="member-list">
-            {% for member in group_members %}
-                <li>{{ member.user.username }}</li>
-            {% endfor %}
-        </ul>
-    </div>
-    <div class="chat-area">
-        <div id="chat-messages">
-            {% for message in messages %}
-            <div class="message">
-                <span class="username">{{ message.sender.username }}</span>
-                <span class="timestamp">{{ message.timestamp|date:"H:i" }}</span>
-                <p>{{ message.content|urlize }}</p>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-3 p-2">
+            <!-- PCサイズ: サイドバー表示 -->
+            <div class="d-none d-md-block">
+                <h5>Members</h5>
+                <ul id="member-list" class="list-group">
+                    {% for member in group_members %}
+                        <li class="list-group-item p-2">{{ member.user.username }}</li>
+                    {% endfor %}
+                </ul>
+        
+                {% if mission == "ミッションを生成しましょう" %}
+                    <form action="{% url 'create_mission' group.id %}" method="POST">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary">ミッションを生成</button>
+                    </form>
+                {% else %}
+                    <div class="mission-generated">
+                        <h5>生成されたミッション</h5>
+                        <p>{{ mission }}</p>
+        
+                        {% if not mission_confirmed %}
+                        <div id="mission-buttons" class="d-flex">
+                            <form action="{% url 'confirm_mission' group.id %}" method="POST" class="me-2">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-success">ミッション確定</button>
+                            </form>
+                            <button class="btn btn-secondary" disabled>議論してミッションを決める</button>
+                        </div>                        
+                        {% endif %}
+                    </div>
+                {% endif %}
+                <p>ミッション生成からの日数: {{ days_since_creation }} 日</p>
             </div>
-            {% endfor %}
+        
+            <!-- スマートフォンサイズ: タブ表示 -->
+            <div class="d-block d-md-none">
+                <ul class="nav nav-tabs" id="mobileTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="mission-tab" data-bs-toggle="tab" data-bs-target="#mission" type="button" role="tab" aria-controls="mission" aria-selected="true">ミッション</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="members-tab" data-bs-toggle="tab" data-bs-target="#members" type="button" role="tab" aria-controls="members" aria-selected="false">メンバー</button>
+                    </li>
+                </ul>
+        
+                <div class="tab-content p-1" id="mobileTabsContent">
+                    <!-- タブ1: ミッション -->
+                    <div class="tab-pane fade show active" id="mission" role="tabpanel" aria-labelledby="mission-tab">
+                        {% if mission == "ミッションを生成しましょう" %}
+                            <form action="{% url 'create_mission' group.id %}" method="POST">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-primary">ミッションを生成</button>
+                            </form>
+                        {% else %}
+                            <div class="mission-generated">
+                                <h5>生成されたミッション</h5>
+                                <strong>{{ mission }}</strong>
+                                {% if not mission_confirmed %}
+                                <div id="mission-buttons" class="d-flex">
+                                    <form action="{% url 'confirm_mission' group.id %}" method="POST" class="me-2">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-success">ミッション確定</button>
+                                    </form>
+                                    <button class="btn btn-secondary" disabled>議論してミッションを決める</button>
+                                </div>                                                              
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                        <p>ミッション生成からの日数: {{ days_since_creation }} 日</p>
+                    </div>
+                    <!-- タブ2: メンバー -->
+                    <div class="tab-pane fade" id="members" role="tabpanel" aria-labelledby="members-tab">
+                        <h5>Members</h5>
+                        <ul id="member-list" class="list-group">
+                            {% for member in group_members %}
+                                <li class="list-group-item p-2">{{ member.user.username }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="message-input">
-            <form id="chat-form">
-                <input type="text" id="chat-message-input" placeholder="Type a message...">
-                <button type="submit">Send</button>
-            </form>
+        <!-- Chat Area -->
+        <div class="col-md-9 p-2">
+            <!-- Messages -->
+            <div id="chat-messages" class="flex-grow-1 overflow-auto border rounded p-3" style="height: calc(100vh - 155px);">
+                {% for message in messages %}
+                    <div class="message mb-2">
+                        <strong class="username text-primary">{{ message.sender.username }}</strong>
+                        <small class="timestamp text-muted">{{ message.timestamp|date:"H:i" }}</small>
+                        <p class="mb-0">{{ message.content }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+            <!-- Input Form -->
+            <div class="message-input mt-3">
+                <form id="chat-form" class="d-flex">
+                    <input 
+                        type="text" 
+                        id="chat-message-input" 
+                        class="form-control me-2" 
+                        placeholder="Type a message..."
+                    >
+                    <button type="submit" class="btn btn-primary">Send</button>
+                </form>
+            </div>
         </div>
     </div>
 </div>
@@ -39,6 +119,11 @@
 <script>
     const groupId = '{{ group.id }}';
     const username = '{{ request.user.username }}';
+    window.onload = function () {
+        const chatMessages = document.querySelector('#chat-messages');
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    };
 </script>
 <script src="{% static 'chat/js/room.js' %}"></script>
+
 {% endblock %}

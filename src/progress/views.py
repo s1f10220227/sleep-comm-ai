@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, time
 from django.utils import timezone
 from chat.models import SleepAdvice
 import logging
+import markdown
 
 logger = logging.getLogger(__name__)
 
@@ -121,6 +122,7 @@ def generate_plot(start_week, dates, values, ylabel, title, plot_type='scatter',
             ticktext=[f"{d.strftime('%m/%d')} ({japanese_weekdays[d.weekday()]})" for d in all_dates],
             tickangle=-90
         ),
+        template="plotly_dark",
         showlegend=False
     )
     logger.debug("Plot layout updated.")
@@ -211,7 +213,7 @@ def progress_check(request):
     logger.debug(f"Sleep advice: {list(sleep_advice)}")
 
     advice_cards = [
-        {'date': timezone.localtime(advice.created_at).strftime('%Y-%m-%d %H:%M:%S'), 'advice': advice.advice}
+        {'date': timezone.localtime(advice.created_at).strftime('%Y-%m-%d %H:%M:%S'), 'advice': markdown.markdown(advice.advice)}
         for advice in sleep_advice
     ]
 

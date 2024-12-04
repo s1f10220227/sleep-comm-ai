@@ -13,6 +13,16 @@ from bs4 import BeautifulSoup
 from django.utils import timezone
 from django.utils.timezone import localtime
 from .models import SleepAdvice
+import markdown
+from .models import Mission
+from datetime import datetime
+
+import markdown
+from django.urls import reverse
+from django.shortcuts import redirect
+import logging
+logger = logging.getLogger(__name__)
+from django.views.decorators.cache import cache_control
 
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -43,11 +53,36 @@ def room(request, group_id):
     if not group_members.filter(user=ai_user).exists():
         GroupMember.objects.create(group=group, user=ai_user)
 
+     # 最新のミッションを取得
+    latest_mission = Mission.objects.filter(group=group).order_by('-created_at').first()
+    no_mission_text = "ミッションを生成しましょう"
+    mission_confirmed = latest_mission.confirmed if latest_mission else False
+
+
+    # ミッション生成からの日数を計算
+    if latest_mission:
+        days_since_creation = (localtime(timezone.now()).date() - localtime(latest_mission.created_at).date()).days
+        logger.debug(f"localtime(timezone.now()).date() {localtime(timezone.now()).date()}")
+        logger.debug(f"localtime(latest_mission.created_at).date() {localtime(latest_mission.created_at).date()}")
+        logger.debug(f"localtime(timezone.now()).date() - localtime(latest_mission.created_at).date() = {localtime(timezone.now()).date() - localtime(latest_mission.created_at).date()}")
+        logger.debug(f"生成日計算: {days_since_creation}")
+    else:
+        days_since_creation = '?'  # ミッションが存在しない場合は?日
+        logger.debug(f"生成日計算: {days_since_creation}")
+
     return render(request, 'chat/room.html', {
+        'mission': latest_mission.mission if latest_mission else no_mission_text,
         'group': group,
+        'mission_confirmed': mission_confirmed,
         'group_members': group_members,
         'messages': reversed(messages),
-    })
+        'days_since_creation': days_since_creation,
+})
+
+
+
+# AIモデルの初期化
+chat = openai.ChatCompletion
 
 # URLから情報を取得する関数
 def scrape_sleep_advice(url):
@@ -129,6 +164,8 @@ def feedback_chat(request):
             )
 
             advice = response['choices'][0]['message']['content']
+            html_advice = markdown.markdown(advice)  # markdownをHTMLに変換
+
             # 睡眠データをデータベースに保存
             SleepAdvice.objects.create(
                 user=request.user,
@@ -138,6 +175,8 @@ def feedback_chat(request):
                 advice=advice,
                 topic_question = None,
             )
+
+            return render(request, 'chat/feedback_chat.html', {'advice': html_advice})
 
         return render(request, 'chat/feedback_chat.html', {'advice': advice})
 
@@ -187,6 +226,8 @@ def feedback_chat(request):
             )
 
             advice = response['choices'][0]['message']['content']
+            html_advice = markdown.markdown(advice)  # markdownをHTMLに変換
+
 
             SleepAdvice.objects.create(
                 user=request.user,
@@ -197,4 +238,90 @@ def feedback_chat(request):
                 topic_question = topic_question,
             )
 
+            return render(request, 'chat/feedback_chat.html', {'advice': html_advice})
+
         return render(request, 'chat/pre_group_questions.html', {'advice': advice})
+
+@login_required
+def create_mission(request, group_id):
+    group = get_object_or_404(Group, id=group_id)
+    group_members = GroupMember.objects.filter(group=group)
+    latest_topics = []
+    for member in group_members:
+        latest_advice = SleepAdvice.objects.filter(user=member.user, topic_question__isnull=False).order_by('-created_at').first()
+        if latest_advice:
+            latest_topics.append(latest_advice.topic_question)
+
+    combined_topics = "。".join(latest_topics)
+    prompt = (
+        f"以下は、これから取り組みたい睡眠に関するトピックです：{combined_topics}。"
+        "これらを元に、全員に共通する改善点や挑戦できるミッションを1つ生成してください。"
+        "ミッションは、全員が実行可能で協力して取り組む内容にしてください。20文字程度で出力してください。"
+    )
+
+    try:
+        response = chat.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a sleep expert who generates collaborative missions based on multiple user inputs."},
+                {"role": "user", "content": prompt}
+            ],
+            api_key=OPENAI_API_KEY,
+            api_base=OPENAI_API_BASE
+        )
+        mission_text = response['choices'][0]['message']['content']
+        
+        logger.debug(f"mission_text: {mission_text}")
+        
+        # ミッションをMissionモデルに保存
+        Mission.objects.create(
+            mission=mission_text,
+            group=group,
+        )
+
+    except Exception:
+        return redirect(reverse('room', args=[group_id]))
+
+    return redirect(reverse('room', args=[group_id]))
+
+@login_required
+def confirm_mission(request, group_id):
+    group = get_object_or_404(Group, id=group_id)
+    if request.method == 'POST':
+        # 最新のミッションを取得
+        latest_mission = Mission.objects.filter(group=group).order_by('-created_at').first()
+
+        if latest_mission:
+            latest_mission.confirmed = True
+            latest_mission.save()
+        # 確認後、同じページへリダイレクト
+        return redirect(reverse('room', args=[group_id]))
+
+@login_required
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
+def save_mission(request, group_id):
+    group = get_object_or_404(Group, id=group_id)
+    group_members = GroupMember.objects.filter(group=group)
+    messages = Message.objects.filter(group=group).order_by('-timestamp')[:50]
+     # 最新のミッションを取得
+    latest_mission = Mission.objects.filter(group=group).order_by('-created_at').first()
+    no_mission_text = "ミッションを生成しましょう"
+    mission_confirmed = latest_mission.confirmed if latest_mission else False
+
+    if request.method == 'POST':
+        # ユーザーがテキストボックスを含むフォームを提出した場合の処理
+        mission_text = request.POST.get('mission')
+        if mission_text: #ミッションテキストがある場合の処理
+            Mission.objects.create(mission=mission_text, group=group)
+            return redirect(reverse('room', args=[group_id]))
+        else:
+            # show_textbox=Trueにしてテキストボックスを表示
+            return render(request, 'chat/room.html', {
+                'mission': latest_mission.mission if latest_mission else no_mission_text,
+                'group': group,
+                'mission_confirmed': mission_confirmed,
+                'group_members': group_members,
+                'messages': reversed(messages),
+                'show_textbox': True,
+            })
+    return redirect(reverse('room', args=[group_id]))
