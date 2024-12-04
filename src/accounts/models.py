@@ -21,6 +21,9 @@ class CustomUser(AbstractUser):
         verbose_name='user permissions',
     )
 
+    gender = models.CharField(max_length=12, choices=[('male', '男性'), ('female', '女性'), ('unspecified', '未回答')], default='unspecified')
+    age = models.IntegerField(null=True, blank=True)
+
 # `groups`と`user_permissions`は、ユーザーが所属するグループや
     # 特定の権限を設定するためのフィールドです。DjangoのデフォルトのUserモデルの
     # 関連を保持しつつ、関連名をカスタムします。
