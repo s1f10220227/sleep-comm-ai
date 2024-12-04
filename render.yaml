@@ -46,10 +46,11 @@ services:
     depends_on:
       - redis
 
-  - type: database
+  - type: postgres
     name: db
     plan: free
-    postgresVersion: 15
+    ipAllowList: []
+    postgresMajorVersion: 15
     envVars:
       - key: POSTGRES_USER
         value: iniad
