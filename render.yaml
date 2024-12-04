@@ -64,13 +64,13 @@ services:
     name: redis-cache
     plan: free
 
-  - type: static
+  - type: web
     name: nginx-server
-    staticPublishPath: ./src/collected_static
     env: docker
     plan: free
     dockerfilePath: ./nginx/Dockerfile
     dockerContext: .
+    envVars: []
     autoDeploy: true
     depends_on:
       - sleep-comm-ai
