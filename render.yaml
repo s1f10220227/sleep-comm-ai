@@ -11,7 +11,3 @@ services:
       - key: REDIS_URL
         value: redis://redis:6379/0
     autoDeploy: true
-
-envVars:
-  - key: REDIS_URL
-    value: redis://<your-redis-host>:6379/0
