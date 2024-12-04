@@ -1,6 +1,6 @@
 FROM python:3.11-slim
 
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONUNBUFFERED 1 && DJANGO_SETTINGS_MODULE config.production
 
 WORKDIR /code
 
@@ -13,4 +13,4 @@ COPY ./src /code/src
 # src ディレクトリを Python パスに追加
 ENV PYTHONPATH=/code/src:$PYTHONPATH
 
-CMD ["uvicorn", "config.asgi:application", "--host", "0.0.0.0", "--port", "8000"]
+CMD python manage.py migrate && uvicorn config.wsgi:application -b 0.0.0.0:8000
