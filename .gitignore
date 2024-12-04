@@ -10,4 +10,4 @@ media
 .DS Store
 .env
 sleep_advice.json
-src/celerybeat-schedule
+celerybeat-schedule
