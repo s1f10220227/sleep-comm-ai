@@ -2,7 +2,6 @@ FROM python:3.11-slim
 
 # 環境変数の設定
 ENV PYTHONUNBUFFERED=1
-ENV DJANGO_SETTINGS_MODULE=config.production
 
 # 作業ディレクトリ設定
 WORKDIR /code
