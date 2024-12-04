@@ -16,7 +16,7 @@ services:
     buildCommand: |
       "./build.sh"
     startCommand: |
-      python src/manage.py migrate && uvicorn config.wsgi:application --host 0.0.0.0 --port $PORT
+      uvicorn config.wsgi:application --host 0.0.0.0 --port $PORT
     depends_on:
       - db
       - redis
@@ -59,7 +59,7 @@ services:
       - db
       - redis
 
-  - type: postgres
+  - type: database
     name: db
     plan: free
     version: "15"
