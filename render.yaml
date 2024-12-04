@@ -60,13 +60,6 @@ services:
     name: db
     plan: free
     postgresVersion: 15
-    envVars:
-      - key: POSTGRES_USER
-        value: iniad
-      - key: POSTGRES_PASSWORD
-        value: password
-      - key: POSTGRES_DB
-        value: testdb
 
   - type: redis
     name: redis-cache
