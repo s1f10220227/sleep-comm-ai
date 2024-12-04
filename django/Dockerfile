@@ -8,10 +8,14 @@ WORKDIR /code
 
 # requirements.txt をコピーしてパッケージをインストール
 COPY ./django/requirements.txt /code/
+
 RUN pip install --no-cache-dir -r requirements.txt
 
 # アプリケーションコードをコピー
 COPY ./src /code/src
+
+# src ディレクトリを Python パスに追加
+ENV PYTHONPATH=/code/src:$PYTHONPATH
 
 # マイグレーションとサーバーの起動をコマンドで実行
 CMD python src/manage.py migrate && \

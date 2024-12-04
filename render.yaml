@@ -1,22 +1,20 @@
 services:
   - type: web
-    name: sleep-comm-ai-test
+    name: django-web
     env: docker
     plan: free
     dockerfilePath: ./django/Dockerfile
     dockerContext: .
     envVars:
       - key: DJANGO_SETTINGS_MODULE
-        value: config.production
-      - key: DATABASE_URL
-        fromDatabase:
-          name: db
-          property: connectionString
+        value: config.settings
     autoDeploy: true
     buildCommand: |
       pip install -r requirements.txt
     startCommand: |
-      uvicorn config.wsgi:application --host 0.0.0.0 --port 8000
+      uvicorn config.asgi:application --host 0.0.0.0 --port 8000
+    databases:
+      - testdb
     depends_on:
       - redis
 
@@ -28,11 +26,7 @@ services:
     dockerContext: .
     envVars:
       - key: DJANGO_SETTINGS_MODULE
-        value: config.production
-      - key: DATABASE_URL
-        fromDatabase:
-          name: db
-          property: connectionString
+        value: config.settings
     startCommand: |
       celery -A config worker --loglevel=info
     depends_on:
@@ -46,11 +40,7 @@ services:
     dockerContext: .
     envVars:
       - key: DJANGO_SETTINGS_MODULE
-        value: config.production
-      - key: DATABASE_URL
-        fromDatabase:
-          name: db
-          property: connectionString
+        value: config.settings
     startCommand: |
       celery -A config beat --loglevel=info
     depends_on:
@@ -60,6 +50,13 @@ services:
     name: db
     plan: free
     postgresVersion: 15
+    envVars:
+      - key: POSTGRES_USER
+        value: iniad
+      - key: POSTGRES_PASSWORD
+        value: password
+      - key: POSTGRES_DB
+        value: testdb
 
   - type: redis
     name: redis-cache
@@ -68,4 +65,11 @@ services:
   - type: static
     name: nginx-server
     staticPublishPath: ./src/collected_static
+    env: docker
+    plan: free
+    dockerfilePath: ./nginx/Dockerfile
+    dockerContext: .
     autoDeploy: true
+    depends_on:
+      - django-web
+      - redis-cache
