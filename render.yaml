@@ -6,10 +6,6 @@ services:
     dockerfilePath: ./django/Dockerfile
     dockerContext: .  # ルートディレクトリをビルドコンテキストに変更
     envVars:
-      - key: DATABASE_URL
-        value: postgres://iniad:password@<host>:5432/testdb
-      - key: REDIS_URL
-        value: redis://redis:6379/0
       - key: DJANGO_SETTINGS_MODULE
         value: config.settings
     autoDeploy: true
