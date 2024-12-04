@@ -2,27 +2,13 @@ services:
   - type: web
     name: django-web
     env: docker
-    plan: free  # 無料プランを使用 (必要に応じて変更)
+    plan: free  # 必要に応じて変更
     dockerfilePath: ./Dockerfile
     dockerContext: .
     envVars:
       - key: DATABASE_URL
-        value: postgres://iniad:password@db:5432/testdb
+        value: postgres://iniad:password@<host>:5432/testdb  # Render のデータベース URL
       - key: REDIS_URL
         value: redis://redis:6379/0
-    buildCommand: docker-compose up --build
     startCommand: uvicorn config.asgi:application --host 0.0.0.0 --port 8000
-    healthCheckPath: /
     autoDeploy: true
-
-  - type: postgresql
-    name: postgres-db
-    plan: starter
-    properties:
-      databaseName: testdb
-      user: iniad
-      password: password
-
-  - type: redis
-    name: redis-cache
-    plan: starter
