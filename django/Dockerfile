@@ -4,11 +4,11 @@ ENV PYTHONUNBUFFERED 1
 
 WORKDIR /code
 
-COPY ./requirements.txt /code
+COPY ./django/requirements.txt /code
 
 RUN pip install -r requirements.txt
 
-COPY . /code/
+COPY ./src /code/src
 
 # src ディレクトリを Python パスに追加
 ENV PYTHONPATH=/code/src:$PYTHONPATH
