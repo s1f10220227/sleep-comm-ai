@@ -14,7 +14,7 @@ def signup(request):
 
         # チェックボックスが選択されているか確認
         if not privacy_policy_checked:
-            return render(request, 'accounts/signup.html', {'error_message': 'プライバシーポリシーに同意する必要があります。'})
+            return render(request, 'accounts/signup.html', {'error_message': 'プライバシーポリシーに同意する必要があります。', 'username': username, 'gender': gender, 'age': age})
         
         if password == password_confirm:
             # 年齢が未回答の場合は None として扱う
@@ -24,7 +24,7 @@ def signup(request):
             user.save()
             return redirect('login')  # サインアップ成功後にログインページへリダイレクト
         else:
-            return render(request, 'accounts/signup.html', {'error_message': 'パスワードが一致しません。'})
+            return render(request, 'accounts/signup.html', {'error_message': 'パスワードが一致しません。', 'username': username, 'gender': gender, 'age': age})
     return render(request, 'accounts/signup.html')
 
 # サインアップのビューです。POSTリクエストを受け取った際に、
