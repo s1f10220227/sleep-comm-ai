@@ -3,7 +3,7 @@ services:
     name: django-web
     env: docker
     plan: free
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: ./django/Dockerfile
     dockerContext: .
     envVars:
       - key: DATABASE_URL
