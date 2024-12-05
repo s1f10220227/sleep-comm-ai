@@ -3,6 +3,8 @@ from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from .models import Group, Message
 from accounts.models import CustomUser
+from django.utils import timezone
+from django.utils.timezone import localtime
 import logging
 
 logger = logging.getLogger(__name__)
@@ -37,3 +39,37 @@ def send_daily_message():
     except Exception as e:
         logger.error(f"Error sending daily message: {str(e)}")
         return f"Error sending daily message: {str(e)}"
+
+@shared_task
+def send_mission_complete_message():
+    try:
+        channel_layer = get_channel_layer()
+        groups = Group.objects.all()
+        current_date = localtime(timezone.now()).date()
+
+        for group in groups:
+            if group.latest_mission:  # latest_missionが存在する場合
+                days_since_creation = (current_date - localtime(group.latest_mission.created_at).date()).days
+
+                if days_since_creation == 2:  # ミッション作成から2日経過
+                    room_group_name = f'chat_{group.id}'
+                    message = "ミッション達成おめでとうございます"
+                    ai_user = CustomUser.objects.get(username='AI Assistant')
+
+                    async_to_sync(channel_layer.group_send)(
+                        room_group_name,
+                        {
+                            'type': 'chat_message',
+                            'message': message,
+                            'username': 'AI Assistant'
+                        }
+                    )
+
+                    Message.objects.create(sender=ai_user, group=group, content=message)
+
+        logger.info("Mission complete messages sent successfully")
+        return "Mission complete messages sent successfully"
+
+    except Exception as e:
+        logger.error(f"Error sending mission complete messages: {str(e)}")
+        return f"Error sending mission complete messages: {str(e)}"
