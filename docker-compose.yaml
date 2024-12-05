@@ -1,7 +1,9 @@
 version: '3.8'
 services:
   django:
-    build: ./django
+    build:
+      context: ./django
+      dockerfile: Dockerfile
     command: uvicorn config.asgi:application --host 0.0.0.0 --port 8000
     expose:
       - 8000
@@ -12,7 +14,9 @@ services:
       - redis
 
   celery_worker:
-    build: ./django
+    build:
+      context: ./django
+      dockerfile: Dockerfile
     command: celery -A config worker --loglevel=info
     volumes:
       - ./src:/code
@@ -21,7 +25,9 @@ services:
       - django
 
   celery_beat:
-    build: ./django
+    build:
+      context: ./django
+      dockerfile: Dockerfile
     command: celery -A config beat --loglevel=info
     volumes:
       - ./src:/code
