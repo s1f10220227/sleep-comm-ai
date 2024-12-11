@@ -1,34 +1,35 @@
-import os
-
-from django.shortcuts import render, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from groups.models import Group, GroupMember
-from .models import Message, MissionOption, Vote
-
+# 標準ライブラリ
 import json
-from django.http import JsonResponse
+import logging
+import os
+from datetime import datetime
+
+# サードパーティライブラリ
+import markdown
 import openai
 import requests
 from bs4 import BeautifulSoup
+
+# Django関連モジュール
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.timezone import localtime
-from .models import SleepAdvice
-import markdown
-from .models import Mission
-from datetime import datetime
-
-import markdown
-from django.urls import reverse
-from django.shortcuts import redirect
-import logging
-logger = logging.getLogger(__name__)
 from django.views.decorators.cache import cache_control
-
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from django.contrib.auth import get_user_model
 
-from django.conf import settings
+# アプリケーション固有のモジュール
+from .models import Message, Mission, MissionOption, SleepAdvice, Vote
+from groups.models import Group, GroupMember
+
+# ロガー設定
+logger = logging.getLogger(__name__)
 
 
 # settings.pyで定義した環境変数OPENAI_API_KEY, OPENAI_API_BASEを参照する
@@ -43,7 +44,7 @@ chat = openai.ChatCompletion
 def room(request, group_id):
     group = get_object_or_404(Group, id=group_id)
     group_members = GroupMember.objects.filter(group=group)
-    messages = Message.objects.filter(group=group).order_by('-timestamp')[:50]
+    chat_messages = Message.objects.filter(group=group).order_by('-timestamp')[:50]
     
     # AIアシスタントユーザーの取得または作成
     User = get_user_model()
@@ -88,16 +89,11 @@ def room(request, group_id):
         'mission': latest_mission,
         'mission_confirmed': mission_confirmed,
         'group_members': group_members,
-        'messages': reversed(messages),
+        'chat_messages': reversed(chat_messages),
         'days_since_creation': days_since_creation,
         'user_vote': user_vote,
         'is_vote_deadline_passed': is_vote_deadline_passed,
 })
-
-
-
-# AIモデルの初期化
-chat = openai.ChatCompletion
 
 # URLから情報を取得する関数
 def scrape_sleep_advice(url):
@@ -318,7 +314,17 @@ def create_missions(request, group_id):
 def vote_mission(request, group_id):
     group = get_object_or_404(Group, id=group_id)
     selected_option_id = request.POST.get("selected_mission")
-    selected_option = get_object_or_404(MissionOption, id=selected_option_id, group=group)
+
+    # 選択肢が選ばれていない、または無効な場合の処理
+    if not selected_option_id:
+        messages.error(request, "ミッションを選択してください。")
+        return redirect(reverse('room', args=[group_id]))
+
+    try:
+        selected_option = MissionOption.objects.get(id=selected_option_id, group=group)
+    except MissionOption.DoesNotExist:
+        messages.error(request, "選択したミッションが無効です。")
+        return redirect(reverse('room', args=[group_id]))
 
     # ユーザーの現在の投票を確認
     existing_vote = Vote.objects.filter(user=request.user, group=group).first()
