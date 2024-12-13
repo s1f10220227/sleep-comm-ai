@@ -1,28 +1,42 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}
-  グループ加入前の質問
+  グループ加入前の睡眠アンケート
 {% endblock %}
 
 {% block content %}
-  <h1>グループ加入前の質問</h1>
+  <h1>グループ加入前の睡眠アンケート</h1>
 
-  {% if advice == '今日は回答済みです。' %}
+  {% if advice == '今日は回答済みです' %}
     <p>{{ advice }}</p>
   {% else %}
     <form method="post">
       {% csrf_token %}
-      <label for="sleep_time">何時に寝ましたか？:</label>
-      <input type="time" id="sleep_time" name="sleep_time" required><br>
+      <label for="sleep_time">就寝時刻</label>
+      <input type="time" id="sleep_time" name="sleep_time" required onchange="calculateSleepDuration()"><br>
 
-      <label for="wake_time">何時に起きましたか？:</label>
-      <input type="time" id="wake_time" name="wake_time" required><br>
+      <label for="wake_time">起床時刻</label>
+      <input type="time" id="wake_time" name="wake_time" required> onchange="calculateSleepDuration()"<br>
 
-      <label for="pre_sleep_activities">昨夜の寝る前に何をしましたか？ (例: テレビを見た):</label>
+      <div id="sleep_duration"></div>
+
+      <label>睡眠休養感</label><br>
+      <input type="radio" id="quality1" name="sleep_quality" value="1" required>
+      <label for="quality1">目覚めが悪かった</label><br>
+      <input type="radio" id="quality2" name="sleep_quality" value="2">
+      <label for="quality2">あまり良くなかった</label><br>
+      <input type="radio" id="quality3" name="sleep_quality" value="3">
+      <label for="quality3">普通</label><br>
+      <input type="radio" id="quality4" name="sleep_quality" value="4">
+      <label for="quality4">良かった</label><br>
+      <input type="radio" id="quality5" name="sleep_quality" value="5">
+      <label for="quality5">すっきり目覚めた</label><br>
+
+      <label for="pre_sleep_activities">就寝前にやったこと（例: テレビを観た）</label>
       <input type="text" id="pre_sleep_activities" name="pre_sleep_activities" required><br>
 
-      <!-- トピック用の質問 -->
-      <label for="topic_question">最近睡眠を向上するために取り組んだこと、またはチームに入ってから取り組んでみたいことを教えてください:</label>
+      <label for="topic_question">睡眠改善のために取り組みたいこと</label>
       <input type="text" id="topic_question" name="topic_question" required><br>
 
       <input type="submit" value="アドバイスを取得">
@@ -33,4 +47,6 @@
       <p>{{ advice }}</p>
     {% endif %}
   {% endif %}
+
+  <script src="{% static 'chat/js/sleep_q.js' %}"></script>
 {% endblock %}

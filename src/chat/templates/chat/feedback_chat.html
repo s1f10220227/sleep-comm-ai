@@ -1,25 +1,52 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}
-  睡眠のフィードバック
+  睡眠アンケート
 {% endblock %}
 
 {% block content %}
-  <h1>睡眠のフィードバック</h1>
+  <h1>睡眠アンケート</h1>
 
-  {% if advice == '今日は回答済みです。' %}
+  {% if advice == '今日は回答済みです' %}
     <p>{{ advice }}</p>
   {% else %}
     <form method="post">
       {% csrf_token %}
-      <label for="sleep_time">何時に寝ましたか？:</label>
-      <input type="time" id="sleep_time" name="sleep_time" required><br>
+      <label for="sleep_time">就寝時刻</label>
+      <input type="time" id="sleep_time" name="sleep_time" required onchange="calculateSleepDuration()"><br>
 
-      <label for="wake_time">何時に起きましたか？:</label>
-      <input type="time" id="wake_time" name="wake_time" required><br>
+      <label for="wake_time">起床時刻</label>
+      <input type="time" id="wake_time" name="wake_time" required onchange="calculateSleepDuration()"><br>
 
-      <label for="pre_sleep_activities">昨夜の寝る前に何をしましたか？ (例: テレビを見た):</label>
+      <div id="sleep_duration"></div>
+
+      <label>睡眠休養感</label><br>
+      <input type="radio" id="quality1" name="sleep_quality" value="1" required>
+      <label for="quality1">目覚めが悪かった</label><br>
+      <input type="radio" id="quality2" name="sleep_quality" value="2">
+      <label for="quality2">あまり良くなかった</label><br>
+      <input type="radio" id="quality3" name="sleep_quality" value="3">
+      <label for="quality3">普通</label><br>
+      <input type="radio" id="quality4" name="sleep_quality" value="4">
+      <label for="quality4">良かった</label><br>
+      <input type="radio" id="quality5" name="sleep_quality" value="5">
+      <label for="quality5">すっきり目覚めた</label><br>
+
+      <label for="pre_sleep_activities">就寝前にやったこと（例: テレビを観た）</label>
       <input type="text" id="pre_sleep_activities" name="pre_sleep_activities" required><br>
+
+      <label>ミッション達成度</label><br>
+      <input type="radio" id="achievement1" name="mission_achievement" value="1" required>
+      <label for="achievement1">全くできなかった</label><br>
+      <input type="radio" id="achievement2" name="mission_achievement" value="2">
+      <label for="achievement2">あまりできなかった</label><br>
+      <input type="radio" id="achievement3" name="mission_achievement" value="3">
+      <label for="achievement3">半分くらいできた</label><br>
+      <input type="radio" id="achievement4" name="mission_achievement" value="4">
+      <label for="achievement4">ほぼできた</label><br>
+      <input type="radio" id="achievement5" name="mission_achievement" value="5">
+      <label for="achievement5">完全にできた</label><br>
 
       <input type="submit" value="アドバイスを取得">
     </form>
@@ -29,4 +56,6 @@
       {{ advice|safe }}
     {% endif %}
   {% endif %}
+
+  <script src="{% static 'chat/js/sleep_q.js' %}"></script>
 {% endblock %}

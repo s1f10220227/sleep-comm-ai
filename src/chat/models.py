@@ -16,24 +16,40 @@ class Message(models.Model):
     content = models.TextField()
     # メッセージの送信日時
     timestamp = models.DateTimeField(auto_now_add=True)
-    
 
     # オブジェクトの文字列表現
     def __str__(self):
         return f"Message from {self.sender.username} in {self.group.id} at {self.timestamp}"
 
 class SleepAdvice(models.Model):
+    SLEEP_QUALITY_CHOICES = [
+        (1, '目覚めが悪かった'),
+        (2, 'あまり良くなかった'),
+        (3, '普通'),
+        (4, '良かった'),
+        (5, 'すっきり目覚めた'),
+    ]
+
+    MISSION_ACHIEVEMENT_CHOICES = [
+        (1, '全くできなかった'),
+        (2, 'あまりできなかった'),
+        (3, '半分くらいできた'),
+        (4, 'ほぼできた'),
+        (5, '完全にできた'),
+    ]
+
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    sleep_time = models.TimeField()  # 睡眠開始時間データを保存
-    wake_time = models.TimeField()   # 起床時刻データを保存
-    pre_sleep_activities = models.TextField()    # 例: "テレビを見た"
+    sleep_time = models.TimeField()  # 就寝時刻
+    wake_time = models.TimeField()   # 起床時刻
+    sleep_quality = models.IntegerField(choices=SLEEP_QUALITY_CHOICES, null=True)   # 睡眠休養感
+    pre_sleep_activities = models.TextField()    # 例: 取り組みたいこと
     advice = models.TextField()                  # 睡眠AIのアドバイス
-    topic_question = models.TextField(null=True) 
+    topic_question = models.TextField(null=True)  # 寝る前にやったこと
+    mission_achievement = models.IntegerField(choices=MISSION_ACHIEVEMENT_CHOICES, null=True)  # ミッション達成度
     created_at = models.DateTimeField(auto_now_add=True)  # 保存日時
 
     def __str__(self):
         return f"{self.user.username} - {self.created_at}"
-    
 
 class Mission(models.Model):
     mission = models.TextField() #ミッションの内容を保存

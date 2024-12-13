@@ -140,9 +140,11 @@ def feedback_chat(request):
                 user=request.user,
                 sleep_time=sleep_time,
                 wake_time=wake_time,
+                sleep_quality=request.POST.get('sleep_quality'),
                 pre_sleep_activities=pre_sleep_activities,
                 advice=advice,
                 topic_question = None,
+                mission_achievement=request.POST.get('mission_achievement'),
             )
 
             return render(request, 'chat/feedback_chat.html', {'advice': html_advice})
