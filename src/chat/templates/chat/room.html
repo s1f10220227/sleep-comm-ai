@@ -62,7 +62,7 @@
                                 {% endif %}
                             </div>
                         {% else %}
-                            <p>ミッションを生成しましょう</p>
+                            <p>メンバーが確定してから生成ボタンを押してください</p>
                             <form action="{% url 'create_missions' group.id %}" method="POST">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-primary">ミッションを生成</button>
@@ -129,7 +129,7 @@
                                     {% endif %}
                                 </div>
                             {% else %}
-                                <p>ミッションを生成しましょう</p>
+                                <p>メンバーが確定してから生成ボタンを押してください</p>
                                 <form action="{% url 'create_missions' group.id %}" method="POST">
                                     {% csrf_token %}
                                     <button type="submit" class="btn btn-primary">ミッションを生成</button>
