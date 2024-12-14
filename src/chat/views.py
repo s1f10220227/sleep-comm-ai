@@ -143,11 +143,11 @@ def sleep_q(request):
                 sleep_quality=request.POST.get('sleep_quality'),
                 pre_sleep_activities=pre_sleep_activities,
                 advice=advice,
-                topic_question = None,
+                topic_question=None,
                 mission_achievement=request.POST.get('mission_achievement'),
             )
 
-            return render(request, 'chat/sleep_q.html', {'advice': html_advice})
+            return redirect('/progress/progress_check/')
 
         return render(request, 'chat/sleep_q.html', {'advice': advice})
 
@@ -194,10 +194,10 @@ def sleep_q(request):
                 wake_time=wake_time,
                 pre_sleep_activities=pre_sleep_activities,
                 advice=advice,
-                topic_question = topic_question,
+                topic_question=topic_question,
             )
 
-            return render(request, 'chat/sleep_q.html', {'advice': html_advice})
+            return redirect('/progress/progress_check/')
 
         return render(request, 'chat/pre_sleep_q.html', {'advice': advice})
 

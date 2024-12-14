@@ -8,10 +8,14 @@
 {% block content %}
   <h1>睡眠アンケート</h1>
 
+  <div id="loading" style="display: none;">
+    <p>AIが睡眠アドバイスを生成中です...</p>
+  </div>
+
   {% if advice == '今日は回答済みです' %}
     <p>{{ advice }}</p>
   {% else %}
-    <form method="post">
+    <form method="post" onsubmit="showLoading()">
       {% csrf_token %}
       <label for="sleep_time">就寝時刻</label>
       <input type="time" id="sleep_time" name="sleep_time" required onchange="calculateSleepDuration()"><br>
@@ -48,14 +52,15 @@
       <input type="radio" id="achievement5" name="mission_achievement" value="5">
       <label for="achievement5">完全にできた</label><br>
 
-      <input type="submit" value="アドバイスを取得">
+      <input type="submit" value="アンケートを送信">
     </form>
-
-    {% if advice %}
-      <h2>AIのアドバイス:</h2>
-      {{ advice|safe }}
-    {% endif %}
   {% endif %}
 
+  <script>
+    function showLoading() {
+      document.getElementById('loading').style.display = 'block';
+      return true;
+    }
+  </script>
   <script src="{% static 'chat/js/sleep_q.js' %}"></script>
 {% endblock %}

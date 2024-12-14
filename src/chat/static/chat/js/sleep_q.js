@@ -14,7 +14,7 @@ function calculateSleepDuration() {
         const hours = Math.floor(diff / 1000 / 60 / 60);
         const minutes = Math.floor((diff / 1000 / 60) % 60);
 
-        document.getElementById('sleep_duration').innerHTML = 
+        document.getElementById('sleep_duration').innerHTML =
             `睡眠時間: ${hours}時間${minutes}分`;
     }
 }
