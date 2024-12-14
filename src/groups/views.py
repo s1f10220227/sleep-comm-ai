@@ -59,7 +59,7 @@ def group_create(request):
     if request.method == 'POST':
         # 既に参加前の質問に回答しているかどうか確認
         if not check_today_data(request.user):
-            return redirect('feedback_chat')
+            return redirect('sleep_q')
         # ユーザーが既にグループに参加しているか確認
         if GroupMember.objects.filter(user=request.user).exists():
             # 既に参加している場合はグループメニューにリダイレクト
@@ -83,7 +83,7 @@ def group_join(request):
     if request.method == 'POST':
         # 既に参加前の質問に回答しているかどうか確認
         if not check_today_data(request.user):
-            return redirect('feedback_chat')
+            return redirect('sleep_q')
         # ユーザーが既にグループに参加しているか確認
         if GroupMember.objects.filter(user=request.user).exists():
             # 既に参加している場合はホームにリダイレクト

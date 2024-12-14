@@ -100,14 +100,14 @@ def check_today_data(user):
 
 # ビュー関数
 @login_required
-def feedback_chat(request):
+def sleep_q(request):
     if GroupMember.objects.filter(user=request.user).exists():
         # グループに加入している場合
         advice = None
 
         if check_today_data(request.user):
             # 今日のデータが既にある場合
-            return render(request, 'chat/feedback_chat.html', {'advice': '今日は回答済みです。'})
+            return render(request, 'chat/sleep_q.html', {'advice': '今日は回答済みです。'})
 
         if request.method == 'POST':
             sleep_time = request.POST.get('sleep_time')
@@ -147,9 +147,9 @@ def feedback_chat(request):
                 mission_achievement=request.POST.get('mission_achievement'),
             )
 
-            return render(request, 'chat/feedback_chat.html', {'advice': html_advice})
+            return render(request, 'chat/sleep_q.html', {'advice': html_advice})
 
-        return render(request, 'chat/feedback_chat.html', {'advice': advice})
+        return render(request, 'chat/sleep_q.html', {'advice': advice})
 
     else:
         # グループに加入していない場合
@@ -157,7 +157,7 @@ def feedback_chat(request):
 
         if check_today_data(request.user):
             # 今日のデータが既にある場合
-            return render(request, 'chat/pre_group_questions.html', {'advice': '今日は回答済みです。'})
+            return render(request, 'chat/pre_sleep_q.html', {'advice': '今日は回答済みです。'})
 
         if request.method == 'POST':
             url = request.POST.get('url')
@@ -197,9 +197,9 @@ def feedback_chat(request):
                 topic_question = topic_question,
             )
 
-            return render(request, 'chat/feedback_chat.html', {'advice': html_advice})
+            return render(request, 'chat/sleep_q.html', {'advice': html_advice})
 
-        return render(request, 'chat/pre_group_questions.html', {'advice': advice})
+        return render(request, 'chat/pre_sleep_q.html', {'advice': advice})
 
 @login_required
 def create_missions(request, group_id):
