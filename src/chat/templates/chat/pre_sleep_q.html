@@ -17,7 +17,7 @@
       <input type="time" id="sleep_time" name="sleep_time" required onchange="calculateSleepDuration()"><br>
 
       <label for="wake_time">起床時刻</label>
-      <input type="time" id="wake_time" name="wake_time" required> onchange="calculateSleepDuration()"<br>
+      <input type="time" id="wake_time" name="wake_time" required onchange="calculateSleepDuration()"><br>
 
       <div id="sleep_duration"></div>
 
@@ -48,5 +48,5 @@
     {% endif %}
   {% endif %}
 
-  <script src="{% static 'chat/js/sleep_q.js' %}"></script>
+<script src="{% static 'chat/js/sleep_q.js' %}"></script>
 {% endblock %}

@@ -107,7 +107,7 @@ def sleep_q(request):
 
         if check_today_data(request.user):
             # 今日のデータが既にある場合
-            return render(request, 'chat/sleep_q.html', {'advice': '今日は回答済みです。'})
+            return render(request, 'chat/sleep_q.html', {'advice': '今日は回答済みです'})
 
         if request.method == 'POST':
             sleep_time = request.POST.get('sleep_time')
@@ -157,7 +157,7 @@ def sleep_q(request):
 
         if check_today_data(request.user):
             # 今日のデータが既にある場合
-            return render(request, 'chat/pre_sleep_q.html', {'advice': '今日は回答済みです。'})
+            return render(request, 'chat/pre_sleep_q.html', {'advice': '今日は回答済みです'})
 
         if request.method == 'POST':
             url = request.POST.get('url')
