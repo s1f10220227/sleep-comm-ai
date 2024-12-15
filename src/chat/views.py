@@ -44,7 +44,7 @@ chat = openai.ChatCompletion
 def room(request, group_id):
     group = get_object_or_404(Group, id=group_id)
     group_members = GroupMember.objects.filter(group=group)
-    chat_messages = Message.objects.filter(group=group).order_by('-timestamp')[:50]
+    messages = Message.objects.filter(group=group).order_by('-timestamp')[:50]
     
     # AIアシスタントユーザーの取得または作成
     User = get_user_model()
@@ -89,7 +89,7 @@ def room(request, group_id):
         'mission': latest_mission,
         'mission_confirmed': mission_confirmed,
         'group_members': group_members,
-        'chat_messages': reversed(chat_messages),
+        'messages': reversed(messages),
         'days_since_creation': days_since_creation,
         'user_vote': user_vote,
         'is_vote_deadline_passed': is_vote_deadline_passed,
