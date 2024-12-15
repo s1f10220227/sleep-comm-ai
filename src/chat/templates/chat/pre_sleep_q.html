@@ -6,52 +6,66 @@
 {% endblock %}
 
 {% block content %}
-  <h1>グループ加入前の睡眠アンケート</h1>
-
-  <div id="loading" style="display: none;">
-    <p>AIが睡眠アドバイスを生成中です...</p>
-  </div>
+<div class="container">
+  <h1 class="mb-4">グループ加入前の睡眠アンケート</h1>
 
   {% if advice == '今日は回答済みです' %}
-    <p>{{ advice }}</p>
+    <div class="alert alert-info">{{ advice }}</div>
   {% else %}
     <form method="post" onsubmit="showLoading()">
       {% csrf_token %}
-      <label for="sleep_time">就寝時刻</label>
-      <input type="time" id="sleep_time" name="sleep_time" required onchange="calculateSleepDuration()"><br>
+      <div class="mb-3">
+        <label for="sleep_time" class="form-label">就寝時刻</label>
+        <input type="time" class="form-control" id="sleep_time" name="sleep_time" required onchange="calculateSleepDuration()">
+      </div>
 
-      <label for="wake_time">起床時刻</label>
-      <input type="time" id="wake_time" name="wake_time" required onchange="calculateSleepDuration()"><br>
+      <div class="mb-3">
+        <label for="wake_time" class="form-label">起床時刻</label>
+        <input type="time" class="form-control" id="wake_time" name="wake_time" required onchange="calculateSleepDuration()">
+      </div>
 
-      <div id="sleep_duration"></div>
+      <div id="sleep_duration" class="mb-3 text-muted"></div>
 
-      <label>睡眠休養感</label><br>
-      <input type="radio" id="quality1" name="sleep_quality" value="1" required>
-      <label for="quality1">目覚めが悪かった</label><br>
-      <input type="radio" id="quality2" name="sleep_quality" value="2">
-      <label for="quality2">あまり良くなかった</label><br>
-      <input type="radio" id="quality3" name="sleep_quality" value="3">
-      <label for="quality3">普通</label><br>
-      <input type="radio" id="quality4" name="sleep_quality" value="4">
-      <label for="quality4">良かった</label><br>
-      <input type="radio" id="quality5" name="sleep_quality" value="5">
-      <label for="quality5">すっきり目覚めた</label><br>
+      <div class="mb-3">
+        <label class="form-label">睡眠休養感</label>
+        <div class="d-flex flex-column">
+          <div class="form-check">
+            <input class="form-check-input" type="radio" id="quality1" name="sleep_quality" value="1" required>
+            <label class="form-check-label" for="quality1">目覚めが悪かった</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" id="quality2" name="sleep_quality" value="2">
+            <label class="form-check-label" for="quality2">あまり良くなかった</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" id="quality3" name="sleep_quality" value="3">
+            <label class="form-check-label" for="quality3">普通</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" id="quality4" name="sleep_quality" value="4">
+            <label class="form-check-label" for="quality4">良かった</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" id="quality5" name="sleep_quality" value="5">
+            <label class="form-check-label" for="quality5">すっきり目覚めた</label>
+          </div>
+        </div>
+      </div>
 
-      <label for="pre_sleep_activities">就寝前にやったこと（例: テレビを観た）</label>
-      <input type="text" id="pre_sleep_activities" name="pre_sleep_activities" required><br>
+      <div class="mb-3">
+        <label for="pre_sleep_activities" class="form-label">就寝前にやったこと（例: テレビを観た）</label>
+        <input type="text" class="form-control" id="pre_sleep_activities" name="pre_sleep_activities" required>
+      </div>
 
-      <label for="topic_question">睡眠改善のために取り組みたいこと</label>
-      <input type="text" id="topic_question" name="topic_question" required><br>
+      <div class="mb-3">
+        <label for="topic_question" class="form-label">睡眠改善のために取り組みたいこと</label>
+        <input type="text" class="form-control" id="topic_question" name="topic_question" required>
+      </div>
 
-      <input type="submit" value="アンケートを送信">
+      <button type="submit" class="btn btn-primary">アンケートを送信</button>
     </form>
   {% endif %}
+</div>
 
-  <script>
-    function showLoading() {
-      document.getElementById('loading').style.display = 'block';
-      return true;
-    }
-  </script>
-  <script src="{% static 'chat/js/sleep_q.js' %}"></script>
+<script src="{% static 'chat/js/sleep_q.js' %}"></script>
 {% endblock %}

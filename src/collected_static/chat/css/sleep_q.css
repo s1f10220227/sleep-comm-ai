@@ -1,0 +1,91 @@
+body {
+    background-color: #f4f6f9;
+    font-family: Arial, sans-serif;
+}
+
+.container {
+    max-width: 600px;
+    margin: 2rem auto;
+    background-color: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    color: #2c3e50;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    font-weight: bold;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    margin-top: 1rem;
+    font-weight: 600;
+    color: #34495e;
+}
+
+input[type="time"],
+input[type="text"] {
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    border: 1px solid #bdc3c7;
+    border-radius: 4px;
+    transition: border-color 0.3s ease;
+}
+
+input[type="time"]:focus,
+input[type="text"]:focus {
+    outline: none;
+    border-color: #3498db;
+}
+
+input[type="radio"] {
+    margin-right: 0.5rem;
+}
+
+#sleep_duration {
+    margin-bottom: 1rem;
+    color: #7f8c8d;
+    font-style: italic;
+}
+
+input[type="submit"] {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 0.75rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 1rem;
+}
+
+input[type="submit"]:hover {
+    background-color: #2980b9;
+}
+
+#loading {
+    text-align: center;
+    color: #2c3e50;
+    font-weight: bold;
+    margin: 1rem 0;
+}
+
+input[type="radio"] + label {
+    margin-right: 1rem;
+    display: inline-block;
+}
+
+@media (max-width: 768px) {
+    .container {
+        width: 95%;
+        padding: 1rem;
+        margin: 1rem auto;
+    }
+}
