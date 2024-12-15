@@ -84,6 +84,13 @@
       </div>
 
       <button type="submit" class="btn btn-primary">アンケートを送信</button>
+
+      <div id="loading" class="text-center" style="display: none;">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2">AIが睡眠アドバイスを生成中です...</p>
+      </div>
     </form>
   {% endif %}
 </div>

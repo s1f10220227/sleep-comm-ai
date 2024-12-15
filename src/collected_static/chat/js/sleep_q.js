@@ -1,3 +1,12 @@
+window.onpageshow = function(event) {
+    if (event.persisted) {
+        // ページがブラウザのキャッシュから読み込まれた（戻るボタン）
+        hideLoading();
+    }
+    // 通常のページロードでもローディングを隠す
+    hideLoading();
+};
+
 function calculateSleepDuration() {
     const sleepTime = document.getElementById('sleep_time').value;
     const wakeTime = document.getElementById('wake_time').value;
@@ -14,7 +23,16 @@ function calculateSleepDuration() {
         const hours = Math.floor(diff / 1000 / 60 / 60);
         const minutes = Math.floor((diff / 1000 / 60) % 60);
 
-        document.getElementById('sleep_duration').innerHTML = 
+        document.getElementById('sleep_duration').innerHTML =
             `睡眠時間: ${hours}時間${minutes}分`;
     }
+}
+
+function showLoading() {
+    document.getElementById('loading').style.display = 'block';
+    return true;
+}
+
+function hideLoading() {
+    document.getElementById('loading').style.display = 'none';
 }
