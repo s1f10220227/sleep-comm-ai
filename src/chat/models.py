@@ -44,9 +44,9 @@ class SleepAdvice(models.Model):
     wake_time = models.TimeField()   # 起床時刻
     sleep_duration = models.DurationField(null=True)  # 睡眠時間
     sleep_quality = models.IntegerField(choices=SLEEP_QUALITY_CHOICES, null=True)   # 睡眠休養感
-    pre_sleep_activities = models.TextField()    # 取り組みたいこと
-    advice = models.TextField()                  # 睡眠AIのアドバイス
-    topic_question = models.TextField(null=True)  # 寝る前にやったこと
+    pre_sleep_activities = models.TextField()  # 寝る前にやったこと
+    advice = models.TextField()  # AIのアドバイス
+    topic_question = models.TextField(null=True)    # 睡眠改善のために取り組みたいこと
     mission_achievement = models.IntegerField(choices=MISSION_ACHIEVEMENT_CHOICES, null=True)  # ミッション達成度
     created_at = models.DateTimeField(auto_now_add=True)  # 保存日時
 
