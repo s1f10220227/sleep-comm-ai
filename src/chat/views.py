@@ -172,7 +172,8 @@ def sleep_q(request):
                 f"- 起床時刻：{wake_time}\n"
                 f"- 睡眠時間：{today_sleep_duration.total_seconds() / 3600:.1f}時間\n"
                 f"- 睡眠休養感：{dict(SleepAdvice.SLEEP_QUALITY_CHOICES)[int(sleep_quality)]}\n"
-                f"- 就寝前の活動：{pre_sleep_activities}\n\n"
+                f"- 就寝前の活動：{pre_sleep_activities}\n"
+                f"- 現在のミッション：{mission_text}\n\n"
                 f"2. {trend_analysis}\n"
             )
 
@@ -191,7 +192,8 @@ def sleep_q(request):
                 f"これらの情報を総合的に分析し、以下の構成でアドバイスを簡潔に提供してください：\n"
                 f"1. 現状の睡眠パターンの評価\n"
                 f"2. 改善が必要な点\n"
-                f"3. 具体的な改善のための1つのアクションプラン\n\n"
+                f"3. 上記の改善点に対して、ミッション「{mission_text}」を活用した1つのアクションプラン\n\n"
+                f"※ アクションプランは、特定された改善点に対して、現在のミッションをどのように活用できるかという観点で簡潔に提案してください。\n"
                 f"※ トレンドデータがない場合は、本日のデータのみに基づいてアドバイスを簡潔に提供してください。"
             )
 
