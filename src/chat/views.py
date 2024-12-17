@@ -13,7 +13,7 @@ from django.utils.timezone import localtime
 from .models import SleepAdvice
 import markdown
 from .models import Mission
-from datetime import datetime
+from datetime import datetime, date, timedelta
 
 import markdown
 from django.urls import reverse
@@ -119,13 +119,80 @@ def sleep_q(request):
         if request.method == 'POST':
             sleep_time = request.POST.get('sleep_time')
             wake_time = request.POST.get('wake_time')
+            sleep_quality = request.POST.get('sleep_quality')
             pre_sleep_activities = request.POST.get('pre_sleep_activities')
+            mission_achievement = request.POST.get('mission_achievement')
+
+            # ミッション作成以来の履歴データを取得
+            mission_creation_date = latest_mission.created_at if latest_mission else None
+            historical_data = SleepAdvice.objects.filter(
+                user=request.user,
+                created_at__gte=mission_creation_date
+            ).order_by('created_at')
+
+            # 睡眠時間をdatetime.timeオブジェクトに変換
+            sleep_time_obj = datetime.strptime(sleep_time, '%H:%M').time()
+            wake_time_obj = datetime.strptime(wake_time, '%H:%M').time()
+
+            # 今日の睡眠時間を計算
+            sleep_datetime = datetime.combine(date.today(), sleep_time_obj)
+            wake_datetime = datetime.combine(date.today(), wake_time_obj)
+            if wake_datetime < sleep_datetime:
+                wake_datetime += timedelta(days=1)
+            today_sleep_duration = wake_datetime - sleep_datetime
+
+            # トレンドメッセージを初期化
+            sleep_duration_trend = "データなし"
+            sleep_quality_trend = "データなし"
+            mission_achievement_trend = "データなし"
+            trend_analysis = "まだ十分なデータがないため、傾向分析はできません。"
+
+            # 傾向分析を行うための履歴データが十分にある場合のみ
+            sleep_durations = [entry.sleep_duration for entry in historical_data if entry.sleep_duration]
+            sleep_qualities = [entry.sleep_quality for entry in historical_data if entry.sleep_quality]
+            mission_achievements = [entry.mission_achievement for entry in historical_data if entry.mission_achievement]
+
+            # 睡眠時間の傾向を計算
+            if sleep_durations:
+                sleep_duration_trend = "増加傾向" if today_sleep_duration > sleep_durations[-1] else "減少傾向"
+                trend_analysis = f"過去{len(sleep_durations)}日間のデータに基づく分析："
+
+            # 睡眠休養感の傾向を計算
+            if sleep_qualities:
+                sleep_quality_trend = "改善傾向" if int(sleep_quality) > sleep_qualities[-1] else "悪化傾向"
+
+            # ミッション達成度の傾向を計算
+            if mission_achievements:
+                mission_achievement_trend = "向上傾向" if int(mission_achievement) > mission_achievements[-1] else "低下傾向"
 
             user_input = (
-                f"ユーザーは{sleep_time}に寝て、{wake_time}に起きました。"
-                f"寝る前は{pre_sleep_activities}をしていました。"
-                f"まず、これらの情報に基づいてユーザーの睡眠習慣に対する評価を簡潔に行ってください。"
-                f"その後、その評価に基づいて、ユーザーにとって最も重要で実行可能なアドバイス3つを簡潔に提供してください。"
+                f"以下の情報に基づいて睡眠アドバイスを簡潔に提供してください：\n\n"
+                f"1. 本日の睡眠状況：\n"
+                f"- 就寝時刻：{sleep_time}\n"
+                f"- 起床時刻：{wake_time}\n"
+                f"- 睡眠時間：{today_sleep_duration.total_seconds() / 3600:.1f}時間\n"
+                f"- 睡眠休養感：{dict(SleepAdvice.SLEEP_QUALITY_CHOICES)[int(sleep_quality)]}\n"
+                f"- 就寝前の活動：{pre_sleep_activities}\n\n"
+                f"2. {trend_analysis}\n"
+            )
+
+            # 履歴データがある場合のみ傾向情報を追加
+            if len(historical_data) > 0:
+                user_input += (
+                    f"- 睡眠時間の傾向：{sleep_duration_trend}\n"
+                    f"- 睡眠休養感の傾向：{sleep_quality_trend}\n"
+                    f"- ミッション達成度の傾向：{mission_achievement_trend}\n"
+                )
+            else:
+                user_input += "※ まだ過去のデータがないため、傾向分析はできません。本日のデータのみに基づいてアドバイスを簡潔に提供してください。\n"
+
+            user_input += (
+                f"- 本日のミッション達成度：{dict(SleepAdvice.MISSION_ACHIEVEMENT_CHOICES)[int(mission_achievement)]}\n\n"
+                f"これらの情報を総合的に分析し、以下の構成でアドバイスを簡潔に提供してください：\n"
+                f"1. 現状の睡眠パターンの評価\n"
+                f"2. 改善が必要な点\n"
+                f"3. 具体的な改善のための1つのアクションプラン\n\n"
+                f"※ トレンドデータがない場合は、本日のデータのみに基づいてアドバイスを簡潔に提供してください。"
             )
 
             # OpenAI APIでアドバイスを取得
@@ -145,13 +212,13 @@ def sleep_q(request):
             # 睡眠データをデータベースに保存
             SleepAdvice.objects.create(
                 user=request.user,
-                sleep_time=sleep_time,
-                wake_time=wake_time,
-                sleep_quality=request.POST.get('sleep_quality'),
+                sleep_time=sleep_time_obj,
+                wake_time=wake_time_obj,
+                sleep_quality=sleep_quality,
                 pre_sleep_activities=pre_sleep_activities,
                 advice=advice,
                 topic_question=None,
-                mission_achievement=request.POST.get('mission_achievement'),
+                mission_achievement=mission_achievement,
             )
 
             return redirect('/progress/progress_check/')
