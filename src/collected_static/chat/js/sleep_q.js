@@ -1,3 +1,4 @@
+// ページが表示されたときの処理
 window.onpageshow = function(event) {
     if (event.persisted) {
         // ページがブラウザのキャッシュから読み込まれた（戻るボタン）
@@ -7,6 +8,7 @@ window.onpageshow = function(event) {
     hideLoading();
 };
 
+// 睡眠時間を計算する関数
 function calculateSleepDuration() {
     const sleepTime = document.getElementById('sleep_time').value;
     const wakeTime = document.getElementById('wake_time').value;
@@ -24,15 +26,20 @@ function calculateSleepDuration() {
         const minutes = Math.floor((diff / 1000 / 60) % 60);
 
         document.getElementById('sleep_duration').innerHTML =
-            `睡眠時間: ${hours}時間${minutes}分`;
+            `睡眠時間: \${hours}時間\${minutes}分`;
+    } else {
+        document.getElementById('sleep_duration').innerHTML =
+            '睡眠時間: --時間--分';
     }
 }
 
+// ローディングアニメーションを表示する関数
 function showLoading() {
     document.getElementById('loading').style.display = 'block';
     return true;
 }
 
+// ローディングアニメーションを隠す関数
 function hideLoading() {
     document.getElementById('loading').style.display = 'none';
 }

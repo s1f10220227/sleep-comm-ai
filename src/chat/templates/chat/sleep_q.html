@@ -24,7 +24,7 @@
         <input type="time" class="form-control" id="wake_time" name="wake_time" required onchange="calculateSleepDuration()">
       </div>
 
-      <div id="sleep_duration" class="mb-3 text-muted"></div>
+      <div id="sleep_duration" class="mb-3 text-muted">睡眠時間: --時間--分</div>
 
       <div class="mb-3">
         <label class="form-label">睡眠休養感</label>
@@ -58,7 +58,7 @@
       </div>
 
       <div class="mb-3">
-        <label class="form-label">ミッション達成度</label>
+        <label class="form-label">ミッション「{{ mission_text }}」の達成度</label>
         <div class="d-flex flex-column">
           <div class="form-check">
             <input class="form-check-input" type="radio" id="achievement1" name="mission_achievement" value="1" required>

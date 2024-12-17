@@ -103,6 +103,13 @@ def check_today_data(user):
 def sleep_q(request):
     if GroupMember.objects.filter(user=request.user).exists():
         # グループに加入している場合
+        group_member = GroupMember.objects.get(user=request.user)
+        group = group_member.group
+
+        # 最新のミッションを取得
+        latest_mission = Mission.objects.filter(group=group).order_by('-created_at').first()
+        mission_text = latest_mission.mission if latest_mission else "設定されていません"
+
         advice = None
 
         if check_today_data(request.user):
@@ -149,7 +156,9 @@ def sleep_q(request):
 
             return redirect('/progress/progress_check/')
 
-        return render(request, 'chat/sleep_q.html', {'advice': advice})
+        return render(request, 'chat/sleep_q.html', {
+            'advice': advice,
+            'mission_text': mission_text})
 
     else:
         # グループに加入していない場合
