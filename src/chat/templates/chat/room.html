@@ -104,7 +104,7 @@
                                 <p>ミッションを生成しましょう</p>
                                 <form action="{% url 'create_missions' group.id %}" method="POST">
                                     {% csrf_token %}
-                                    <button type="submit" name="create_mission" class="btn btn-primary">ミッションを生成</button>
+                                    <button type="submit" class="btn btn-primary">ミッションを生成</button>
                                 </form>
                             {% endif %}
                         {% endif %}

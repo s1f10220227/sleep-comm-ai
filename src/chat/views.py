@@ -269,6 +269,7 @@ def create_missions(request, group_id):
 
     mission_generate, created = Missiongenerate.objects.get_or_create(group=group)
     existing_vote = MissiongenerateVote.objects.filter(user=request.user, group=group).first()
+    user_has_voted = bool(existing_vote)
     if not existing_vote:
         MissiongenerateVote.objects.create(user=request.user, group=group)
         # 新しい投票先の票数を +1 更新
@@ -323,7 +324,7 @@ def create_missions(request, group_id):
             logger.error(f"Error generating missions: {e}")
             return redirect(reverse('room', args=[group_id]))
 
-    return redirect(reverse('room', args=[group_id]))
+    return redirect(reverse('room', args=[group_id])+ f'?has_voted={user_has_voted}')
 
 @login_required
 def vote_mission(request, group_id):
