@@ -13,7 +13,7 @@ def send_daily_message():
         channel_layer = get_channel_layer()
         groups = Group.objects.all()
 
-        message = "http://127.0.0.1:8080/chat/feedback_chat/"
+        message = "http://127.0.0.1:8080/chat/sleep_q/"
 
         ai_user = CustomUser.objects.get(username='AI Assistant')
 
