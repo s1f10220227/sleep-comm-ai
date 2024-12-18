@@ -16,6 +16,11 @@ def signup(request):
         if not privacy_policy_checked:
             return render(request, 'accounts/signup.html', {'error_message': 'プライバシーポリシーに同意する必要があります。', 'username': username, 'gender': gender, 'age': age})
         
+        # 追加
+        # 変更箇所 1: ユーザーネームがすでに存在するか確認
+        if CustomUser.objects.filter(username=username).exists():
+            return render(request, 'accounts/signup.html', {'error_message': 'このユーザー名はすでに使用されています。', 'username': username, 'gender': gender, 'age': age})
+        
         if password == password_confirm:
             # 年齢が未回答の場合は None として扱う
             age = age if age else None
