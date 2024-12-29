@@ -1,21 +1,16 @@
 # 標準ライブラリ
-import json
 import logging
-import os
-from datetime import datetime
+from datetime import datetime, date, timedelta
 
 # サードパーティライブラリ
 import markdown
 import openai
-import requests
-from bs4 import BeautifulSoup
 
 # Django関連モジュール
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -31,14 +26,12 @@ from groups.models import Group, GroupMember
 # ロガー設定
 logger = logging.getLogger(__name__)
 
-
 # settings.pyで定義した環境変数OPENAI_API_KEY, OPENAI_API_BASEを参照する
 OPENAI_API_KEY = settings.OPENAI_API_KEY
 OPENAI_API_BASE = settings.OPENAI_API_BASE
 
 # AIモデルの初期化
 chat = openai.ChatCompletion
-
 
 @login_required
 def room(request, group_id):
@@ -49,7 +42,7 @@ def room(request, group_id):
     # AIアシスタントユーザーの取得または作成
     User = get_user_model()
     ai_user, created = User.objects.get_or_create(username='AI Assistant')
-    
+
     # AIアシスタントがグループのメンバーか確認し、いなければ追加
     if not group_members.filter(user=ai_user).exists():
         GroupMember.objects.create(group=group, user=ai_user)
@@ -95,33 +88,8 @@ def room(request, group_id):
         'is_vote_deadline_passed': is_vote_deadline_passed,
 })
 
-# URLから情報を取得する関数
-def scrape_sleep_advice(url):
-    headers = {'User-Agent': 'Mozilla/5.0'}
-    response = requests.get(url, headers=headers)
-    response.raise_for_status()
-    soup = BeautifulSoup(response.content, 'html.parser')
-    advice_elements = soup.find_all('p')
-    advice_texts = [element.get_text() for element in advice_elements if element.get_text()]
-    return ' '.join(advice_texts)
-
-# スクレイピング結果をファイルに保存
-def save_advice_to_file(url, advice, filename='sleep_advice.json'):
-    if os.path.exists(filename):
-        with open(filename, 'r') as file:
-            data = json.load(file)
-    else:
-        data = {}
-    data[url] = advice
-    with open(filename, 'w') as file:
-        json.dump(data, file, ensure_ascii=False, indent=4)
-
-# スクレイピング結果をファイルから読み込み
-def load_advice_from_file(filename='sleep_advice.json'):
-    if os.path.exists(filename):
-        with open(filename, 'r') as file:
-            return json.load(file)
-    return {}
+# AIモデルの初期化
+chat = openai.ChatCompletion
 
 # 今日のデータが既に存在するか確認
 def check_today_data(user):
@@ -130,37 +98,101 @@ def check_today_data(user):
 
 # ビュー関数
 @login_required
-def feedback_chat(request):
+def sleep_q(request):
     if GroupMember.objects.filter(user=request.user).exists():
         # グループに加入している場合
+        group_member = GroupMember.objects.get(user=request.user)
+        group = group_member.group
+
+        # 最新のミッションを取得
+        latest_mission = Mission.objects.filter(group=group).order_by('-created_at').first()
+        mission_text = latest_mission.mission if latest_mission else "設定されていません"
+
         advice = None
 
         if check_today_data(request.user):
             # 今日のデータが既にある場合
-            return render(request, 'chat/feedback_chat.html', {'advice': '今日は回答済みです。'})
+            return render(request, 'chat/sleep_q.html', {'advice': '今日は回答済みです'})
 
         if request.method == 'POST':
-            url = request.POST.get('url')
             sleep_time = request.POST.get('sleep_time')
             wake_time = request.POST.get('wake_time')
+            sleep_quality = request.POST.get('sleep_quality')
             pre_sleep_activities = request.POST.get('pre_sleep_activities')
+            mission_achievement = request.POST.get('mission_achievement')
 
-            # ローカルに保存されたアドバイスを確認
-            saved_advice = load_advice_from_file()
-            if url in saved_advice:
-                scraped_info = saved_advice[url]
-            else:
-                scraped_info = scrape_sleep_advice(url)
-                save_advice_to_file(url, scraped_info)
-                saved_advice = load_advice_from_file()  # 再読み込み
+            # ミッション作成以来の履歴データを取得
+            mission_creation_date = latest_mission.created_at if latest_mission else None
+            historical_data = SleepAdvice.objects.filter(
+                user=request.user,
+                created_at__gte=mission_creation_date
+            ).order_by('created_at')
 
-            all_advice = " ".join([str(value) for value in saved_advice.values()])
+            # 睡眠時間をdatetime.timeオブジェクトに変換
+            sleep_time_obj = datetime.strptime(sleep_time, '%H:%M').time()
+            wake_time_obj = datetime.strptime(wake_time, '%H:%M').time()
+
+            # 今日の睡眠時間を計算
+            sleep_datetime = datetime.combine(date.today(), sleep_time_obj)
+            wake_datetime = datetime.combine(date.today(), wake_time_obj)
+            if wake_datetime < sleep_datetime:
+                wake_datetime += timedelta(days=1)
+            today_sleep_duration = wake_datetime - sleep_datetime
+
+            # トレンドメッセージを初期化
+            sleep_duration_trend = "データなし"
+            sleep_quality_trend = "データなし"
+            mission_achievement_trend = "データなし"
+            trend_analysis = "まだ十分なデータがないため、傾向分析はできません。"
+
+            # 傾向分析を行うための履歴データがある場合のみ
+            sleep_durations = [entry.sleep_duration for entry in historical_data if entry.sleep_duration]
+            sleep_qualities = [entry.sleep_quality for entry in historical_data if entry.sleep_quality]
+            mission_achievements = [entry.mission_achievement for entry in historical_data if entry.mission_achievement]
+
+            # 睡眠時間の傾向を計算
+            if sleep_durations:
+                sleep_duration_trend = "増加傾向" if today_sleep_duration > sleep_durations[-1] else "減少傾向"
+                trend_analysis = f"過去{len(sleep_durations)}日間のデータに基づく分析："
+
+            # 睡眠休養感の傾向を計算
+            if sleep_qualities:
+                sleep_quality_trend = "改善傾向" if int(sleep_quality) > sleep_qualities[-1] else "悪化傾向"
+
+            # ミッション達成度の傾向を計算
+            if mission_achievements:
+                mission_achievement_trend = "向上傾向" if int(mission_achievement) > mission_achievements[-1] else "低下傾向"
+
             user_input = (
-                f"ユーザーは{sleep_time}に寝て、{wake_time}に起きました。"
-                f"寝る前は{pre_sleep_activities}をしていました。"
-                f"以下の情報も評価やアドバイスの参考にしてください: {all_advice}"
-                f"まず、これらの情報に基づいてユーザーの睡眠習慣に対する評価を簡潔に行ってください。"
-                f"その後、その評価に基づいて、ユーザーにとって最も重要で実行可能なアドバイス3つを簡潔に提供してください。"
+                f"以下の情報に基づいて睡眠アドバイスを簡潔に提供してください：\n\n"
+                f"1. 本日の睡眠状況：\n"
+                f"- 就寝時刻：{sleep_time}\n"
+                f"- 起床時刻：{wake_time}\n"
+                f"- 睡眠時間：{today_sleep_duration.total_seconds() / 3600:.1f}時間\n"
+                f"- 睡眠休養感：{dict(SleepAdvice.SLEEP_QUALITY_CHOICES)[int(sleep_quality)]}\n"
+                f"- 就寝前の活動：{pre_sleep_activities}\n"
+                f"- 現在のミッション：{mission_text}\n\n"
+                f"2. {trend_analysis}\n"
+            )
+
+            # 履歴データがある場合のみ傾向情報を追加
+            if len(historical_data) > 0:
+                user_input += (
+                    f"- 睡眠時間の傾向：{sleep_duration_trend}\n"
+                    f"- 睡眠休養感の傾向：{sleep_quality_trend}\n"
+                    f"- ミッション達成度の傾向：{mission_achievement_trend}\n"
+                )
+            else:
+                user_input += "※ まだ過去のデータがないため、傾向分析はできません。本日のデータのみに基づいてアドバイスを簡潔に提供してください。\n"
+
+            user_input += (
+                f"- 本日のミッション達成度：{dict(SleepAdvice.MISSION_ACHIEVEMENT_CHOICES)[int(mission_achievement)]}\n\n"
+                f"これらの情報を総合的に分析し、以下の構成でアドバイスを簡潔に提供してください：\n"
+                f"1. 現状の睡眠パターンの評価\n"
+                f"2. 改善が必要な点\n"
+                f"3. 上記の改善点に対して、ミッション「{mission_text}」を活用した1つのアクションプラン\n\n"
+                f"※ アクションプランは、特定された改善点に対して、現在のミッションをどのように活用できるかという観点で簡潔に提案してください。\n"
+                f"※ トレンドデータがない場合は、本日のデータのみに基づいてアドバイスを簡潔に提供してください。"
             )
 
             # OpenAI APIでアドバイスを取得
@@ -180,49 +212,98 @@ def feedback_chat(request):
             # 睡眠データをデータベースに保存
             SleepAdvice.objects.create(
                 user=request.user,
-                sleep_time=sleep_time,
-                wake_time=wake_time,
+                sleep_time=sleep_time_obj,
+                wake_time=wake_time_obj,
+                sleep_quality=sleep_quality,
                 pre_sleep_activities=pre_sleep_activities,
                 advice=advice,
-                topic_question = None,
+                topic_question=None,
+                mission_achievement=mission_achievement,
             )
 
-            return render(request, 'chat/feedback_chat.html', {'advice': html_advice})
+            return redirect('/progress/progress_check/')
 
-        return render(request, 'chat/feedback_chat.html', {'advice': advice})
+        return render(request, 'chat/sleep_q.html', {
+            'advice': advice,
+            'mission_text': mission_text})
 
     else:
         # グループに加入していない場合
         advice = None
-        
+
         if check_today_data(request.user):
             # 今日のデータが既にある場合
-            return render(request, 'chat/pre_group_questions.html', {'advice': '今日は回答済みです。'})
-        
+            return render(request, 'chat/pre_sleep_q.html', {'advice': '今日は回答済みです'})
+
         if request.method == 'POST':
-            url = request.POST.get('url')
             sleep_time = request.POST.get('sleep_time')
             wake_time = request.POST.get('wake_time')
+            sleep_quality = request.POST.get('sleep_quality')
             pre_sleep_activities = request.POST.get('pre_sleep_activities')
-            topic_question = request.POST.get('topic_question')  # トピック用の質問
+            topic_question = request.POST.get('topic_question')
 
-            # ローカルに保存されたアドバイスを確認
-            saved_advice = load_advice_from_file()
-            if url in saved_advice:
-                scraped_info = saved_advice[url]
-            else:
-                scraped_info = scrape_sleep_advice(url)
-                save_advice_to_file(url, scraped_info)
-                saved_advice = load_advice_from_file()  # 再読み込み
+            # 睡眠時間をdatetime.timeオブジェクトに変換
+            sleep_time_obj = datetime.strptime(sleep_time, '%H:%M').time()
+            wake_time_obj = datetime.strptime(wake_time, '%H:%M').time()
 
-            all_advice = " ".join([str(value) for value in saved_advice.values()])
+            # 今日の睡眠時間を計算
+            sleep_datetime = datetime.combine(date.today(), sleep_time_obj)
+            wake_datetime = datetime.combine(date.today(), wake_time_obj)
+            if wake_datetime < sleep_datetime:
+                wake_datetime += timedelta(days=1)
+            today_sleep_duration = wake_datetime - sleep_datetime
+
+            # 過去1週間のデータを取得
+            week_ago = datetime.now() - timedelta(days=7)
+            historical_data = SleepAdvice.objects.filter(
+                user=request.user,
+                created_at__gte=week_ago
+            ).order_by('created_at')
+
+            # トレンドメッセージを初期化
+            sleep_duration_trend = "データなし"
+            sleep_quality_trend = "データなし"
+            trend_analysis = "まだ十分なデータがないため、傾向分析はできません。"
+
+            # 傾向分析を行うための履歴データがある場合のみ
+            sleep_durations = [entry.sleep_duration for entry in historical_data if entry.sleep_duration]
+            sleep_qualities = [entry.sleep_quality for entry in historical_data if entry.sleep_quality]
+
+            # 睡眠時間の傾向を計算
+            if sleep_durations:
+                sleep_duration_trend = "増加傾向" if today_sleep_duration > sleep_durations[-1] else "減少傾向"
+                trend_analysis = f"過去{len(sleep_durations)}日間のデータに基づく分析："
+
+            # 睡眠休養感の傾向を計算
+            if sleep_qualities:
+                sleep_quality_trend = "改善傾向" if int(sleep_quality) > sleep_qualities[-1] else "悪化傾向"
+
             user_input = (
-                f"ユーザーは{sleep_time}に寝て、{wake_time}に起きました。"
-                f"寝る前は{pre_sleep_activities}をしていました。"
-                f"最近睡眠に関して取り組んだこと、取り組んでみたいことは{topic_question}です。"
-                f"以下の情報も評価やアドバイスの参考にしてください: {all_advice}"
-                f"まず、これらの情報に基づいてユーザーの睡眠習慣に対する評価を簡潔に行ってください。"
-                f"その後、その評価に基づいて、ユーザーにとって最も重要で実行可能なアドバイス3つを簡潔に提供してください。"
+                f"以下の情報に基づいて睡眠アドバイスを簡潔に提供してください：\n\n"
+                f"1. 本日の睡眠状況：\n"
+                f"- 就寝時刻：{sleep_time}\n"
+                f"- 起床時刻：{wake_time}\n"
+                f"- 睡眠時間：{today_sleep_duration.total_seconds() / 3600:.1f}時間\n"
+                f"- 睡眠休養感：{dict(SleepAdvice.SLEEP_QUALITY_CHOICES)[int(sleep_quality)]}\n"
+                f"- 就寝前の活動：{pre_sleep_activities}\n"
+                f"- 睡眠改善のために取り組みたいこと：{topic_question}\n\n"
+                f"2. {trend_analysis}\n"
+            )
+
+            # 履歴データがある場合のみ傾向情報を追加
+            if len(historical_data) > 0:
+                user_input += (
+                    f"- 睡眠時間の傾向：{sleep_duration_trend}\n"
+                    f"- 睡眠休養感の傾向：{sleep_quality_trend}\n"
+                )
+            else:
+                user_input += "※ まだ過去のデータがないため、傾向分析はできません。本日のデータのみに基づいてアドバイスを簡潔に提供してください。\n"
+
+            user_input += (
+                f"\nこれらの情報を総合的に分析し、以下の構成でアドバイスを簡潔に提供してください：\n"
+                f"1. 現状の睡眠パターンの評価\n"
+                f"2. 改善が必要な点\n"
+                f"3. 具体的な改善のための1つのアクションプラン\n"
             )
 
             # OpenAI APIでアドバイスを取得
@@ -239,19 +320,20 @@ def feedback_chat(request):
             advice = response['choices'][0]['message']['content']
             html_advice = markdown.markdown(advice)  # markdownをHTMLに変換
 
-
+            # 睡眠データをデータベースに保存
             SleepAdvice.objects.create(
                 user=request.user,
-                sleep_time=sleep_time,
-                wake_time=wake_time,
+                sleep_time=sleep_time_obj,
+                wake_time=wake_time_obj,
+                sleep_quality=sleep_quality,
                 pre_sleep_activities=pre_sleep_activities,
                 advice=advice,
-                topic_question = topic_question,
+                topic_question=topic_question,
             )
 
-            return render(request, 'chat/feedback_chat.html', {'advice': html_advice})
+            return redirect('/progress/progress_check/')
 
-        return render(request, 'chat/pre_group_questions.html', {'advice': advice})
+        return render(request, 'chat/pre_sleep_q.html', {'advice': advice})
 
 @login_required
 def create_missions(request, group_id):
@@ -279,7 +361,6 @@ def create_missions(request, group_id):
         "ミッション5\n\n"
         "フォーマットを厳守し、必ず改行区切りで出力してください。"
     )
-
 
     try:
         response = chat.create(
@@ -350,7 +431,7 @@ def vote_mission(request, group_id):
         # 新しい投票先の票数を更新
         selected_option.votes += 1
         selected_option.save()
-    
+
     # 全員が投票を完了したか確認
     if check_all_votes_completed(group):
         # 最も多い票数の選択肢を取得
@@ -381,7 +462,6 @@ def confirm_mission(request, group_id):
         # 確認後、同じページへリダイレクト
         return redirect(reverse('room', args=[group_id]))
 
-
 def check_all_votes_completed(group):
     total_members = group.members.count()
     total_votes = Vote.objects.filter(group=group).count()
@@ -394,8 +474,8 @@ def finalize_mission(request, group_id):
     # ミッションを確定
     if top_voted_option and not Mission.objects.filter(group=group, confirmed=True).exists():
         Mission.objects.create(
-            mission=top_voted_option.text, 
-            group=group, 
+            mission=top_voted_option.text,
+            group=group,
             confirmed=True
         )
         MissionOption.objects.filter(group=group).delete()
@@ -407,7 +487,7 @@ def save_mission(request, group_id):
     group = get_object_or_404(Group, id=group_id)
     group_members = GroupMember.objects.filter(group=group)
     messages = Message.objects.filter(group=group).order_by('-timestamp')[:50]
-     # 最新のミッションを取得
+    # 最新のミッションを取得
     latest_mission = Mission.objects.filter(group=group).order_by('-created_at').first()
     no_mission_text = "ミッションを生成しましょう"
     mission_confirmed = latest_mission.confirmed if latest_mission else False
@@ -429,4 +509,3 @@ def save_mission(request, group_id):
                 'show_textbox': True,
             })
     return redirect(reverse('room', args=[group_id]))
-
