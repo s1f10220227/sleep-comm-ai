@@ -157,7 +157,7 @@
                     <div class="message mb-2">
                         <strong class="username text-primary">{{ message.sender.username }}</strong>
                         <small class="timestamp text-muted">{{ message.timestamp|date:"H:i" }}</small>
-                        <p>{{ message.content | urlize | linebreaks }}</p>
+                        <p class="mb-0">{{ message.content | urlize | linebreaksbr }}</p>
                     </div>
                 {% endfor %}
             </div>
