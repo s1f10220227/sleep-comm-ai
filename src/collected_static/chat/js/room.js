@@ -1,5 +1,5 @@
 const chatSocket = new WebSocket(
-    'ws://' + window.location.host + '/ws/chat/' + groupId + '/'
+    'wss://' + window.location.host + '/ws/chat/' + groupId + '/'
 );
 
 chatSocket.onmessage = function(e) {
