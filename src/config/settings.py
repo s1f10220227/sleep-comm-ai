@@ -94,8 +94,7 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            'hosts': [('redis', 6379)],
-            'password': env('REDIS_PASSWORD')
+            'hosts': [(f'redis://:{env("REDIS_PASSWORD")}@redis:6379/0')],
         },
     }
 }
