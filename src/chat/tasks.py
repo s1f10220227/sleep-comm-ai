@@ -56,6 +56,68 @@ def send_init_message(group_id):
         return f"Error sending initial messages: {str(e)}"
 
 @shared_task
+def send_mission_explanation(group_id, mission_text):
+    try:
+        # OpenAI APIでミッションの効果説明を生成
+        prompt = (
+            f"以下のミッションが睡眠にどのように良い影響を与えるか、その理由と効果を100文字程度で説明してください：\n"
+            f"ミッション：{mission_text}\n"
+            f"※専門的な説明を避け、わかりやすく具体的に説明してください。"
+        )
+
+        response = chat.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a sleep expert who explains the benefits of sleep-related activities."},
+                {"role": "user", "content": prompt}
+            ],
+            api_key=OPENAI_API_KEY,
+            api_base=OPENAI_API_BASE
+        )
+
+        benefits_explanation = response['choices'][0]['message']['content'].strip()
+
+        # 通知メッセージを作成
+        notification_message = (
+            f"🎯 新しいミッションが確定されました！『{mission_text}』\n\n"
+            f"✨ このミッションの効果：\n"
+            f"{benefits_explanation}\n\n"
+            f"📋 明日朝7時に、睡眠状況とミッションの達成度についてのアンケートが送信されます。"
+            f"皆さんの回答をお待ちしています！"
+        )
+
+        # グループにメッセージを送信
+        group = Group.objects.get(id=group_id)
+        ai_user = CustomUser.objects.get(username='AI Assistant')
+
+        # メッセージを作成して保存
+        Message.objects.create(
+            sender=ai_user,
+            group=group,
+            content=notification_message
+        )
+
+        # ebSocketを通じて送信
+        channel_layer = get_channel_layer()
+        room_group_name = f'chat_{group_id}'
+
+        async_to_sync(channel_layer.group_send)(
+            room_group_name,
+            {
+                'type': 'chat_message',
+                'message': notification_message,
+                'username': 'AI Assistant'
+            }
+        )
+
+        logger.info(f"Mission explanation sent successfully for group {group_id}")
+        return "Mission explanation sent successfully"
+
+    except Exception as e:
+        logger.error(f"Error sending mission explanation: {str(e)}")
+        return f"Error sending mission explanation: {str(e)}"
+
+@shared_task
 def send_daily_message():
     try:
         channel_layer = get_channel_layer()

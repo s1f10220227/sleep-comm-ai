@@ -22,7 +22,7 @@ from django.views.decorators.http import require_POST
 # アプリケーション固有のモジュール
 from .models import Message, Mission, MissionOption, SleepAdvice, Vote
 from groups.models import Group, GroupMember
-from .tasks import send_init_message
+from .tasks import send_init_message, send_mission_explanation
 
 # ロガー設定
 logger = logging.getLogger(__name__)
@@ -50,7 +50,7 @@ def room(request, group_id):
 
     # 初期メッセージが送信されているかどうかを確認
     if not group.init_message_sent:
-        send_init_message.delay(str(group.id))
+        send_init_message.delay(str(group.id))  # 初期メッセージを送信
         group.init_message_sent = True
         group.save()
 
@@ -75,7 +75,7 @@ def room(request, group_id):
     if latest_mission:
         days_since_creation = (localtime(timezone.now()).date() - localtime(latest_mission.created_at).date()).days + 1
     else:
-        days_since_creation = '?'  # ミッションが存在しない場合は?日
+        days_since_creation = '-'  # ミッションが存在しない場合は-日目と表示
 
     return render(request, 'chat/room.html', {
         'mission_options': mission_options,
@@ -441,13 +441,17 @@ def vote_mission(request, group_id):
 
         # ミッションを確定
         if top_voted_option and not Mission.objects.filter(group=group, confirmed=True).exists():
-            Mission.objects.create(
-                mission=top_voted_option.text,
-                group=group,
-                confirmed=True
-            )
+            mission = Mission.objects.create(
+            mission=top_voted_option.text,
+            group=group,
+            confirmed=True
+        )
 
-            MissionOption.objects.filter(group=group).delete()
+        # ミッション案を削除
+        MissionOption.objects.filter(group=group).delete()
+
+        # ミッションの説明を送信
+        send_mission_explanation.delay(group.id, mission.mission)
 
     return redirect(reverse('room', args=[group_id]))
 
@@ -461,6 +465,7 @@ def confirm_mission(request, group_id):
         if latest_mission:
             latest_mission.confirmed = True
             latest_mission.save()
+
         # 確認後、同じページへリダイレクト
         return redirect(reverse('room', args=[group_id]))
 
@@ -473,14 +478,21 @@ def check_all_votes_completed(group):
 def finalize_mission(request, group_id):
     group = get_object_or_404(Group, id=group_id)
     top_voted_option = MissionOption.objects.filter(group=group).order_by('-votes', '?').first()
+
     # ミッションを確定
     if top_voted_option and not Mission.objects.filter(group=group, confirmed=True).exists():
-        Mission.objects.create(
+        mission = Mission.objects.create(
             mission=top_voted_option.text,
             group=group,
             confirmed=True
         )
+
+        # ミッション案を削除
         MissionOption.objects.filter(group=group).delete()
+
+        # ミッションの説明を送信
+        send_mission_explanation.delay(group.id, mission.mission)
+
     return redirect(reverse('room', args=[group_id]))
 
 @login_required
