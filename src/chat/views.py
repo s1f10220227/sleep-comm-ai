@@ -67,6 +67,12 @@ def room(request, group_id):
     # ユーザーの準備完了データを取得
     user_ready = MissiongenerateVote.objects.filter(user=request.user, group=group).exists()
 
+    # 準備完了しているメンバーのリストを取得
+    ready_members = MissiongenerateVote.objects.filter(group=group).values_list('user', flat=True)
+    ready_members_list = User.objects.filter(id__in=ready_members)
+    ready_count = ready_members_list.count() 
+    total_members = group_members.count() - 1  # AI Assistantを除く
+
     # 投票締め切りを過ぎているかどうかを計算
     if group.vote_deadline:
         is_vote_deadline_passed = timezone.now() > group.vote_deadline
@@ -96,6 +102,9 @@ def room(request, group_id):
         'user_vote': user_vote,
         'is_vote_deadline_passed': is_vote_deadline_passed,
         'user_ready': user_ready,
+        'ready_count': ready_count,
+        'total_members': total_members,
+        'ready_members_list': ready_members_list,
 })
 
 # AIモデルの初期化
@@ -345,6 +354,7 @@ def sleep_q(request):
 
         return render(request, 'chat/pre_sleep_q.html', {'advice': advice})
     
+# ミッション生成の準備完了をトグルするビュー
 @login_required
 def toggle_ready(request, group_id):
     group = get_object_or_404(Group, id=group_id)
@@ -366,6 +376,7 @@ def toggle_ready(request, group_id):
 
     return redirect(reverse('room', args=[group_id]))
 
+# ミッションを生成するビュー
 @login_required
 def create_missions(request, group_id):
     group = get_object_or_404(Group, id=group_id)
@@ -422,6 +433,7 @@ def create_missions(request, group_id):
 
     return redirect(reverse('room', args=[group_id]))
 
+# ミッション案の投票を行うビュー
 @login_required
 def vote_mission(request, group_id):
     group = get_object_or_404(Group, id=group_id)
@@ -480,6 +492,7 @@ def vote_mission(request, group_id):
 
     return redirect(reverse('room', args=[group_id]))
 
+# ミッション案を確定するビュー
 @login_required
 def confirm_mission(request, group_id):
     group = get_object_or_404(Group, id=group_id)
@@ -493,7 +506,7 @@ def confirm_mission(request, group_id):
         # 確認後、同じページへリダイレクト
         return redirect(reverse('room', args=[group_id]))
 
-# ミッション生成前の全員が「ミッション生成ボタン」をおしているか管理する関数
+# ミッション生成前の全員が「準備完了」をおしているか管理する関数
 def check_all_MissiongenerateVote_completed(group):
     total_members = group.members.count()
     total_votes = MissiongenerateVote.objects.filter(group=group).count()
