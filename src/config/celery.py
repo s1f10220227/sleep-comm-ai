@@ -18,6 +18,10 @@ app.conf.beat_schedule = {
         'task': 'chat.tasks.send_daily_tips',
         'schedule': crontab(hour=11, minute=32), # ex. 13:15 JST
     },
+    'send-mission-complete-message': {
+        'task': 'chat.tasks.send_mission_complete_message',
+        'schedule': crontab(hour=15, minute=0),  # 毎日 15:00 に実行
+    },
 }
 
 app.conf.timezone = 'Asia/Tokyo'

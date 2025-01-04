@@ -1,11 +1,16 @@
-from celery import shared_task
+import logging
+
+from django.conf import settings
+from django.utils import timezone
+from django.utils.timezone import localtime
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+from celery import shared_task
+
+import openai
+
 from .models import Group, Message
 from accounts.models import CustomUser
-import openai  # OpenAIライブラリを使用
-from django.conf import settings
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -16,15 +21,12 @@ OPENAI_API_BASE = settings.OPENAI_API_BASE
 # AIモデルの初期化
 chat = openai.ChatCompletion
 
-
 @shared_task
 def send_daily_message():
     try:
         channel_layer = get_channel_layer()
         groups = Group.objects.all()
-
         message = "http://127.0.0.1:8080/chat/sleep_q/"
-
         ai_user = CustomUser.objects.get(username='AI Assistant')
 
         for group in groups:
@@ -47,7 +49,6 @@ def send_daily_message():
     except Exception as e:
         logger.error(f"Error sending daily message: {str(e)}")
         return f"Error sending daily message: {str(e)}"
-
 
 @shared_task
 def send_daily_tips():
@@ -90,3 +91,34 @@ def send_daily_tips():
     except Exception as e:
         logger.error(f"Error sending daily tips: {str(e)}")
         return f"Error sending daily tips: {str(e)}"
+
+@shared_task
+def send_mission_complete_message():
+    try:
+        channel_layer = get_channel_layer()
+        groups = Group.objects.all()
+        current_date = localtime(timezone.now()).date()
+
+        for group in groups:
+            if group.latest_mission:  # latest_missionが存在する場合
+                days_since_creation = (current_date - localtime(group.latest_mission.created_at).date()).days + 1
+                if days_since_creation == 3:  # ミッション作成から3日経過
+                    room_group_name = f'chat_{group.id}'
+                    message = "ミッション達成おめでとうございます"
+                    ai_user = CustomUser.objects.get(username='AI Assistant')
+                    async_to_sync(channel_layer.group_send)(
+                        room_group_name,
+                        {
+                            'type': 'chat_message',
+                            'message': message,
+                            'username': 'AI Assistant'
+                        }
+                    )
+                    Message.objects.create(sender=ai_user, group=group, content=message)
+
+        logger.info("Mission complete messages sent successfully")
+        return "Mission complete messages sent successfully"
+
+    except Exception as e:
+        logger.error(f"Error sending mission complete messages: {str(e)}")
+        return f"Error sending mission complete messages: {str(e)}"
