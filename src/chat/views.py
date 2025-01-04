@@ -64,6 +64,9 @@ def room(request, group_id):
     # ユーザーの最新の投票データを取得
     user_vote = Vote.objects.filter(user=request.user, group=group).first()
 
+    # ユーザーの準備完了データを取得
+    user_ready = MissiongenerateVote.objects.filter(user=request.user, group=group).exists()
+
     # 投票締め切りを過ぎているかどうかを計算
     if group.vote_deadline:
         is_vote_deadline_passed = timezone.now() > group.vote_deadline
@@ -92,6 +95,7 @@ def room(request, group_id):
         'days_since_creation': days_since_creation,
         'user_vote': user_vote,
         'is_vote_deadline_passed': is_vote_deadline_passed,
+        'user_ready': user_ready,
 })
 
 # AIモデルの初期化
@@ -340,6 +344,27 @@ def sleep_q(request):
             return redirect('/progress/progress_check/')
 
         return render(request, 'chat/pre_sleep_q.html', {'advice': advice})
+    
+@login_required
+def toggle_ready(request, group_id):
+    group = get_object_or_404(Group, id=group_id)
+    mission_generate, created = Missiongenerate.objects.get_or_create(group=group)
+    user_vote, created = MissiongenerateVote.objects.get_or_create(user=request.user, group=group)
+
+    if created:
+        # 新しい投票先の票数を +1 更新
+        mission_generate.votes = F('votes') + 1
+        mission_generate.save()
+    else:
+        # 既存の投票を削除
+        user_vote.delete()
+        mission_generate.votes = F('votes') - 1
+        mission_generate.save()
+
+    if check_all_MissiongenerateVote_completed(group):
+        create_missions(request, group_id)
+
+    return redirect(reverse('room', args=[group_id]))
 
 @login_required
 def create_missions(request, group_id):
@@ -351,62 +376,51 @@ def create_missions(request, group_id):
         if latest_advice:
             latest_topics.append(latest_advice.topic_question)
 
-    mission_generate, created = Missiongenerate.objects.get_or_create(group=group)
-    existing_vote = MissiongenerateVote.objects.filter(user=request.user, group=group).first()
-    user_has_voted = bool(existing_vote)
-    if not existing_vote:
-        MissiongenerateVote.objects.create(user=request.user, group=group)
-        # 新しい投票先の票数を +1 更新
-        mission_generate.votes = F('votes') + 1
-        mission_generate.save()
+    combined_topics = "。".join(latest_topics)
+    prompt = (
+        f"以下は、これから取り組みたい睡眠に関するトピックです：{combined_topics}。\n\n"
+        "これらを元に、全員に共通する改善点や挑戦できるミッションを5つ、生成してください。\n"
+        "ミッションは以下の条件を満たすようにしてください：\n"
+        "1. 全員が実行可能であること。\n"
+        "2. 睡眠に関する具体的な内容であること。\n"
+        "3. 各ミッションは20文字程度で簡潔に表現すること。\n\n"
+        "以下のフォーマットに従って、改行で区切ったリスト形式で出力してください：\n"
+        "ミッション1\n"
+        "ミッション2\n"
+        "ミッション3\n"
+        "ミッション4\n"
+        "ミッション5\n\n"
+        "フォーマットを厳守し、必ず改行区切りで出力してください。"
+    )
 
-        # 新しい投票先の票数を更新
-    if check_all_MissiongenerateVote_completed(group):
-        combined_topics = "。".join(latest_topics)
-        prompt = (
-            f"以下は、これから取り組みたい睡眠に関するトピックです：{combined_topics}。\n\n"
-            "これらを元に、全員に共通する改善点や挑戦できるミッションを5つ、生成してください。\n"
-            "ミッションは以下の条件を満たすようにしてください：\n"
-            "1. 全員が実行可能であること。\n"
-            "2. 睡眠に関する具体的な内容であること。\n"
-            "3. 各ミッションは20文字程度で簡潔に表現すること。\n\n"
-            "以下のフォーマットに従って、改行で区切ったリスト形式で出力してください：\n"
-            "ミッション1\n"
-            "ミッション2\n"
-            "ミッション3\n"
-            "ミッション4\n"
-            "ミッション5\n\n"
-            "フォーマットを厳守し、必ず改行区切りで出力してください。"
+    try:
+        response = chat.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a sleep expert who generates collaborative missions based on multiple user inputs."},
+                {"role": "user", "content": prompt}
+            ],
+            api_key=OPENAI_API_KEY,
+            api_base=OPENAI_API_BASE
         )
+        mission_texts = response['choices'][0]['message']['content'].split("\n")  # 複数行で返されると仮定
 
-        try:
-            response = chat.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {"role": "system", "content": "You are a sleep expert who generates collaborative missions based on multiple user inputs."},
-                    {"role": "user", "content": prompt}
-                ],
-                api_key=OPENAI_API_KEY,
-                api_base=OPENAI_API_BASE
-            )
-            mission_texts = response['choices'][0]['message']['content'].split("\n")  # 複数行で返されると仮定
+        for mission_text in mission_texts:
+            if mission_text.strip():  # 空白行を除外
+                MissionOption.objects.create(
+                    group=group,
+                    text=mission_text.strip()
+                )
 
-            for mission_text in mission_texts:
-                if mission_text.strip():  # 空白行を除外
-                    MissionOption.objects.create(
-                        group=group,
-                        text=mission_text.strip()
-                    )
+        # 投票締切時刻を現在時刻 + 2時間に設定
+        group.vote_deadline = localtime(timezone.now()) + timezone.timedelta(hours=2)
+        group.save()
 
-            # 投票締切時刻を現在時刻 + 2時間に設定
-            group.vote_deadline = localtime(timezone.now()) + timezone.timedelta(hours=2)
-            group.save()
+    except Exception as e:
+        logger.error(f"Error generating missions: {e}")
+        return redirect(reverse('room', args=[group_id]))
 
-        except Exception as e:
-            logger.error(f"Error generating missions: {e}")
-            return redirect(reverse('room', args=[group_id]))
-
-    return redirect(reverse('room', args=[group_id])+ f'?has_voted={user_has_voted}')
+    return redirect(reverse('room', args=[group_id]))
 
 @login_required
 def vote_mission(request, group_id):

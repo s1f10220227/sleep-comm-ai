@@ -62,10 +62,18 @@
                                 {% endif %}
                             </div>
                         {% else %}
-                            <p>メンバーが確定してから生成ボタンを押してください</p>
-                            <form action="{% url 'create_missions' group.id %}" method="POST">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-primary">ミッションを生成</button>
+                            <p>参加しているメンバー全員が準備完了し次第、ミッション案を生成します。メンバーが確定してから生成ボタンを押してください。</p>
+                            <form method="post" action="{% url 'toggle_ready' group.id %}">
+                                <div class="d-grid gap-2 m-2">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-info">
+                                        {% if user_ready %}
+                                            準備完了を取り消す
+                                        {% else %}
+                                            準備完了
+                                        {% endif %}
+                                    </button>
+                                </div>
                             </form>
                         {% endif %}
                     {% endif %}
@@ -129,10 +137,18 @@
                                     {% endif %}
                                 </div>
                             {% else %}
-                                <p>メンバーが確定してから生成ボタンを押してください</p>
-                                <form action="{% url 'create_missions' group.id %}" method="POST">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-primary">ミッションを生成</button>
+                                <p>参加しているメンバー全員が準備完了し次第、ミッション案を生成します。メンバーが確定してから生成ボタンを押してください。</p>
+                                <form method="post" action="{% url 'toggle_ready' group.id %}">
+                                    <div class="d-grid gap-2 m-2">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-info">
+                                            {% if user_ready %}
+                                                準備完了を取り消す
+                                            {% else %}
+                                                準備完了
+                                            {% endif %}
+                                        </button>
+                                    </div>
                                 </form>
                             {% endif %}
                         {% endif %}
