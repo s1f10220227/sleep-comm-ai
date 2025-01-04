@@ -38,18 +38,32 @@
                                             </label>
                                         </div>
                                     {% endfor %}
-                                    <button type="submit" class="btn btn-primary">投票する</button>
-                                </form>
+                                    <div class="d-grid gap-2 m-2">
+                                        <button type="submit" class="btn btn-primary">投票する</button>
+                                    </div>
+                                    </form>
+                                {% if messages %}
+                                    <div class="messages">
+                                        {% for message in messages %}
+                                            <div class="alert alert-danger alert-dismissible fade show border mb-0" role="alert">
+                                                {{ message }}
+                                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
                                 {% if is_vote_deadline_passed %}
                                     <form action="{% url 'finalize_mission' group.id %}" method="POST">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-warning">ミッションを確定</button>
+                                        <div class="d-grid gap-2 m-2">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-warning">ミッションを確定</button>
+                                        </div>
                                     </form>
                                 {% endif %}
                             </div>
                         {% else %}
-                            <p>ミッションを生成しましょう</p>
-                            <form action="{% url 'create_missions' group.id %}" name="create_mission" method="POST">
+                            <p>メンバーが確定してから生成ボタンを押してください</p>
+                            <form action="{% url 'create_missions' group.id %}" method="POST">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-primary">ミッションを生成</button>
                             </form>
@@ -91,17 +105,31 @@
                                                 </label>
                                             </div>
                                         {% endfor %}
-                                        <button type="submit" class="btn btn-primary">投票する</button>
-                                    </form>
+                                        <div class="d-grid gap-2 m-2">
+                                            <button type="submit" class="btn btn-primary">投票する</button>
+                                        </div>
+                                        </form>
+                                    {% if messages %}
+                                        <div class="messages">
+                                            {% for message in messages %}
+                                                <div class="alert alert-danger alert-dismissible fade show border mb-0" role="alert">
+                                                    {{ message }}
+                                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
                                     {% if is_vote_deadline_passed %}
                                         <form action="{% url 'finalize_mission' group.id %}" method="POST">
-                                            {% csrf_token %}
-                                            <button type="submit" class="btn btn-warning">ミッションを確定</button>
+                                            <div class="d-grid gap-2 m-2">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-warning">ミッションを確定</button>
+                                            </div>
                                         </form>
                                     {% endif %}
                                 </div>
                             {% else %}
-                                <p>ミッションを生成しましょう</p>
+                                <p>メンバーが確定してから生成ボタンを押してください</p>
                                 <form action="{% url 'create_missions' group.id %}" method="POST">
                                     {% csrf_token %}
                                     <button type="submit" class="btn btn-primary">ミッションを生成</button>
@@ -125,23 +153,23 @@
         <div class="col-md-9 p-2">
             <!-- Messages -->
             <div id="chat-messages" class="flex-grow-1 overflow-auto border rounded p-3" style="height: calc(100vh - 155px);">
-                {% for message in messages %}
+                {% for message in chat_messages %}
                     <div class="message mb-2">
                         <strong class="username text-primary">{{ message.sender.username }}</strong>
                         <small class="timestamp text-muted">{{ message.timestamp|date:"H:i" }}</small>
-                        <p class="mb-0">{{ message.content }}</p>
+                        <p class="mb-0">{{ message.content | urlize | linebreaksbr }}</p>
                     </div>
                 {% endfor %}
             </div>
             <!-- Input Form -->
             <div class="message-input mt-3">
                 <form id="chat-form" class="d-flex">
-                    <input 
+                    <textarea
                         type="text" 
                         id="chat-message-input" 
                         class="form-control me-2" 
                         placeholder="Type a message..."
-                    >
+                    ></textarea>
                     <button type="submit" class="btn btn-primary">Send</button>
                 </form>
             </div>

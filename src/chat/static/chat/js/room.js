@@ -28,9 +28,8 @@ chatSocket.onmessage = function(e) {
 
     // メッセージ本文を作成
     const contentP = document.createElement('p');
-    contentP.innerHTML = parseLinks(data.message); // メッセージ内のリンクを変換
+    contentP.innerHTML = parseLinksAndLineBreaks(data.message); // メッセージ内のリンクと改行を変換
     contentP.className = 'mb-0'
-    contentP.textContent = data.message;
 
     // 作成した要素を親要素に追加
     messageElement.appendChild(usernameSpan);
@@ -60,10 +59,16 @@ document.querySelector('#chat-form').onsubmit = function(e) {
     messageInputDom.value = '';
 };
 
-// メッセージ内のリンクをHTMLリンクに変換
-function parseLinks(message) {
+
+// メッセージ内のリンクと改行をHTMLリンクおよび改行タグに変換
+function parseLinksAndLineBreaks(message) {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
-    return message.replace(urlRegex, function(url) {
+
+    // リンク変換
+    const withLinks = message.replace(urlRegex, function(url) {
         return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
     });
+
+    // 改行変換
+    return withLinks.replace(/\n/g, '<br>');
 }
