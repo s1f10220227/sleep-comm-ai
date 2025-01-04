@@ -64,16 +64,11 @@ def room(request, group_id):
     else:
         is_vote_deadline_passed = False # 投票開始前
 
-    # ミッション生成からの日数を計算
+    # ミッション生成からの日数を計算（初日を1日目とする）
     if latest_mission:
-        days_since_creation = (localtime(timezone.now()).date() - localtime(latest_mission.created_at).date()).days
-        logger.debug(f"localtime(timezone.now()).date() {localtime(timezone.now()).date()}")
-        logger.debug(f"localtime(latest_mission.created_at).date() {localtime(latest_mission.created_at).date()}")
-        logger.debug(f"localtime(timezone.now()).date() - localtime(latest_mission.created_at).date() = {localtime(timezone.now()).date() - localtime(latest_mission.created_at).date()}")
-        logger.debug(f"生成日計算: {days_since_creation}")
+        days_since_creation = (localtime(timezone.now()).date() - localtime(latest_mission.created_at).date()).days + 1
     else:
         days_since_creation = '?'  # ミッションが存在しない場合は?日
-        logger.debug(f"生成日計算: {days_since_creation}")
 
     return render(request, 'chat/room.html', {
         'mission_options': mission_options,
