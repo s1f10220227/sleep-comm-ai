@@ -22,6 +22,7 @@ from django.views.decorators.http import require_POST
 # アプリケーション固有のモジュール
 from .models import Message, Mission, MissionOption, SleepAdvice, Vote
 from groups.models import Group, GroupMember
+from .tasks import send_init_message
 
 # ロガー設定
 logger = logging.getLogger(__name__)
@@ -38,7 +39,7 @@ def room(request, group_id):
     group = get_object_or_404(Group, id=group_id)
     group_members = GroupMember.objects.filter(group=group)
     chat_messages = Message.objects.filter(group=group).order_by('-timestamp')[:50]
-    
+
     # AIアシスタントユーザーの取得または作成
     User = get_user_model()
     ai_user, created = User.objects.get_or_create(username='AI Assistant')
@@ -46,6 +47,12 @@ def room(request, group_id):
     # AIアシスタントがグループのメンバーか確認し、いなければ追加
     if not group_members.filter(user=ai_user).exists():
         GroupMember.objects.create(group=group, user=ai_user)
+
+    # 初期メッセージが送信されているかどうかを確認
+    if not group.init_message_sent:
+        send_init_message.delay(str(group.id))
+        group.init_message_sent = True
+        group.save()
 
     # 最新のミッションを取得
     latest_mission = Mission.objects.filter(group=group).order_by('-created_at').first()

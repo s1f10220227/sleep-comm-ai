@@ -22,6 +22,40 @@ OPENAI_API_BASE = settings.OPENAI_API_BASE
 chat = openai.ChatCompletion
 
 @shared_task
+def send_init_message(group_id):
+    try:
+        channel_layer = get_channel_layer()
+        group = Group.objects.get(id=group_id)
+        room_group_name = f'chat_{group.id}'
+        ai_user = CustomUser.objects.get(username='AI Assistant')
+        message = (
+            "グループへようこそ！私はAIアシスタントです。\n"
+            "このグループでは、メンバーの皆さんと一緒に目標達成を目指していきます。\n"
+        )
+
+        async_to_sync(channel_layer.group_send)(
+            room_group_name,
+            {
+            'type': 'chat_message',
+            'message': message,
+            'username': 'AI Assistant'
+            }
+        )
+
+        Message.objects.create(
+            sender=ai_user,
+            group=group,
+            content=message
+        )
+
+        logger.info(f"Initial messages sent successfully to group {group_id}")
+        return "Initial messages sent successfully"
+
+    except Exception as e:
+        logger.error(f"Error sending initial messages to group {group_id}: {str(e)}")
+        return f"Error sending initial messages: {str(e)}"
+
+@shared_task
 def send_daily_message():
     try:
         channel_layer = get_channel_layer()
