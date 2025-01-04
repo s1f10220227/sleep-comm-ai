@@ -9,7 +9,7 @@ from celery import shared_task
 
 import openai
 
-from .models import Group, Message
+from .models import Group, Message, Mission
 from accounts.models import CustomUser
 
 logger = logging.getLogger(__name__)
@@ -97,15 +97,19 @@ def send_mission_complete_message():
     try:
         channel_layer = get_channel_layer()
         groups = Group.objects.all()
-        current_date = localtime(timezone.now()).date()
+        message = "ミッション達成おめでとうございます"
+        ai_user = CustomUser.objects.get(username='AI Assistant')
 
         for group in groups:
-            if group.latest_mission:  # latest_missionが存在する場合
-                days_since_creation = (current_date - localtime(group.latest_mission.created_at).date()).days + 1
-                if days_since_creation == 3:  # ミッション作成から3日経過
+            # 最新のミッションを取得
+            latest_mission = Mission.objects.filter(group=group).order_by('-created_at').first()
+
+            if latest_mission:
+                days_since_creation = (localtime(timezone.now()).date() - localtime(latest_mission.created_at).date()).days + 1
+
+                if days_since_creation == 2:  # ミッション作成から3日経過
                     room_group_name = f'chat_{group.id}'
-                    message = "ミッション達成おめでとうございます"
-                    ai_user = CustomUser.objects.get(username='AI Assistant')
+
                     async_to_sync(channel_layer.group_send)(
                         room_group_name,
                         {
@@ -114,6 +118,7 @@ def send_mission_complete_message():
                             'username': 'AI Assistant'
                         }
                     )
+
                     Message.objects.create(sender=ai_user, group=group, content=message)
 
         logger.info("Mission complete messages sent successfully")
