@@ -95,6 +95,9 @@ def group_join(request):
             try:
                 # 招待コードでグループを検索
                 group = Group.objects.get(invite_code=invite_code)
+                if group.is_join_closed:
+                    # 参加締め切りの場合の処理
+                    return redirect('home')
                 try:
                     # 現在のユーザーをグループメンバーとして追加
                     GroupMember.objects.create(group=group, user=request.user)
@@ -106,7 +109,7 @@ def group_join(request):
                 pass
         else:
             # メンバーが5人未満のグループにランダム参加
-            group = Group.objects.filter(is_private=False).annotate(member_count=Count('members')).filter(member_count__lt=6).order_by('?').first()
+            group = Group.objects.filter(is_private=False, is_join_closed=False).annotate(member_count=Count('members')).filter(member_count__lt=6).order_by('?').first()
             if group and group.member_count < 6:
                 # 現在のユーザーをグループメンバーとして追加
                 GroupMember.objects.create(group=group, user=request.user)

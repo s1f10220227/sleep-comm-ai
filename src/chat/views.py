@@ -358,6 +358,9 @@ def sleep_q(request):
 @login_required
 def toggle_ready(request, group_id):
     group = get_object_or_404(Group, id=group_id)
+    if group.is_join_closed:
+        messages.error(request, "ミッション生成が開始されているため、準備完了を変更できません。")
+        return redirect(reverse('room', args=[group_id]))
     mission_generate, created = Missiongenerate.objects.get_or_create(group=group)
     user_vote, created = MissiongenerateVote.objects.get_or_create(user=request.user, group=group)
 
@@ -425,7 +428,12 @@ def create_missions(request, group_id):
 
         # 投票締切時刻を現在時刻 + 2時間に設定
         group.vote_deadline = localtime(timezone.now()) + timezone.timedelta(hours=2)
+        group.is_join_closed = True  # 参加を締め切る
         group.save()
+
+        # グループの準備完了をリセット
+        MissiongenerateVote.objects.filter(group=group).delete()
+        Missiongenerate.objects.filter(group=group).delete()
 
     except Exception as e:
         logger.error(f"Error generating missions: {e}")

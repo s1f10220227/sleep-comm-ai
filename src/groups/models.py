@@ -13,6 +13,8 @@ class Group(models.Model):
     invite_code = models.CharField(max_length=100, null=True, blank=True)
     # 締切時刻を保存するフィールド
     vote_deadline = models.DateTimeField(null=True, blank=True)
+    # 参加締め切りのフラグ
+    is_join_closed = models.BooleanField(default=False) 
 
 # グループメンバーモデル
 class GroupMember(models.Model):
