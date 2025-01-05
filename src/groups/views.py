@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Count
 from django.core.exceptions import ValidationError
 from .models import Group, GroupMember
-from chat.models import Message
+from chat.models import Message, Vote
 from chat.views import check_today_data
 
 # HTMLテンプレートをレンダリングするビュー
@@ -127,8 +127,21 @@ def group_leave(request):
             # 現在のユーザーのグループメンバーシップを取得
             group_member = GroupMember.objects.get(user=request.user)
             group = group_member.group
+            
+            # ユーザーの投票を取得
+            existing_vote = Vote.objects.filter(user=request.user, group=group).first()
+
+            if existing_vote:
+                # 投票されている選択肢の票数を減らす
+                existing_vote.mission_option.votes -= 1
+                existing_vote.mission_option.save()
+
+                # ユーザーの投票を削除
+                existing_vote.delete()
+
             # グループメンバーシップを削除
             group_member.delete()
+
             # グループの人数をチェックし、1人以下ならグループを削除 
             if GroupMember.objects.filter(group=group).count() <= 1:
                 group.delete()
