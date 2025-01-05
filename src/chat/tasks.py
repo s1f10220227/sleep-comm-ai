@@ -21,6 +21,7 @@ OPENAI_API_BASE = settings.OPENAI_API_BASE
 # AIモデルの初期化
 chat = openai.ChatCompletion
 
+# グループの初期メッセージを送信
 @shared_task
 def send_init_message(group_id):
     try:
@@ -55,10 +56,11 @@ def send_init_message(group_id):
         logger.error(f"Error sending initial messages to group {group_id}: {str(e)}")
         return f"Error sending initial messages: {str(e)}"
 
+
+# ミッションの説明を送信
 @shared_task
 def send_mission_explanation(group_id, mission_text):
     try:
-        # OpenAI APIでミッションの効果説明を生成
         prompt = (
             f"以下のミッションが睡眠にどのように良い影響を与えるか、その理由と効果を100文字程度で説明してください：\n"
             f"ミッション：{mission_text}\n"
@@ -77,8 +79,7 @@ def send_mission_explanation(group_id, mission_text):
 
         benefits_explanation = response['choices'][0]['message']['content'].strip()
 
-        # 通知メッセージを作成
-        notification_message = (
+        message = (
             f"🎯 新しいミッションが確定されました！『{mission_text}』\n\n"
             f"✨ このミッションの効果：\n"
             f"{benefits_explanation}\n\n"
@@ -86,18 +87,15 @@ def send_mission_explanation(group_id, mission_text):
             f"皆さんの回答をお待ちしています！"
         )
 
-        # グループにメッセージを送信
         group = Group.objects.get(id=group_id)
         ai_user = CustomUser.objects.get(username='AI Assistant')
 
-        # メッセージを作成して保存
         Message.objects.create(
             sender=ai_user,
             group=group,
-            content=notification_message
+            content=message
         )
 
-        # ebSocketを通じて送信
         channel_layer = get_channel_layer()
         room_group_name = f'chat_{group_id}'
 
@@ -105,7 +103,7 @@ def send_mission_explanation(group_id, mission_text):
             room_group_name,
             {
                 'type': 'chat_message',
-                'message': notification_message,
+                'message': message,
                 'username': 'AI Assistant'
             }
         )
@@ -117,12 +115,43 @@ def send_mission_explanation(group_id, mission_text):
         logger.error(f"Error sending mission explanation: {str(e)}")
         return f"Error sending mission explanation: {str(e)}"
 
+
+# 睡眠アンケートを送信
 @shared_task
-def send_daily_message():
+def send_sleep_questionnaire():
     try:
+        prompt = (
+            "睡眠アンケートの依頼メッセージを以下の3つのパートで作成してください：\n"
+            "1. 明るい朝の挨拶\n"
+            "2. 睡眠アンケートへの回答依頼\n"
+            "3. 励ましの締めの言葉\n"
+            "※各パートは簡潔に作成してください。\n"
+            "※適度に絵文字を使用してください。\n"
+            "※全体で100字程度に収めてください。"
+        )
+
+        response = chat.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a friendly sleep coach helping users track their sleep habits."},
+                {"role": "user", "content": prompt}
+            ],
+            api_key=OPENAI_API_KEY,
+            api_base=OPENAI_API_BASE
+        )
+
+        ai_message = response['choices'][0]['message']['content'].strip()
+
+        # アンケートURLを含めた完全なメッセージを構築
+        questionnaire_url = "http://127.0.0.1:8080/chat/sleep_q/"
+        message = (
+            f"{ai_message}\n\n"
+            f"📋 アンケートURL: {questionnaire_url}"
+        )
+
+        # 全グループにメッセージを送信
         channel_layer = get_channel_layer()
         groups = Group.objects.all()
-        message = "http://127.0.0.1:8080/chat/sleep_q/"
         ai_user = CustomUser.objects.get(username='AI Assistant')
 
         for group in groups:
@@ -139,12 +168,13 @@ def send_daily_message():
 
             Message.objects.create(sender=ai_user, group=group, content=message)
 
-        logger.info("Daily message sent successfully")
-        return "Daily message sent successfully"
+        logger.info("Sleep questionnaire sent successfully")
+        return "Sleep questionnaire sent successfully"
 
     except Exception as e:
-        logger.error(f"Error sending daily message: {str(e)}")
-        return f"Error sending daily message: {str(e)}"
+        logger.error(f"Error sending sleep questionnaire: {str(e)}")
+        return f"Error sending sleep questionnaire: {str(e)}"
+
 
 @shared_task
 def send_daily_tips():
@@ -187,6 +217,7 @@ def send_daily_tips():
     except Exception as e:
         logger.error(f"Error sending daily tips: {str(e)}")
         return f"Error sending daily tips: {str(e)}"
+
 
 @shared_task
 def send_mission_complete_message():
