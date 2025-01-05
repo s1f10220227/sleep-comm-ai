@@ -29,17 +29,58 @@ def send_init_message(group_id):
         group = Group.objects.get(id=group_id)
         room_group_name = f'chat_{group.id}'
         ai_user = CustomUser.objects.get(username='AI Assistant')
-        message = (
-            "グループへようこそ！私はAIアシスタントです。\n"
-            "このグループでは、メンバーの皆さんと一緒に目標達成を目指していきます。\n"
+
+        # グループの種類に応じたプロンプトを準備
+        base_prompt = (
+            "以下の内容を含む初期メッセージを作成してください：\n"
+            "1. グループへの歓迎の挨拶\n"
+            "2. AIアシスタントの自己紹介\n"
+            "3. 3日間かけて睡眠改善ミッションに挑戦することの説明\n"
         )
+
+        # プライベートグループの場合
+        if group.is_private:
+            specific_prompt = (
+                "4. 一緒にグループに参加したい人に招待コードを共有し、その人もグループ参加後に左側の「準備完了」ボタンを押すよう案内\n"
+                "5. グループメンバー全員が準備完了となり次第、事前の睡眠アンケートをもとにミッション案が5つ生成されることを説明\n"
+                "6. 誤って「準備完了」ボタンを押してしまった場合は、一度グループを抜けて作り直すか再度参加する必要があることを説明\n"
+                "7. 励ましの締めの言葉\n\n"
+                "※絵文字を適度に使用してください。\n"
+                "※重要な部分は強調してください。\n"
+                "※内容は簡潔に、全体で400字程度に収めてください。"
+            )
+        # パブリックグループの場合
+        else:
+            specific_prompt = (
+                "4. 参加希望者は左側の「準備完了」ボタンを押すよう案内\n"
+                "5. グループメンバー全員が準備完了となり次第、事前の睡眠アンケートをもとにミッション案が5つ生成されることを説明\n"
+                "6. 誤って「準備完了」ボタンを押してしまった場合は、一度グループを抜けて作り直すか再度参加する必要があることを説明\n"
+                "7. 励ましの締めの言葉\n\n"
+                "※絵文字を適度に使用してください。\n"
+                "※重要な部分は強調してください。\n"
+                "※内容は簡潔に、全体で400字程度に収めてください。"
+            )
+
+        prompt = base_prompt + specific_prompt
+
+        response = chat.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a friendly AI assistant that supports group members in improving their sleep."},
+                {"role": "user", "content": prompt}
+            ],
+            api_key=OPENAI_API_KEY,
+            api_base=OPENAI_API_BASE
+        )
+
+        message = response['choices'][0]['message']['content'].strip()
 
         async_to_sync(channel_layer.group_send)(
             room_group_name,
             {
-            'type': 'chat_message',
-            'message': message,
-            'username': 'AI Assistant'
+                'type': 'chat_message',
+                'message': message,
+                'username': 'AI Assistant'
             }
         )
 
