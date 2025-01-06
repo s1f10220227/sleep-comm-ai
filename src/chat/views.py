@@ -22,7 +22,7 @@ from django.views.decorators.http import require_POST
 # アプリケーション固有のモジュール
 from .models import Message, Mission, MissionOption, SleepAdvice, Vote
 from groups.models import Group, GroupMember
-from .tasks import send_init_message, send_mission_explanation
+from .tasks import send_init_message, send_mission_explanation, send_sleep_report
 
 # ロガー設定
 logger = logging.getLogger(__name__)
@@ -222,6 +222,9 @@ def sleep_q(request):
                 topic_question=None,
                 mission_achievement=mission_achievement,
             )
+
+            # グループに睡眠レポートを送信
+            send_sleep_report.delay(request.user.username, group.id)
 
             return redirect('/progress/progress_check/')
 
