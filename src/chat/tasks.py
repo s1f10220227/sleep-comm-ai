@@ -520,3 +520,46 @@ def send_mission_complete_message():
     except Exception as e:
         logger.error(f"Error sending mission complete messages: {str(e)}")
         return f"Error sending mission complete messages: {str(e)}"
+
+
+# グループ解散の関数
+def disband_group(group):
+    try:
+        # グループのメンバーが1人以上いる限り繰り返しメンバーを削除
+        while GroupMember.objects.filter(group=group).exists():
+            group_member = GroupMember.objects.filter(group=group).first()
+            if group_member:
+                group_member.delete()
+        
+        # グループの人数が1人以下になったらグループを削除
+        if GroupMember.objects.filter(group=group).count() <= 1:
+            group.delete()
+        
+        logger.info(f"Group {group.name} (ID: {group.id}) has been disbanded.")
+
+    except GroupMember.DoesNotExist:
+        logger.warning(f"No members found for group {group.name} (ID: {group.id}).")
+
+
+@shared_task
+def check_and_disband_groups():
+    try:
+        groups = Group.objects.all()
+
+        for group in groups:
+            # 最新のミッションを取得
+            latest_mission = Mission.objects.filter(group=group).order_by('-created_at').first()
+
+            if latest_mission:
+                days_since_creation = (localtime(timezone.now()).date() - localtime(latest_mission.created_at).date()).days + 1
+
+                if days_since_creation >= 3:
+                    logger.info(f"Disbanding group {group.name} (ID: {group.id})")
+                    disband_group(group)  # タスクでグループを解散
+
+        logger.info("Checked and disbanded groups successfully")
+        return "Checked and disbanded groups successfully"
+
+    except Exception as e:
+        logger.error(f"Error disbanding groups: {str(e)}")
+        return f"Error disbanding groups: {str(e)}"

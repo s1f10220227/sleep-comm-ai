@@ -28,6 +28,10 @@ app.conf.beat_schedule = {
         'task': 'chat.tasks.send_mission_complete_message',
         'schedule': crontab(hour=15, minute=00),  # 15:00 JST
     },
+    'check-and-disband-groups': {
+        'task': 'chat.tasks.check_and_disband_groups',
+        'schedule': crontab(hour=0, minute=0),  # 0:00 JST
+    }, 
 }
 
 app.conf.timezone = 'Asia/Tokyo'
