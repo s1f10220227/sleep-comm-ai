@@ -295,6 +295,153 @@ def send_sleep_questionnaire():
         return f"Error sending sleep questionnaire: {str(e)}"
 
 
+# グループ睡眠分析を送信
+@shared_task
+def send_group_sleep_analysis():
+    try:
+        current_date = localtime(timezone.now()).date()
+        ai_user = CustomUser.objects.get(username='AI Assistant')
+
+        # 全グループを取得
+        groups = Group.objects.all()
+
+        for group in groups:
+            # 最新のミッションを取得
+            latest_mission = Mission.objects.filter(group=group).order_by('-created_at').first()
+            if not latest_mission:
+                continue
+
+            # ミッション作成からの経過日数を計算
+            days_since_creation = (current_date - localtime(latest_mission.created_at).date()).days + 1
+
+            # 経過日数が1または2の場合のみ処理を実行
+            if days_since_creation not in [1, 2]:
+                continue
+
+            # グループメンバーを取得（AI Assistantを除く）
+            members = GroupMember.objects.filter(group=group).exclude(user=ai_user)
+
+            # グループ分析メッセージを生成
+            message = f"🌟 グループの睡眠状況レポート ({current_date.strftime('%m月%d日')})\n\n"
+
+            # 各メンバーの最新の睡眠アドバイスを取得
+            sleep_data = []
+            reminder_needed = []
+
+            for member in members:
+                latest_advice = SleepAdvice.objects.filter(
+                    user=member.user,
+                    created_at__date__lte=current_date
+                ).order_by('-created_at').first()
+
+                if latest_advice:
+                    days_since_last_report = (current_date - localtime(latest_advice.created_at).date()).days
+
+                    if days_since_last_report >= 1:
+                        reminder_needed.append(member.user.username)
+
+                    # sleep_durationがNoneでない場合のみデータを追加
+                    if latest_advice.sleep_duration is not None:
+                        sleep_data.append({
+                            'username': member.user.username,
+                            'sleep_duration': latest_advice.sleep_duration,
+                            'mission_achievement': latest_advice.mission_achievement,
+                            'sleep_quality': latest_advice.sleep_quality
+                        })
+
+            if not sleep_data:
+                continue
+
+            # 有効な睡眠時間データがあるエントリのみを使用して平均を計算
+            valid_durations = [d['sleep_duration'].total_seconds() for d in sleep_data]
+            if valid_durations:
+                ave_duration = sum(valid_durations) / len(valid_durations)
+                ave_hours = int(ave_duration // 3600)
+                ave_minutes = int((ave_duration % 3600) // 60)
+                message += f"👥 グループの平均睡眠時間: {ave_hours}時間{ave_minutes}分\n\n"
+            else:
+                message += "👥 グループの平均睡眠時間: データなし\n\n"
+
+            # 睡眠時間ランキング（有効なデータのみ）
+            message += "🏆 睡眠時間ランキング:\n"
+            sorted_by_duration = sorted(sleep_data, key=lambda x: x['sleep_duration'].total_seconds(), reverse=True)
+            if sorted_by_duration:
+                for i, data in enumerate(sorted_by_duration, 1):
+                    hours = int(data['sleep_duration'].total_seconds() // 3600)
+                    minutes = int((data['sleep_duration'].total_seconds() % 3600) // 60)
+                    message += f"{i}位: {data['username']} ({hours}時間{minutes}分)\n"
+            else:
+                message += "データなし\n"
+
+            # ミッション達成度ランキング（有効なデータのみ）
+            message += "\n📈 ミッション達成度ランキング:\n"
+            valid_achievement_data = [d for d in sleep_data if d['mission_achievement'] is not None]
+            if valid_achievement_data:
+                sorted_by_achievement = sorted(
+                    valid_achievement_data,
+                    key=lambda x: x['mission_achievement'],
+                    reverse=True
+                )
+                for i, data in enumerate(sorted_by_achievement, 1):
+                    message += f"{i}位: {data['username']} ({dict(SleepAdvice.MISSION_ACHIEVEMENT_CHOICES)[data['mission_achievement']]})\n"
+            else:
+                message += "データなし\n"
+
+            # アドバイスを生成
+            prompt = (
+                f"以下の睡眠データに基づいて、グループ全体の改善点と具体的なアクションプランを1つ簡潔に提案してください：\n"
+                f"- 平均睡眠時間: {ave_hours}時間{ave_minutes}分\n" if valid_durations else "- 平均睡眠時間: データなし\n"
+                f"- メンバー数: {len(sleep_data)}人\n"
+                f"- 現在のミッション: {latest_mission.mission}\n"
+            )
+
+            response = chat.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": "You are a sleep expert providing concise group advice."},
+                    {"role": "user", "content": prompt}
+                ],
+                api_key=OPENAI_API_KEY,
+                api_base=OPENAI_API_BASE
+            )
+
+            message += f"\n💡 改善のアドバイス:\n{response['choices'][0]['message']['content'].strip()}\n"
+
+            # リマインダーメッセージ
+            if reminder_needed:
+                message += f"\n⚠️ アンケート未回答の方へ\n"
+                message += f"以下のメンバーは最新の睡眠アンケートにまだ回答していません：\n"
+                message += ", ".join(reminder_needed)
+                message += "\n回答をお願いします！\n"
+                message += "📋 アンケートURL: http://127.0.0.1:8080/chat/sleep_q/"
+
+            # メッセージを送信
+            Message.objects.create(
+                sender=ai_user,
+                group=group,
+                content=message
+            )
+
+            # WebSocket経由でメッセージを送信
+            channel_layer = get_channel_layer()
+            room_group_name = f'chat_{group.id}'
+            async_to_sync(channel_layer.group_send)(
+                room_group_name,
+                {
+                    'type': 'chat_message',
+                    'message': message,
+                    'username': 'AI Assistant'
+                }
+            )
+
+        logger.info("Group sleep analysis sent successfully")
+        return "Group sleep analysis sent successfully"
+
+    except Exception as e:
+        logger.error(f"Error sending group sleep analysis: {str(e)}")
+        return f"Error sending group sleep analysis: {str(e)}"
+
+
 @shared_task
 def send_daily_tips():
     try:
