@@ -9,7 +9,8 @@ from celery import shared_task
 
 import openai
 
-from .models import Group, Message, Mission
+from .models import Message, SleepAdvice, Mission
+from groups.models import Group, GroupMember
 from accounts.models import CustomUser
 
 logger = logging.getLogger(__name__)
@@ -149,12 +150,89 @@ def send_mission_explanation(group_id, mission_text):
             }
         )
 
+        # ミッション説明送信後、全メンバーの睡眠レポートをグループに送信
+        group_members = GroupMember.objects.filter(group_id=group_id).exclude(user__username='AI Assistant')  # AI Assistantは除外
+        for member in group_members:
+            send_sleep_report.delay(member.user.username, group_id)
+
         logger.info(f"Mission explanation sent successfully for group {group_id}")
         return "Mission explanation sent successfully"
 
     except Exception as e:
         logger.error(f"Error sending mission explanation: {str(e)}")
         return f"Error sending mission explanation: {str(e)}"
+
+
+# グループに睡眠レポートを送信
+@shared_task
+def send_sleep_report(username, group_id):
+    try:
+        user = CustomUser.objects.get(username=username)
+        group = Group.objects.get(id=group_id)
+
+        # 最新の睡眠アドバイスを取得
+        latest_advice = SleepAdvice.objects.filter(user=user).latest('created_at')
+
+        # 睡眠時間を時間と分に変換
+        hours = int(latest_advice.sleep_duration.total_seconds() // 3600)
+        minutes = int((latest_advice.sleep_duration.total_seconds() % 3600) // 60)
+
+        # レポートメッセージの作成
+        report = (
+            f"{user.username}さんの{latest_advice.created_at.strftime('%m月%d日')}の睡眠レポート\n"
+            f"- 就寝時刻: {latest_advice.sleep_time.strftime('%H:%M')}\n"
+            f"- 起床時刻: {latest_advice.wake_time.strftime('%H:%M')}\n"
+            f"- 睡眠時間: {hours}時間{minutes}分\n"
+            f"- 睡眠休養感: {latest_advice.get_sleep_quality_display()}\n"
+            f"- ミッション達成度: {'なし' if latest_advice.mission_achievement is None else latest_advice.get_mission_achievement_display()}\n"
+            f"- 寝る前にやったこと: {latest_advice.pre_sleep_activities}\n"
+        )
+
+        # アドバイスの要約を生成
+        prompt = (
+            f"以下の睡眠アドバイスを1文で要約してください：\n"
+            f"{latest_advice.advice}"
+        )
+
+        response = chat.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a sleep expert who summarizes sleep advice concisely."},
+                {"role": "user", "content": prompt}
+            ],
+            api_key=OPENAI_API_KEY,
+            api_base=OPENAI_API_BASE
+        )
+
+        summary = response['choices'][0]['message']['content'].strip()
+        report += f"一言アドバイス: {summary}"
+
+        # メッセージの作成と送信
+        ai_user = CustomUser.objects.get(username='AI Assistant')
+        Message.objects.create(
+            sender=ai_user,
+            group=group,
+            content=report
+        )
+
+        # WebSocket経由でメッセージを送信
+        channel_layer = get_channel_layer()
+        room_group_name = f'chat_{group_id}'
+        async_to_sync(channel_layer.group_send)(
+            room_group_name,
+            {
+                'type': 'chat_message',
+                'message': report,
+                'username': 'AI Assistant'
+            }
+        )
+
+        logger.info(f"Sleep report sent successfully for user {username}")
+        return "Sleep report sent successfully"
+
+    except Exception as e:
+        logger.error(f"Error sending sleep report: {str(e)}")
+        return f"Error sending sleep report: {str(e)}"
 
 
 # 睡眠アンケートを送信
