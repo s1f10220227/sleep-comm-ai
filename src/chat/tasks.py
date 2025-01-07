@@ -3,6 +3,7 @@ import logging
 from django.conf import settings
 from django.utils import timezone
 from django.utils.timezone import localtime
+from datetime import timedelta
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from celery import shared_task
@@ -162,6 +163,7 @@ def send_mission_explanation(group_id, mission_text):
         return f"Error sending mission explanation: {str(e)}"
 
 
+# 今後の流れを説明する関数
 @shared_task
 def send_future_flow(group_id):
     try:
@@ -578,41 +580,170 @@ def send_mission_related_tips():
         return f"Error sending mission-related tips: {str(e)}"
 
 
+# 3日間の睡眠分析レポートを送信する関数
 @shared_task
-def send_mission_complete_message():
+def send_three_day_sleep_analysis():
     try:
-        channel_layer = get_channel_layer()
-        groups = Group.objects.all()
-        message = "ミッション達成おめでとうございます"
+        current_date = localtime(timezone.now()).date()
         ai_user = CustomUser.objects.get(username='AI Assistant')
+        groups = Group.objects.all()
 
         for group in groups:
             # 最新のミッションを取得
             latest_mission = Mission.objects.filter(group=group).order_by('-created_at').first()
+            if not latest_mission:
+                continue
 
-            if latest_mission:
-                days_since_creation = (localtime(timezone.now()).date() - localtime(latest_mission.created_at).date()).days + 1
+            # ミッション作成からの経過日数を計算
+            days_since_creation = (current_date - localtime(latest_mission.created_at).date()).days + 1
 
-                if days_since_creation == 2:  # ミッション作成から3日経過
-                    room_group_name = f'chat_{group.id}'
+            # 経過日数が3日の場合のみ処理を実行
+            if days_since_creation != 3:
+                continue
 
-                    async_to_sync(channel_layer.group_send)(
-                        room_group_name,
-                        {
-                            'type': 'chat_message',
-                            'message': message,
-                            'username': 'AI Assistant'
+            # グループメンバーを取得（AI Assistantを除く）
+            members = GroupMember.objects.filter(group=group).exclude(user=ai_user)
+
+            message = f"📊 3日間の睡眠状況分析レポート\n"
+            message += f"期間: {(current_date - timedelta(days=2)).strftime('%m/%d')} - {current_date.strftime('%m/%d')}\n\n"
+
+            # 各メンバーの3日分の睡眠データを収集
+            member_data = {}
+            group_daily_data = {
+                current_date - timedelta(days=2): [],  # 一昨日
+                current_date - timedelta(days=1): [],  # 昨日
+                current_date: []                       # 今日
+            }
+
+            for member in members:
+                member_data[member.user.username] = []
+
+                # 3日分のデータを取得
+                for target_date in group_daily_data.keys():
+                    advice = SleepAdvice.objects.filter(
+                        user=member.user,
+                        created_at__date=target_date
+                    ).first()
+
+                    if advice and advice.sleep_duration is not None:
+                        data = {
+                            'date': target_date,
+                            'sleep_duration': advice.sleep_duration,
+                            'mission_achievement': advice.mission_achievement,
+                            'sleep_quality': advice.sleep_quality
                         }
-                    )
+                        member_data[member.user.username].append(data)
+                        group_daily_data[target_date].append(advice.sleep_duration.total_seconds())
 
-                    Message.objects.create(sender=ai_user, group=group, content=message)
+            # 個人ごとの分析
+            message += "👤 個人の睡眠時間推移:\n"
+            for username, data_list in member_data.items():
+                if data_list:
+                    total_seconds = sum(d['sleep_duration'].total_seconds() for d in data_list)
+                    ave_seconds = total_seconds / len(data_list)
+                    ave_hours = int(ave_seconds // 3600)
+                    ave_minutes = int((ave_seconds % 3600) // 60)
 
-        logger.info("Mission complete messages sent successfully")
-        return "Mission complete messages sent successfully"
+                    message += f"\n{username}さん\n"
+                    message += f"3日間の平均睡眠時間: {ave_hours}時間{ave_minutes}分\n"
+
+                    # 日ごとの詳細
+                    for data in data_list:
+                        hours = int(data['sleep_duration'].total_seconds() // 3600)
+                        minutes = int((data['sleep_duration'].total_seconds() % 3600) // 60)
+                        message += f"- {data['date'].strftime('%m/%d')}: {hours}時間{minutes}分\n"
+
+            # グループ全体の分析
+            message += "\n👥 グループ全体の分析:\n"
+
+            # 日ごとの平均睡眠時間
+            for date, durations in group_daily_data.items():
+                if durations:
+                    ave_seconds = sum(durations) / len(durations)
+                    ave_hours = int(ave_seconds // 3600)
+                    ave_minutes = int((ave_seconds % 3600) // 60)
+                    message += f"{date.strftime('%m/%d')}: 平均 {ave_hours}時間{ave_minutes}分\n"
+
+            # 3日間の総合ランキング
+            message += "\n🏆 3日間の総合ランキング:\n"
+
+            # 睡眠時間ランキング
+            ave_sleep_duration = {}
+            for username, data_list in member_data.items():
+                if data_list:
+                    ave_seconds = sum(d['sleep_duration'].total_seconds() for d in data_list) / len(data_list)
+                    ave_sleep_duration[username] = ave_seconds
+
+            if ave_sleep_duration:
+                message += "\n⏰ 平均睡眠時間ランキング:\n"
+                for i, (username, seconds) in enumerate(sorted(ave_sleep_duration.items(), key=lambda x: x[1], reverse=True), 1):
+                    hours = int(seconds // 3600)
+                    minutes = int((seconds % 3600) // 60)
+                    message += f"{i}位: {username} ({hours}時間{minutes}分)\n"
+
+            # ミッション達成度ランキング
+            ave_mission_achievement = {}
+            for username, data_list in member_data.items():
+                valid_achievements = [d['mission_achievement'] for d in data_list if d['mission_achievement'] is not None]
+                if valid_achievements:
+                    ave_mission_achievement[username] = sum(valid_achievements) / len(valid_achievements)
+
+            if ave_mission_achievement:
+                message += "\n🎯 平均ミッション達成度ランキング:\n"
+                for i, (username, score) in enumerate(sorted(ave_mission_achievement.items(), key=lambda x: x[1], reverse=True), 1):
+                    message += f"{i}位: {username} (平均 {score:.1f}点)\n"
+
+            # AIによる分析とアドバイス
+            prompt = (
+                f"以下の3日間の睡眠データを分析し、以前に示していない新しい視点からの分析と具体的なアドバイスを1-2段落で簡潔に提供してください。"
+                f"特に、グループ全体の変化の特徴や、前回と異なる改善ポイントに焦点を当ててください：\n"
+                f"- データ期間: {(current_date - timedelta(days=2)).strftime('%m/%d')} - {current_date.strftime('%m/%d')}\n"
+                f"- 現在のミッション: {latest_mission.mission}\n"
+                f"- グループの平均睡眠時間推移とミッション達成度の平均: {message}\n"
+                f"- メンバー数: {len(member_data)}人\n"
+                f"- 睡眠データ有効件数: {sum(1 for data in member_data.values() if data)}\n"
+                f"※専門的な説明を避け、わかりやすく具体的に説明してください。\n"
+                f"※絵文字を適度に使用してください。\n"
+                f"※重要な部分は強調してください。\n"
+            )
+
+            response = chat.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": "You are a sleep expert providing comprehensive group analysis."},
+                    {"role": "user", "content": prompt}
+                ],
+                api_key=OPENAI_API_KEY,
+                api_base=OPENAI_API_BASE
+            )
+
+            message += f"\n💡 AIによる分析とアドバイス:\n{response['choices'][0]['message']['content'].strip()}"
+
+            # メッセージを送信
+            Message.objects.create(
+                sender=ai_user,
+                group=group,
+                content=message
+            )
+
+            # WebSocket経由でメッセージを送信
+            channel_layer = get_channel_layer()
+            room_group_name = f'chat_{group.id}'
+            async_to_sync(channel_layer.group_send)(
+                room_group_name,
+                {
+                    'type': 'chat_message',
+                    'message': message,
+                    'username': 'AI Assistant'
+                }
+            )
+
+        logger.info("Three-day sleep analysis sent successfully")
+        return "Three-day sleep analysis sent successfully"
 
     except Exception as e:
-        logger.error(f"Error sending mission complete messages: {str(e)}")
-        return f"Error sending mission complete messages: {str(e)}"
+        logger.error(f"Error sending three-day sleep analysis: {str(e)}")
+        return f"Error sending three-day sleep analysis: {str(e)}"
 
 
 # グループ解散の関数

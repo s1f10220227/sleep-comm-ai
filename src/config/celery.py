@@ -13,20 +13,22 @@ app.conf.beat_schedule = {
     # 睡眠アンケートを送信
     'send-sleep-questionnaire': {
         'task': 'chat.tasks.send_sleep_questionnaire',
-        'schedule': crontab(hour=7, minute=00), # 7:00 JST
+        'schedule': crontab(hour=7, minute=0), # 7:00 JST
     },
     # グループ睡眠分析を送信
     'send-group-sleep-analysis': {
         'task': 'chat.tasks.send_group_sleep_analysis',
-        'schedule': crontab(hour=15, minute=00),  # 15:00 JST
+        'schedule': crontab(hour=15, minute=0),  # 15:00 JST
     },
+    # ミッション関連の睡眠豆知識を送信
     'send-mission-related-tips': {
         'task': 'chat.tasks.send_mission_related_tips',
-        'schedule': crontab(hour=18, minute=00), # 18:00 JST
+        'schedule': crontab(hour=18, minute=0), # 18:00 JST
     },
-    'send-mission-complete-message': {
-        'task': 'chat.tasks.send_mission_complete_message',
-        'schedule': crontab(hour=15, minute=00),  # 15:00 JST
+    # 3日間の睡眠分析を送信
+    'send-three-day-sleep-analysis': {
+        'task': 'chat.tasks.send_three_day_sleep_analysis',
+        'schedule': crontab(hour=15, minute=0),  # 15:00 JST
     },
     'check-and-disband-groups': {
         'task': 'chat.tasks.check_and_disband_groups',
