@@ -106,7 +106,10 @@ def send_mission_explanation(group_id, mission_text):
         prompt = (
             f"以下のミッションが睡眠にどのように良い影響を与えるか、その理由と効果を100文字程度で説明してください：\n"
             f"ミッション：{mission_text}\n"
-            f"※専門的な説明を避け、わかりやすく具体的に説明してください。"
+            f"また、このミッションに対して、グループメンバーのモチベーションを高める応援メッセージを50文字程度で作成してください。\n"
+            f"※専門的な説明を避け、わかりやすく具体的に説明してください。\n"
+            f"※絵文字を適度に使用してください。\n"
+            f"※重要な部分は強調してください。\n"
         )
 
         response = chat.create(
@@ -124,9 +127,7 @@ def send_mission_explanation(group_id, mission_text):
         message = (
             f"🎯 新しいミッションが確定されました！『{mission_text}』\n\n"
             f"✨ このミッションの効果：\n"
-            f"{benefits_explanation}\n\n"
-            f"📋 明日朝7時に、睡眠状況とミッションの達成度についてのアンケートが送信されます。"
-            f"皆さんの回答をお待ちしています！"
+            f"{benefits_explanation}"
         )
 
         group = Group.objects.get(id=group_id)
@@ -150,10 +151,8 @@ def send_mission_explanation(group_id, mission_text):
             }
         )
 
-        # ミッション説明送信後、全メンバーの睡眠レポートをグループに送信
-        group_members = GroupMember.objects.filter(group_id=group_id).exclude(user__username='AI Assistant')  # AI Assistantは除外
-        for member in group_members:
-            send_sleep_report.delay(member.user.username, group_id)
+        # ミッション説明を送信した後に、今後の流れを説明
+        send_future_flow.delay(group_id)
 
         logger.info(f"Mission explanation sent successfully for group {group_id}")
         return "Mission explanation sent successfully"
@@ -161,6 +160,70 @@ def send_mission_explanation(group_id, mission_text):
     except Exception as e:
         logger.error(f"Error sending mission explanation: {str(e)}")
         return f"Error sending mission explanation: {str(e)}"
+
+
+@shared_task
+def send_future_flow(group_id):
+    try:
+        prompt = (
+            "グループチャットで睡眠改善ミッションに取り組むメンバーに向けて、以下の点を含めた今後の流れを説明してください：\n"
+            "- この後に私が全員の睡眠アンケートの回答を共有すること\n"
+            "- お互いの睡眠状況を理解し合うこと\n"
+            "- 今日から3日間ミッションに取り組むこと\n"
+            "- 私が2日目と3日目の朝7時に再び睡眠アンケートへの回答をお願いすること\n"
+            "- 私が毎日15時にグループの睡眠状況を共有すること\n"
+            "- 私が1日目と2日目の18時に睡眠に関するトリビアを共有すること\n"
+            "- 最初に自己紹介をしてもらうこと\n"
+            "- `@AI`とメンションすることでいつでも質問や相談ができること\n"
+            "※絵文字を適度に使用してください。\n"
+            "※重要な部分は強調してください。\n"
+            "※最後にメンバーの士気を高めるメッセージを入れてください。\n"
+        )
+
+        response = chat.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a friendly sleep improvement facilitator who explains the program flow."},
+                {"role": "user", "content": prompt}
+            ],
+            api_key=OPENAI_API_KEY,
+            api_base=OPENAI_API_BASE
+        )
+
+        flow_explanation = response['choices'][0]['message']['content'].strip()
+
+        group = Group.objects.get(id=group_id)
+        ai_user = CustomUser.objects.get(username='AI Assistant')
+
+        Message.objects.create(
+            sender=ai_user,
+            group=group,
+            content=flow_explanation
+        )
+
+        channel_layer = get_channel_layer()
+        room_group_name = f'chat_{group_id}'
+
+        async_to_sync(channel_layer.group_send)(
+            room_group_name,
+            {
+                'type': 'chat_message',
+                'message': flow_explanation,
+                'username': 'AI Assistant'
+            }
+        )
+
+        # 今後の流れを説明した後に、全メンバーの睡眠レポートをグループに送信
+        group_members = GroupMember.objects.filter(group_id=group_id).exclude(user__username='AI Assistant')  # AI Assistantは除外
+        for member in group_members:
+            send_sleep_report.delay(member.user.username, group_id)
+
+        logger.info(f"Future flow explanation sent successfully for group {group_id}")
+        return "Future flow explanation sent successfully"
+
+    except Exception as e:
+        logger.error(f"Error sending future flow explanation: {str(e)}")
+        return f"Error sending future flow explanation: {str(e)}"
 
 
 # グループに睡眠レポートを送信する関数
@@ -179,7 +242,7 @@ def send_sleep_report(username, group_id):
 
         # レポートメッセージの作成
         report = (
-            f"{user.username}さんの{latest_advice.created_at.strftime('%m月%d日')}の睡眠レポート\n"
+            f"🌟 {user.username}さんの{latest_advice.created_at.strftime('%m月%d日')}の睡眠レポート\n"
             f"- 就寝時刻: {latest_advice.sleep_time.strftime('%H:%M')}\n"
             f"- 起床時刻: {latest_advice.wake_time.strftime('%H:%M')}\n"
             f"- 睡眠時間: {hours}時間{minutes}分\n"
@@ -205,7 +268,7 @@ def send_sleep_report(username, group_id):
         )
 
         summary = response['choices'][0]['message']['content'].strip()
-        report += f"一言アドバイス: {summary}"
+        report += f"💬 一言アドバイス: {summary}"
 
         # メッセージの作成と送信
         ai_user = CustomUser.objects.get(username='AI Assistant')
