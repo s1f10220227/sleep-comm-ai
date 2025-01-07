@@ -22,7 +22,7 @@ OPENAI_API_BASE = settings.OPENAI_API_BASE
 # AIモデルの初期化
 chat = openai.ChatCompletion
 
-# グループの初期メッセージを送信
+# グループの初期メッセージを送信する関数
 @shared_task
 def send_init_message(group_id):
     try:
@@ -99,7 +99,7 @@ def send_init_message(group_id):
         return f"Error sending initial messages: {str(e)}"
 
 
-# ミッションの説明を送信
+# ミッションの説明を送信する関数
 @shared_task
 def send_mission_explanation(group_id, mission_text):
     try:
@@ -163,7 +163,7 @@ def send_mission_explanation(group_id, mission_text):
         return f"Error sending mission explanation: {str(e)}"
 
 
-# グループに睡眠レポートを送信
+# グループに睡眠レポートを送信する関数
 @shared_task
 def send_sleep_report(username, group_id):
     try:
@@ -235,7 +235,7 @@ def send_sleep_report(username, group_id):
         return f"Error sending sleep report: {str(e)}"
 
 
-# 睡眠アンケートを送信
+# 睡眠アンケートを送信する関数
 @shared_task
 def send_sleep_questionnaire():
     try:
@@ -295,7 +295,7 @@ def send_sleep_questionnaire():
         return f"Error sending sleep questionnaire: {str(e)}"
 
 
-# グループ睡眠分析を送信
+# グループ睡眠分析を送信する関数
 @shared_task
 def send_group_sleep_analysis():
     try:
@@ -442,30 +442,59 @@ def send_group_sleep_analysis():
         return f"Error sending group sleep analysis: {str(e)}"
 
 
+# ミッション関連の睡眠豆知識を送信する関数
 @shared_task
-def send_daily_tips():
+def send_mission_related_tips():
     try:
-        input_message = "睡眠の質を高めるための簡単なTipsや雑学などを教えてください。50字以内でお願いします。"
-        response = chat.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "You are a sleep expert who provides advice on healthy sleep habits."},
-                {"role": "user", "content": input_message}
-            ],
-            api_key=OPENAI_API_KEY,
-            api_base=OPENAI_API_BASE,
-            temperature=0.7,
-        )
-        ai_response = response['choices'][0]['message']['content'].strip()
-        message = "今日の睡眠豆知識\n" + ai_response if ai_response else "睡眠に関するTipsを取得できませんでした。"
-
         ai_user = CustomUser.objects.get(username='AI Assistant')
         groups = Group.objects.all()
         channel_layer = get_channel_layer()
 
         for group in groups:
+            # グループの最新の確定ミッションを取得
+            latest_mission = Mission.objects.filter(
+                group=group,
+                confirmed=True
+            ).order_by('-created_at').first()
+
+            if latest_mission:
+                # ミッション関連のヒントを生成
+                prompt = (
+                    f"以下のミッションに関連する意外な睡眠の豆知識を、絵文字を適度に使用して50文字程度で教えてください。"
+                    f"ミッション：{latest_mission.mission}\n"
+                )
+            else:
+                # ミッションが確定されていないグループには一般的な意外な睡眠のヒントを生成
+                prompt = "意外と知られていない睡眠に関する興味深い豆知識を、絵文字を適度に使用して50文字程度で教えてください。"
+
+            response = chat.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a sleep expert who provides surprising and interesting facts about sleep, "
+                                "especially those related to specific sleep improvement missions."
+                    },
+                    {"role": "user", "content": prompt}
+                ],
+                api_key=OPENAI_API_KEY,
+                api_base=OPENAI_API_BASE,
+            )
+
+            ai_response = response['choices'][0]['message']['content'].strip()
+
+            # ミッション関連か一般的なものかに基づいてメッセージをカスタマイズ
+            if latest_mission:
+                message = (
+                    f"💡 ミッション『{latest_mission.mission}』に関連する今日の睡眠豆知識\n"
+                    f"{ai_response}"
+                )
+            else:
+                message = f"💡 今日の意外な睡眠豆知識\n{ai_response}"
+
             room_group_name = f'chat_{group.id}'
 
+            # WebSocketを通じてメッセージを送信
             async_to_sync(channel_layer.group_send)(
                 room_group_name,
                 {
@@ -475,14 +504,15 @@ def send_daily_tips():
                 }
             )
 
+            # メッセージをデータベースに保存
             Message.objects.create(sender=ai_user, group=group, content=message)
 
-        logger.info("Daily sleep tips sent successfully")
-        return "Daily sleep tips sent successfully"
+        logger.info("Mission-related sleep tips sent successfully")
+        return "Mission-related sleep tips sent successfully"
 
     except Exception as e:
-        logger.error(f"Error sending daily tips: {str(e)}")
-        return f"Error sending daily tips: {str(e)}"
+        logger.error(f"Error sending mission-related tips: {str(e)}")
+        return f"Error sending mission-related tips: {str(e)}"
 
 
 @shared_task

@@ -20,9 +20,9 @@ app.conf.beat_schedule = {
         'task': 'chat.tasks.send_group_sleep_analysis',
         'schedule': crontab(hour=15, minute=00),  # 15:00 JST
     },
-    'send-daily-tips': {
-        'task': 'chat.tasks.send_daily_tips',
-        'schedule': crontab(hour=11, minute=32), # ex. 13:15 JST
+    'send-mission-related-tips': {
+        'task': 'chat.tasks.send_mission_related_tips',
+        'schedule': crontab(hour=18, minute=00), # 18:00 JST
     },
     'send-mission-complete-message': {
         'task': 'chat.tasks.send_mission_complete_message',
@@ -31,7 +31,7 @@ app.conf.beat_schedule = {
     'check-and-disband-groups': {
         'task': 'chat.tasks.check_and_disband_groups',
         'schedule': crontab(hour=0, minute=0),  # 0:00 JST
-    }, 
+    },
 }
 
 app.conf.timezone = 'Asia/Tokyo'
