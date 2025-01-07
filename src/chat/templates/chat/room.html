@@ -49,10 +49,15 @@
                             </div>
                         {% else %}
                             <p>ミッションを生成しましょう</p>
-                            <form action="{% url 'create_missions' group.id %}" name="create_mission" method="POST">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-primary">ミッションを生成</button>
-                            </form>
+                            {% if user_has_create_mission_voted %}
+                                <button type="button" class="btn btn-secondary" disabled>ミッション生成投票済み</button>
+                            {% else %}
+                                <form action="{% url 'create_missions' group.id %}" method="POST">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-primary">ミッションを生成</button>
+                                </form>
+                            {% endif %}
+
                         {% endif %}
                     {% endif %}
                     <p>ミッション生成からの日数: {{ days_since_creation }} 日</p>
@@ -102,10 +107,14 @@
                                 </div>
                             {% else %}
                                 <p>ミッションを生成しましょう</p>
-                                <form action="{% url 'create_missions' group.id %}" method="POST">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-primary">ミッションを生成</button>
-                                </form>
+                                {% if user_has_create_mission_voted %}
+                                    <button type="button" class="btn btn-secondary" disabled>ミッション生成投票済み</button>
+                                {% else %}
+                                    <form action="{% url 'create_missions' group.id %}" method="POST">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-primary">ミッションを生成</button>
+                                    </form>
+                                {% endif %}
                             {% endif %}
                         {% endif %}
                         <p>ミッション生成からの日数: {{ days_since_creation }} 日</p>

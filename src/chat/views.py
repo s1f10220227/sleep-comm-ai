@@ -64,6 +64,9 @@ def room(request, group_id):
     # ユーザーの最新の投票データを取得
     user_vote = Vote.objects.filter(user=request.user, group=group).first()
 
+    # ユーザーがミッション生成ボタンを押したかのステータス取得
+    user_has_create_mission_voted = MissiongenerateVote.objects.filter(user=request.user, group=group).exists()
+
     # 投票締め切りを過ぎているかどうかを計算
     if group.vote_deadline:
         is_vote_deadline_passed = timezone.now() > group.vote_deadline
@@ -92,6 +95,7 @@ def room(request, group_id):
         'days_since_creation': days_since_creation,
         'user_vote': user_vote,
         'is_vote_deadline_passed': is_vote_deadline_passed,
+        'user_has_create_mission_voted': user_has_create_mission_voted,
 })
 
 
@@ -270,6 +274,7 @@ def create_missions(request, group_id):
     mission_generate, created = Missiongenerate.objects.get_or_create(group=group)
     existing_vote = MissiongenerateVote.objects.filter(user=request.user, group=group).first()
     user_has_voted = bool(existing_vote)
+    user_has_create_voted = MissiongenerateVote.objects.filter(user=request.user, group=group).exists()
     if not existing_vote:
         MissiongenerateVote.objects.create(user=request.user, group=group)
         # 新しい投票先の票数を +1 更新
@@ -324,7 +329,7 @@ def create_missions(request, group_id):
             logger.error(f"Error generating missions: {e}")
             return redirect(reverse('room', args=[group_id]))
 
-    return redirect(reverse('room', args=[group_id])+ f'?has_voted={user_has_voted}')
+    return redirect(reverse('room', args=[group_id]))
 
 @login_required
 def vote_mission(request, group_id):
