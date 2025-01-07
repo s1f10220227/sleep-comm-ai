@@ -49,6 +49,7 @@ def send_init_message(group_id):
                 "7. 励ましの締めの言葉\n\n"
                 "※絵文字を適度に使用してください。\n"
                 "※重要な部分は強調してください。\n"
+                "※専門的な表現は避けてください。\n"
                 "※内容は簡潔に、全体で400字程度に収めてください。"
             )
         # パブリックグループの場合
@@ -60,6 +61,7 @@ def send_init_message(group_id):
                 "7. 励ましの締めの言葉\n\n"
                 "※絵文字を適度に使用してください。\n"
                 "※重要な部分は強調してください。\n"
+                "※専門的な表現は避けてください。\n"
                 "※内容は簡潔に、全体で400字程度に収めてください。"
             )
 
@@ -179,7 +181,8 @@ def send_future_flow(group_id):
             "- `@AI`とメンションすることでいつでも質問や相談ができること\n"
             "※絵文字を適度に使用してください。\n"
             "※重要な部分は強調してください。\n"
-            "※最後にメンバーの士気を高めるメッセージを入れてください。\n"
+            "※専門的な表現は避けてください。\n"
+            "※最後にメンバーの士気を高めるメッセージを入れてください。"
         )
 
         response = chat.create(
@@ -740,12 +743,70 @@ def send_three_day_sleep_analysis():
                 }
             )
 
+            # 3日間の睡眠分析レポートを送信した後に、最終メッセージを送信
+            send_final_message(group, latest_mission, ai_user)
+
         logger.info("Three-day sleep analysis sent successfully")
         return "Three-day sleep analysis sent successfully"
 
     except Exception as e:
         logger.error(f"Error sending three-day sleep analysis: {str(e)}")
         return f"Error sending three-day sleep analysis: {str(e)}"
+
+
+# 最終メッセージを送信する関数
+def send_final_message(group, latest_mission, ai_user):
+    try:
+        prompt = (
+            f"3日間の睡眠改善ミッションを完了したグループメンバーへの最終メッセージを作成してください。\n"
+            f"以下の要件を満たしてください:\n"
+            f"1. 過去3日間の努力に労いの言葉をかける\n"
+            f"2. これにてミッション『{latest_mission.mission}』が完了したことを伝える\n"
+            f"3. このグループが今日23:59に解散し、チャット履歴にアクセスできなくなることを警告する\n"
+            f"4. 再度別のミッションに取り組みたい場合は、新しいグループを作成するよう案内する\n"
+            f"5. アプリを評価するよう依頼する (リンク: https://docs.google.com/forms/?authuser=0)\n"
+            f"6. 感謝と締めの言葉で終わる\n"
+            f"※絵文字を適度に使用してください。\n"
+            f"※重要な部分は強調してください。\n"
+            f"※専門的な表現は避けてください。\n"
+            f"※内容は簡潔に、全体で400字程度に収めてください。"
+        )
+
+        response = chat.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are an empathetic assistant creating closing messages for user groups."},
+                {"role": "user", "content": prompt}
+            ],
+            api_key=OPENAI_API_KEY,
+            api_base=OPENAI_API_BASE
+        )
+
+        final_message = response['choices'][0]['message']['content'].strip()
+
+        # メッセージを送信
+        Message.objects.create(
+            sender=ai_user,
+            group=group,
+            content=final_message
+        )
+
+        # WebSocket経由でメッセージを送信
+        channel_layer = get_channel_layer()
+        room_group_name = f'chat_{group.id}'
+        async_to_sync(channel_layer.group_send)(
+            room_group_name,
+            {
+                'type': 'chat_message',
+                'message': final_message,
+                'username': 'AI Assistant'
+            }
+        )
+
+        logger.info(f"Final message sent successfully to group {group.id}")
+
+    except Exception as e:
+        logger.error(f"Error sending final message to group {group.id}: {str(e)}")
 
 
 # グループ解散の関数
