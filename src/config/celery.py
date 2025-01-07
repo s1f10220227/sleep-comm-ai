@@ -20,9 +20,9 @@ app.conf.beat_schedule = {
         'task': 'chat.tasks.send_group_sleep_analysis',
         'schedule': crontab(hour=15, minute=0),  # 15:00 JST
     },
-    # ミッション関連の睡眠豆知識を送信
-    'send-mission-related-tips': {
-        'task': 'chat.tasks.send_mission_related_tips',
+    # 睡眠豆知識を送信
+    'send-sleep-tips': {
+        'task': 'chat.tasks.send_sleep_tips',
         'schedule': crontab(hour=18, minute=0), # 18:00 JST
     },
     # 3日間の睡眠分析を送信

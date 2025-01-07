@@ -507,10 +507,11 @@ def send_group_sleep_analysis():
         return f"Error sending group sleep analysis: {str(e)}"
 
 
-# ミッション関連の睡眠豆知識を送信する関数
+# 睡眠豆知識を送信する関数
 @shared_task
-def send_mission_related_tips():
+def send_sleep_tips():
     try:
+        current_date = localtime(timezone.now()).date()
         ai_user = CustomUser.objects.get(username='AI Assistant')
         groups = Group.objects.all()
         channel_layer = get_channel_layer()
@@ -523,14 +524,23 @@ def send_mission_related_tips():
             ).order_by('-created_at').first()
 
             if latest_mission:
+                # ミッション作成からの経過日数を計算
+                days_since_creation = (current_date - localtime(latest_mission.created_at).date()).days + 1
+
+                # 経過日数が1または2の場合のみ処理を実行
+                if days_since_creation not in [1, 2]:
+                    continue
+
                 # ミッション関連のヒントを生成
                 prompt = (
                     f"以下のミッションに関連する意外な睡眠の豆知識を、絵文字を適度に使用して50文字程度で教えてください。"
                     f"ミッション：{latest_mission.mission}\n"
                 )
+                message_prefix = f"💡 ミッション『{latest_mission.mission}』に関連する今日の睡眠豆知識\n"
             else:
                 # ミッションが確定されていないグループには一般的な意外な睡眠のヒントを生成
                 prompt = "意外と知られていない睡眠に関する興味深い豆知識を、絵文字を適度に使用して50文字程度で教えてください。"
+                message_prefix = "💡 今日の睡眠豆知識\n"
 
             response = chat.create(
                 model="gpt-4o-mini",
@@ -547,15 +557,7 @@ def send_mission_related_tips():
             )
 
             ai_response = response['choices'][0]['message']['content'].strip()
-
-            # ミッション関連か一般的なものかに基づいてメッセージをカスタマイズ
-            if latest_mission:
-                message = (
-                    f"💡 ミッション『{latest_mission.mission}』に関連する今日の睡眠豆知識\n"
-                    f"{ai_response}"
-                )
-            else:
-                message = f"💡 今日の意外な睡眠豆知識\n{ai_response}"
+            message = message_prefix + ai_response
 
             room_group_name = f'chat_{group.id}'
 
@@ -572,12 +574,12 @@ def send_mission_related_tips():
             # メッセージをデータベースに保存
             Message.objects.create(sender=ai_user, group=group, content=message)
 
-        logger.info("Mission-related sleep tips sent successfully")
-        return "Mission-related sleep tips sent successfully"
+        logger.info("Sleep tips sent successfully")
+        return "Sleep tips sent successfully"
 
     except Exception as e:
-        logger.error(f"Error sending mission-related tips: {str(e)}")
-        return f"Error sending mission-related tips: {str(e)}"
+        logger.error(f"Error sending sleep tips : {str(e)}")
+        return f"Error sending sleep tips : {str(e)}"
 
 
 # 3日間の睡眠分析レポートを送信する関数
