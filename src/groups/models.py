@@ -15,6 +15,8 @@ class Group(models.Model):
     vote_deadline = models.DateTimeField(null=True, blank=True)
     # 初期メッセージを送信したかどうかを示すフラグ
     init_message_sent = models.BooleanField(default=False)
+    # 参加締め切りのフラグ
+    is_join_closed = models.BooleanField(default=False) 
 
 # グループメンバーモデル
 class GroupMember(models.Model):

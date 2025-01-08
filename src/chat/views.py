@@ -1,6 +1,7 @@
 # 標準ライブラリ
 import logging
-from datetime import datetime, date, timedelta
+from datetime import date, datetime, timedelta
+import json
 
 # サードパーティライブラリ
 import markdown
@@ -11,6 +12,8 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
+from django.db.models import F
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -20,7 +23,10 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 # アプリケーション固有のモジュール
-from .models import Message, Mission, MissionOption, SleepAdvice, Vote
+from .models import (
+    Message, Mission, MissionOption, SleepAdvice, Vote, 
+    Missiongenerate, MissiongenerateVote
+)
 from groups.models import Group, GroupMember
 from .tasks import send_init_message, send_mission_explanation, send_sleep_report
 
@@ -65,6 +71,15 @@ def room(request, group_id):
     # ユーザーの最新の投票データを取得
     user_vote = Vote.objects.filter(user=request.user, group=group).first()
 
+    # ユーザーの準備完了データを取得
+    user_ready = MissiongenerateVote.objects.filter(user=request.user, group=group).exists()
+
+    # 準備完了しているメンバーのリストを取得
+    ready_members = MissiongenerateVote.objects.filter(group=group).values_list('user', flat=True)
+    ready_members_list = User.objects.filter(id__in=ready_members)
+    ready_count = ready_members_list.count() 
+    total_members = group_members.count() - 1  # AI Assistantを除く
+
     # 投票締め切りを過ぎているかどうかを計算
     if group.vote_deadline:
         is_vote_deadline_passed = timezone.now() > group.vote_deadline
@@ -88,6 +103,10 @@ def room(request, group_id):
         'days_since_creation': days_since_creation,
         'user_vote': user_vote,
         'is_vote_deadline_passed': is_vote_deadline_passed,
+        'user_ready': user_ready,
+        'ready_count': ready_count,
+        'total_members': total_members,
+        'ready_members_list': ready_members_list,
 })
 
 # AIモデルの初期化
@@ -339,7 +358,33 @@ def sleep_q(request):
             return redirect('/progress/progress_check/')
 
         return render(request, 'chat/pre_sleep_q.html', {'advice': advice})
+    
+# ミッション生成の準備完了をトグルするビュー
+@login_required
+def toggle_ready(request, group_id):
+    group = get_object_or_404(Group, id=group_id)
+    if group.is_join_closed:
+        messages.error(request, "ミッション生成が開始されているため、準備完了を変更できません。")
+        return redirect(reverse('room', args=[group_id]))
+    mission_generate, created = Missiongenerate.objects.get_or_create(group=group)
+    user_vote, created = MissiongenerateVote.objects.get_or_create(user=request.user, group=group)
 
+    if created:
+        # 新しい投票先の票数を +1 更新
+        mission_generate.votes = F('votes') + 1
+        mission_generate.save()
+    else:
+        # 既存の投票を削除
+        user_vote.delete()
+        mission_generate.votes = F('votes') - 1
+        mission_generate.save()
+
+    if check_all_MissiongenerateVote_completed(group):
+        create_missions(request, group_id)
+
+    return redirect(reverse('room', args=[group_id]))
+
+# ミッションを生成するビュー
 @login_required
 def create_missions(request, group_id):
     group = get_object_or_404(Group, id=group_id)
@@ -388,7 +433,12 @@ def create_missions(request, group_id):
 
         # 投票締切時刻を現在時刻 + 2時間に設定
         group.vote_deadline = localtime(timezone.now()) + timezone.timedelta(hours=2)
+        group.is_join_closed = True  # 参加を締め切る
         group.save()
+
+        # グループの準備完了をリセット
+        MissiongenerateVote.objects.filter(group=group).delete()
+        Missiongenerate.objects.filter(group=group).delete()
 
     except Exception as e:
         logger.error(f"Error generating missions: {e}")
@@ -396,6 +446,7 @@ def create_missions(request, group_id):
 
     return redirect(reverse('room', args=[group_id]))
 
+# ミッション案の投票を行うビュー
 @login_required
 def vote_mission(request, group_id):
     group = get_object_or_404(Group, id=group_id)
@@ -458,6 +509,7 @@ def vote_mission(request, group_id):
 
     return redirect(reverse('room', args=[group_id]))
 
+# ミッション案を確定するビュー
 @login_required
 def confirm_mission(request, group_id):
     group = get_object_or_404(Group, id=group_id)
@@ -472,6 +524,13 @@ def confirm_mission(request, group_id):
         # 確認後、同じページへリダイレクト
         return redirect(reverse('room', args=[group_id]))
 
+# ミッション生成前の全員が「準備完了」をおしているか管理する関数
+def check_all_MissiongenerateVote_completed(group):
+    total_members = group.members.count()
+    total_votes = MissiongenerateVote.objects.filter(group=group).count()
+    return total_votes >= total_members - 1 # AI Assistantは投票しないため-1
+
+# ミッション生成後の全員が投票しているか管理する関数
 def check_all_votes_completed(group):
     total_members = group.members.count()
     total_votes = Vote.objects.filter(group=group).count()
