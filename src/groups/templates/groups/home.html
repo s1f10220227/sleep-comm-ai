@@ -21,17 +21,19 @@
               <h2>グループの情報</h2>
             </div>
             <div class="card-body">
-              <p><strong>ミッション：</strong> </p>
-              <p><strong>グループの種類：</strong>
-                {% if group.is_private %}
-                  プライベート
-                {% else %}
-                  パブリック
-                {% endif %}
+              <p>ミッション：<strong>{{ mission.mission }}</strong> </p>
+              <p>グループの種類：
+                <strong>
+                  {% if group.is_private %}
+                    プライベート
+                  {% else %}
+                    パブリック
+                  {% endif %}
+                </strong>
               </p>
               {% if group.invite_code %}
                 <!-- グループがプライベートで招待コードがある場合の表示 -->
-                <p><strong>招待コード：</strong> {{ group.invite_code }}</p>
+                <p>招待コード：<strong>{{ group.invite_code }}</strong></p>
               {% endif %}
             </div>
             <div class="card-footer">
@@ -122,7 +124,21 @@
             <h2>本日の回答</h2>
           </div>
           <div class="card-body">
-            <p>回答状況：{{ advice }}</p>
+            {% if has_answered_today %}
+              <p>回答状況：<strong>回答済み</strong></p>
+              <p>就寝時刻：<strong>{{ answer.sleep_time }}</strong></p>
+              <p>起床時刻：<strong>{{ answer.wake_time }}</strong></p>
+              <p>睡眠時間：<strong>{{ answer.sleep_duration }}</strong></p>
+              <p>睡眠の質：<strong>{{ answer.sleep_quality }}</strong></p>
+              <p>寝る前にやったこと：<strong>{{ answer.pre_sleep_activities }}</strong></p>
+              {% if is_member %}
+                <p>ミッション達成度：<strong>{{ answer.mission_achievement }}</strong></p>
+              {% else %}
+                <p>取り組みたいこと：<strong>{{ answer.topic_question }}</strong></p>
+              {% endif %}
+            {% else %}
+              <p>回答状況：<strong>未回答</strong></p>
+            {% endif %}
           </div>
           <div class="card-footer">
             <div class="d-grid gap-2">
@@ -141,8 +157,10 @@
             <ul class="list-group">
               {% for group in groups %}
                 <li class="list-group-item">
-                  <strong>ミッション：</strong> <br>
-                  <strong>メンバー：</strong>
+                  {% with group_mission=group_missions|get_item:group.id %}
+                    ミッション：<strong>{{ group_mission.mission }}</strong> <br>
+                  {% endwith %}
+                  メンバー：
                   <ul>
                     {% with members=group_members|get_item:group.id %}
                       {% for member in members %}
