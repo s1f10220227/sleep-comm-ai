@@ -62,10 +62,3 @@ def privacy_policy(request):
     return render(request, 'accounts/privacy_policy.html')
 
 # プライバシーポリシーページのビューです。単に`accounts/privacy_policy.html`テンプレートを表示します。
-
-@login_required
-def profile(request):
-    return render(request, 'accounts/profile.html')
-
-# プロフィールページのビューです。特に追加の処理はなく、
-# 単に`accounts/profile.html`テンプレートを表示します。
