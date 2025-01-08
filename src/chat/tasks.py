@@ -823,7 +823,7 @@ def disband_groups():
             if latest_mission:
                 days_since_creation = (localtime(timezone.now()).date() - localtime(latest_mission.created_at).date()).days + 1
 
-                if days_since_creation == 3:  # 3日目のグループを対象
+                if days_since_creation >= 3:  # 3日目のグループを対象
                     groups_to_disband = True  # 3日目のグループが存在
                     try:
                         # グループのメンバーが存在する限り、メンバーを削除
