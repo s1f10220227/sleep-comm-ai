@@ -14,12 +14,22 @@
     </title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous" />
     <!-- スタイリングのためのBootstrap CSSへのリンク -->
+    <style>
+      .navbar-tagline {
+        display: block; /* ブロック要素として表示 */
+        font-size: 0.8rem; /* 小さめのフォントサイズ */
+        color: #6c757d; /* グレーの色 */
+      }
+    </style>
   </head>
   <body>
     <nav class="navbar navbar-expand-lg bg-body-tertiary">
       <!-- ライト背景のナビバーコンポーネント -->
       <div class="container-fluid">
-        <a class="navbar-brand" href="{% url 'home' %}">Navbar</a>
+        <a class="navbar-brand" href="{% url 'home' %}">
+          SomNet
+          <span class="navbar-tagline">AIと睡眠を改善するコミュニティ</span>
+        </a>
         <!-- ダッシュボードへのブランドリンク -->
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
         <!-- 小さな画面でナビバーを切り替えるためのボタン -->
