@@ -28,6 +28,7 @@ from .models import (
     Missiongenerate, MissiongenerateVote
 )
 from groups.models import Group, GroupMember
+from .tasks import send_init_message, send_mission_explanation, send_sleep_report
 
 # ロガー設定
 logger = logging.getLogger(__name__)
@@ -44,7 +45,7 @@ def room(request, group_id):
     group = get_object_or_404(Group, id=group_id)
     group_members = GroupMember.objects.filter(group=group)
     chat_messages = Message.objects.filter(group=group).order_by('-timestamp')[:50]
-    
+
     # AIアシスタントユーザーの取得または作成
     User = get_user_model()
     ai_user, created = User.objects.get_or_create(username='AI Assistant')
@@ -52,6 +53,12 @@ def room(request, group_id):
     # AIアシスタントがグループのメンバーか確認し、いなければ追加
     if not group_members.filter(user=ai_user).exists():
         GroupMember.objects.create(group=group, user=ai_user)
+
+    # 初期メッセージが送信されているかどうかを確認
+    if not group.init_message_sent:
+        send_init_message.delay(str(group.id))  # 初期メッセージを送信
+        group.init_message_sent = True
+        group.save()
 
     # 最新のミッションを取得
     latest_mission = Mission.objects.filter(group=group).order_by('-created_at').first()
@@ -79,16 +86,11 @@ def room(request, group_id):
     else:
         is_vote_deadline_passed = False # 投票開始前
 
-    # ミッション生成からの日数を計算
+    # ミッション生成からの日数を計算（初日を1日目とする）
     if latest_mission:
-        days_since_creation = (localtime(timezone.now()).date() - localtime(latest_mission.created_at).date()).days
-        logger.debug(f"localtime(timezone.now()).date() {localtime(timezone.now()).date()}")
-        logger.debug(f"localtime(latest_mission.created_at).date() {localtime(latest_mission.created_at).date()}")
-        logger.debug(f"localtime(timezone.now()).date() - localtime(latest_mission.created_at).date() = {localtime(timezone.now()).date() - localtime(latest_mission.created_at).date()}")
-        logger.debug(f"生成日計算: {days_since_creation}")
+        days_since_creation = (localtime(timezone.now()).date() - localtime(latest_mission.created_at).date()).days + 1
     else:
-        days_since_creation = '?'  # ミッションが存在しない場合は?日
-        logger.debug(f"生成日計算: {days_since_creation}")
+        days_since_creation = '-'  # ミッションが存在しない場合は-日目と表示
 
     return render(request, 'chat/room.html', {
         'mission_options': mission_options,
@@ -182,7 +184,7 @@ def sleep_q(request):
             if mission_achievements:
                 mission_achievement_trend = "向上傾向" if int(mission_achievement) > mission_achievements[-1] else "低下傾向"
 
-            user_input = (
+            prompt = (
                 f"以下の情報に基づいて睡眠アドバイスを簡潔に提供してください：\n\n"
                 f"1. 本日の睡眠状況：\n"
                 f"- 就寝時刻：{sleep_time}\n"
@@ -196,15 +198,15 @@ def sleep_q(request):
 
             # 履歴データがある場合のみ傾向情報を追加
             if len(historical_data) > 0:
-                user_input += (
+                prompt += (
                     f"- 睡眠時間の傾向：{sleep_duration_trend}\n"
                     f"- 睡眠休養感の傾向：{sleep_quality_trend}\n"
                     f"- ミッション達成度の傾向：{mission_achievement_trend}\n"
                 )
             else:
-                user_input += "※ まだ過去のデータがないため、傾向分析はできません。本日のデータのみに基づいてアドバイスを簡潔に提供してください。\n"
+                prompt += "※ まだ過去のデータがないため、傾向分析はできません。本日のデータのみに基づいてアドバイスを簡潔に提供してください。\n"
 
-            user_input += (
+            prompt += (
                 f"- 本日のミッション達成度：{dict(SleepAdvice.MISSION_ACHIEVEMENT_CHOICES)[int(mission_achievement)]}\n\n"
                 f"これらの情報を総合的に分析し、以下の構成でアドバイスを簡潔に提供してください：\n"
                 f"1. 現状の睡眠パターンの評価\n"
@@ -219,7 +221,7 @@ def sleep_q(request):
                 model="gpt-4o-mini",
                 messages=[
                     {"role": "system", "content": "You are a sleep expert who provides advice on healthy sleep habits."},
-                    {"role": "user", "content": user_input}
+                    {"role": "user", "content": prompt}
                 ],
                 api_key=OPENAI_API_KEY,
                 api_base=OPENAI_API_BASE
@@ -239,6 +241,9 @@ def sleep_q(request):
                 topic_question=None,
                 mission_achievement=mission_achievement,
             )
+
+            # グループに睡眠レポートを送信
+            send_sleep_report.delay(request.user.username, group.id)
 
             return redirect('/progress/progress_check/')
 
@@ -297,7 +302,7 @@ def sleep_q(request):
             if sleep_qualities:
                 sleep_quality_trend = "改善傾向" if int(sleep_quality) > sleep_qualities[-1] else "悪化傾向"
 
-            user_input = (
+            prompt = (
                 f"以下の情報に基づいて睡眠アドバイスを簡潔に提供してください：\n\n"
                 f"1. 本日の睡眠状況：\n"
                 f"- 就寝時刻：{sleep_time}\n"
@@ -311,14 +316,14 @@ def sleep_q(request):
 
             # 履歴データがある場合のみ傾向情報を追加
             if len(historical_data) > 0:
-                user_input += (
+                prompt += (
                     f"- 睡眠時間の傾向：{sleep_duration_trend}\n"
                     f"- 睡眠休養感の傾向：{sleep_quality_trend}\n"
                 )
             else:
-                user_input += "※ まだ過去のデータがないため、傾向分析はできません。本日のデータのみに基づいてアドバイスを簡潔に提供してください。\n"
+                prompt += "※ まだ過去のデータがないため、傾向分析はできません。本日のデータのみに基づいてアドバイスを簡潔に提供してください。\n"
 
-            user_input += (
+            prompt += (
                 f"\nこれらの情報を総合的に分析し、以下の構成でアドバイスを簡潔に提供してください：\n"
                 f"1. 現状の睡眠パターンの評価\n"
                 f"2. 改善が必要な点\n"
@@ -330,7 +335,7 @@ def sleep_q(request):
                 model="gpt-4o-mini",
                 messages=[
                     {"role": "system", "content": "You are a sleep expert who provides advice on healthy sleep habits."},
-                    {"role": "user", "content": user_input}
+                    {"role": "user", "content": prompt}
                 ],
                 api_key=OPENAI_API_KEY,
                 api_base=OPENAI_API_BASE
@@ -490,13 +495,17 @@ def vote_mission(request, group_id):
 
         # ミッションを確定
         if top_voted_option and not Mission.objects.filter(group=group, confirmed=True).exists():
-            Mission.objects.create(
-                mission=top_voted_option.text,
-                group=group,
-                confirmed=True
-            )
+            mission = Mission.objects.create(
+            mission=top_voted_option.text,
+            group=group,
+            confirmed=True
+        )
 
-            MissionOption.objects.filter(group=group).delete()
+        # ミッション案を削除
+        MissionOption.objects.filter(group=group).delete()
+
+        # ミッションの説明を送信
+        send_mission_explanation.delay(group.id, mission.mission)
 
     return redirect(reverse('room', args=[group_id]))
 
@@ -511,6 +520,7 @@ def confirm_mission(request, group_id):
         if latest_mission:
             latest_mission.confirmed = True
             latest_mission.save()
+
         # 確認後、同じページへリダイレクト
         return redirect(reverse('room', args=[group_id]))
 
@@ -530,14 +540,21 @@ def check_all_votes_completed(group):
 def finalize_mission(request, group_id):
     group = get_object_or_404(Group, id=group_id)
     top_voted_option = MissionOption.objects.filter(group=group).order_by('-votes', '?').first()
+
     # ミッションを確定
     if top_voted_option and not Mission.objects.filter(group=group, confirmed=True).exists():
-        Mission.objects.create(
+        mission = Mission.objects.create(
             mission=top_voted_option.text,
             group=group,
             confirmed=True
         )
+
+        # ミッション案を削除
         MissionOption.objects.filter(group=group).delete()
+
+        # ミッションの説明を送信
+        send_mission_explanation.delay(group.id, mission.mission)
+
     return redirect(reverse('room', args=[group_id]))
 
 @login_required

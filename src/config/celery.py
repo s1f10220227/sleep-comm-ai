@@ -10,13 +10,30 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 app.autodiscover_tasks()
 
 app.conf.beat_schedule = {
-    'send-daily-message': {
-        'task': 'chat.tasks.send_daily_message',
-        'schedule': crontab(hour=11, minute=32), # ex. 13:15 JST
+    # 睡眠アンケートを送信
+    'send-sleep-questionnaire': {
+        'task': 'chat.tasks.send_sleep_questionnaire',
+        'schedule': crontab(hour=7, minute=0), # 7:00 JST
     },
-    'send-daily-tips': {
-        'task': 'chat.tasks.send_daily_tips',
-        'schedule': crontab(hour=11, minute=32), # ex. 13:15 JST
+    # グループ睡眠分析を送信
+    'send-group-sleep-analysis': {
+        'task': 'chat.tasks.send_group_sleep_analysis',
+        'schedule': crontab(hour=15, minute=0),  # 15:00 JST
+    },
+    # 睡眠豆知識を送信
+    'send-sleep-tips': {
+        'task': 'chat.tasks.send_sleep_tips',
+        'schedule': crontab(hour=18, minute=0), # 18:00 JST
+    },
+    # 3日間の睡眠分析を送信
+    'send-three-day-sleep-analysis': {
+        'task': 'chat.tasks.send_three_day_sleep_analysis',
+        'schedule': crontab(hour=15, minute=0),  # 15:00 JST
+    },
+    # グループを解散
+    'disband-groups': {
+        'task': 'chat.tasks.disband_groups',
+        'schedule': crontab(hour=23, minute=59),  # 23:59 JST
     },
 }
 

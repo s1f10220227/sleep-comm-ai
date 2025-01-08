@@ -83,10 +83,10 @@
                             </form>
                         {% endif %}
                     {% endif %}
-                    <p>ミッション生成からの日数: {{ days_since_creation }} 日</p>
+                    <p>ミッション{{ days_since_creation }}日目</p>
                 </div>
             </div>
-        
+
             <!-- スマートフォンサイズ: タブ表示 -->
             <div class="d-block d-md-none">
                 <ul class="nav nav-tabs" id="mobileTabs" role="tablist">
@@ -97,7 +97,7 @@
                         <button class="nav-link" id="members-tab" data-bs-toggle="tab" data-bs-target="#members" type="button" role="tab" aria-controls="members" aria-selected="false">メンバー</button>
                     </li>
                 </ul>
-        
+
                 <div class="tab-content p-1" id="mobileTabsContent">
                     <!-- タブ1: ミッション -->
                     <div class="tab-pane fade show active" id="mission" role="tabpanel" aria-labelledby="mission-tab">
@@ -159,7 +159,7 @@
                                 </form>
                             {% endif %}
                         {% endif %}
-                        <p>ミッション生成からの日数: {{ days_since_creation }} 日</p>
+                        <p>ミッション{{ days_since_creation }}日目</p>
                     </div>
                     <!-- タブ2: メンバー -->
                     <div class="tab-pane fade" id="members" role="tabpanel" aria-labelledby="members-tab">
@@ -194,9 +194,9 @@
             <div class="message-input mt-3">
                 <form id="chat-form" class="d-flex">
                     <textarea
-                        type="text" 
-                        id="chat-message-input" 
-                        class="form-control me-2" 
+                        type="text"
+                        id="chat-message-input"
+                        class="form-control me-2"
                         placeholder="Type a message..."
                     ></textarea>
                     <button type="submit" class="btn btn-primary">Send</button>
