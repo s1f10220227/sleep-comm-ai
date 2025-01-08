@@ -809,29 +809,12 @@ def send_final_message(group, latest_mission, ai_user):
         logger.error(f"Error sending final message to group {group.id}: {str(e)}")
 
 
-# グループ解散の関数
-def disband_group(group):
-    try:
-        # グループのメンバーが1人以上いる限り繰り返しメンバーを削除
-        while GroupMember.objects.filter(group=group).exists():
-            group_member = GroupMember.objects.filter(group=group).first()
-            if group_member:
-                group_member.delete()
-        
-        # グループの人数が1人以下になったらグループを削除
-        if GroupMember.objects.filter(group=group).count() <= 1:
-            group.delete()
-        
-        logger.info(f"Group {group.name} (ID: {group.id}) has been disbanded.")
-
-    except GroupMember.DoesNotExist:
-        logger.warning(f"No members found for group {group.name} (ID: {group.id}).")
-
-
+# グループを解散する関数
 @shared_task
-def check_and_disband_groups():
+def disband_groups():
     try:
         groups = Group.objects.all()
+        groups_to_disband = False  # 3日目のグループ存在フラグ
 
         for group in groups:
             # 最新のミッションを取得
@@ -840,13 +823,30 @@ def check_and_disband_groups():
             if latest_mission:
                 days_since_creation = (localtime(timezone.now()).date() - localtime(latest_mission.created_at).date()).days + 1
 
-                if days_since_creation >= 3:
-                    logger.info(f"Disbanding group {group.name} (ID: {group.id})")
-                    disband_group(group)  # タスクでグループを解散
+                if days_since_creation == 3:  # 3日目のグループを対象
+                    groups_to_disband = True  # 3日目のグループが存在
+                    try:
+                        # グループのメンバーが存在する限り、メンバーを削除
+                        while GroupMember.objects.filter(group=group).exists():
+                            group_member = GroupMember.objects.filter(group=group).first()
+                            if group_member:
+                                group_member.delete()
 
-        logger.info("Checked and disbanded groups successfully")
-        return "Checked and disbanded groups successfully"
+                        # メンバーが1人以下になったらグループを削除
+                        if GroupMember.objects.filter(group=group).count() <= 1:
+                            group.delete()
+                            logger.info(f"Group {group.id} has been disbanded after 3 days")
+
+                    except GroupMember.DoesNotExist:
+                        logger.warning(f"No members found for group {group.id}")
+
+        if not groups_to_disband:
+            logger.info("No groups to disband on day 3")
+        else:
+            logger.info("Group disbanding completed successfully")
+
+        return "Group disbanding completed successfully"
 
     except Exception as e:
-        logger.error(f"Error disbanding groups: {str(e)}")
-        return f"Error disbanding groups: {str(e)}"
+        logger.error(f"Error group disbanding: {str(e)}")
+        return f"Error group disbanding: {str(e)}"
