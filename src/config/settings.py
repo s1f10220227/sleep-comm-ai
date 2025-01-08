@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'channels',
     'chat',
     'results',
+    'import_export'
 ]
 
 MIDDLEWARE = [
