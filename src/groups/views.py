@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Count
 from django.core.exceptions import ValidationError
 from .models import Group, GroupMember
-from chat.models import Message
+from chat.models import Message, Mission, SleepAdvice, Vote
 from chat.views import check_today_data
 
 # HTMLテンプレートをレンダリングするビュー
@@ -17,33 +17,55 @@ def home(request):
             # 参加しているグループの情報を取得
             group_member = GroupMember.objects.get(user=request.user)
             group = group_member.group
+            mission = Mission.objects.filter(group=group).order_by('-created_at').first()
             # 最新のメッセージを取得
             latest_message = Message.objects.filter(group=group).order_by('-timestamp').first()
             # パブリックグループとメンバーの一覧を取得（最大10件）
             groups = Group.objects.filter(is_private=False).exclude(id=group.id)[:10]
             group_members = {g.id: GroupMember.objects.filter(group=g) for g in groups}
-            advice = check_today_data(request.user)
-            # グループ情報と最新のメッセージ、他のグループとメンバーの一覧を含むテンプレートをレンダリング
-            return render(request, 'groups/home.html', {
+            group_missions = {g.id: Mission.objects.filter(group=g).order_by('-created_at').first() for g in groups}
+            has_answered_today = check_today_data(request.user)
+
+            response_data = {
                 'group': group,
+                'mission': mission,
                 'is_member': True,
                 'latest_message': latest_message,
                 'groups': groups,
                 'group_members': group_members,
-                'advice': advice
-            })
+                'group_missions': group_missions,
+                'has_answered_today': has_answered_today
+            }
+
+            # 今日の質問に回答済みの場合、回答を取得
+            if has_answered_today:
+                answer = SleepAdvice.objects.filter(user=request.user).order_by('-created_at').first()
+                response_data['answer'] = answer
+
+            # グループ情報と最新のメッセージ、他のグループとメンバーの一覧を含むテンプレートをレンダリング
+            return render(request, 'groups/home.html', response_data)
         else:
             # パブリックグループとメンバーの一覧を取得（最大10件）
             groups = Group.objects.filter(is_private=False)[:10]
             group_members = {g.id: GroupMember.objects.filter(group=g) for g in groups}
-            advice = check_today_data(request.user)
-            # グループメニューのテンプレートをレンダリング
-            return render(request, 'groups/home.html', {
+            group_missions = {g.id: Mission.objects.filter(group=g).order_by('-created_at').first() for g in groups}
+            has_answered_today = check_today_data(request.user)
+
+            response_data = {
                 'is_member': False,
                 'groups': groups,
                 'group_members': group_members,
-                'advice': advice
-            })
+                'group_missions': group_missions,
+                'has_answered_today': has_answered_today
+            }
+
+            # 今日の質問に回答済みの場合、回答を取得
+            if has_answered_today:
+                answer = SleepAdvice.objects.filter(user=request.user).order_by('-created_at').first()
+                response_data['answer'] = answer
+
+            # グループメニューのテンプレートをレンダリング
+            return render(request, 'groups/home.html', response_data)
     else:
         # ユーザーが認証されていない場合
         return render(request, 'groups/home.html')
@@ -95,6 +117,9 @@ def group_join(request):
             try:
                 # 招待コードでグループを検索
                 group = Group.objects.get(invite_code=invite_code)
+                if group.is_join_closed:
+                    # 参加締め切りの場合の処理
+                    return redirect('home')
                 try:
                     # 現在のユーザーをグループメンバーとして追加
                     GroupMember.objects.create(group=group, user=request.user)
@@ -106,7 +131,7 @@ def group_join(request):
                 pass
         else:
             # メンバーが5人未満のグループにランダム参加
-            group = Group.objects.filter(is_private=False).annotate(member_count=Count('members')).filter(member_count__lt=6).order_by('?').first()
+            group = Group.objects.filter(is_private=False, is_join_closed=False).annotate(member_count=Count('members')).filter(member_count__lt=6).order_by('?').first()
             if group and group.member_count < 6:
                 # 現在のユーザーをグループメンバーとして追加
                 GroupMember.objects.create(group=group, user=request.user)
@@ -124,8 +149,21 @@ def group_leave(request):
             # 現在のユーザーのグループメンバーシップを取得
             group_member = GroupMember.objects.get(user=request.user)
             group = group_member.group
+            
+            # ユーザーの投票を取得
+            existing_vote = Vote.objects.filter(user=request.user, group=group).first()
+
+            if existing_vote:
+                # 投票されている選択肢の票数を減らす
+                existing_vote.mission_option.votes -= 1
+                existing_vote.mission_option.save()
+
+                # ユーザーの投票を削除
+                existing_vote.delete()
+
             # グループメンバーシップを削除
             group_member.delete()
+
             # グループの人数をチェックし、1人以下ならグループを削除 
             if GroupMember.objects.filter(group=group).count() <= 1:
                 group.delete()

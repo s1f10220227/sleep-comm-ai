@@ -14,7 +14,12 @@
                     <h5>メンバー</h5>
                     <ul id="member-list" class="list-group">
                         {% for member in group_members %}
-                            <li class="list-group-item p-2">{{ member.user.username }}</li>
+                            <li class="list-group-item p-2">
+                                {{ member.user.username }}
+                                {% if member.user in ready_members_list %}
+                                    <span class="badge badge-success">準備完了</span>
+                                {% endif %}
+                            </li>
                         {% endfor %}
                     </ul>
                 </div>
@@ -62,17 +67,26 @@
                                 {% endif %}
                             </div>
                         {% else %}
-                            <p>メンバーが確定してから生成ボタンを押してください</p>
-                            <form action="{% url 'create_missions' group.id %}" method="POST">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-primary">ミッションを生成</button>
+                            <p>参加しているメンバー全員が準備完了し次第、ミッション案を生成します。メンバーが確定してから準備完了ボタンを押してください。</p>
+                            <p>{{ ready_count }} / {{ total_members }} 人が準備完了</p>
+                            <form method="post" action="{% url 'toggle_ready' group.id %}">
+                                <div class="d-grid gap-2 m-2">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-info">
+                                        {% if user_ready %}
+                                            準備完了を取り消す
+                                        {% else %}
+                                            準備完了
+                                        {% endif %}
+                                    </button>
+                                </div>
                             </form>
                         {% endif %}
                     {% endif %}
-                    <p>ミッション生成からの日数: {{ days_since_creation }} 日</p>
+                    <p>ミッション{{ days_since_creation }}日目</p>
                 </div>
             </div>
-        
+
             <!-- スマートフォンサイズ: タブ表示 -->
             <div class="d-block d-md-none">
                 <ul class="nav nav-tabs" id="mobileTabs" role="tablist">
@@ -83,7 +97,7 @@
                         <button class="nav-link" id="members-tab" data-bs-toggle="tab" data-bs-target="#members" type="button" role="tab" aria-controls="members" aria-selected="false">メンバー</button>
                     </li>
                 </ul>
-        
+
                 <div class="tab-content p-1" id="mobileTabsContent">
                     <!-- タブ1: ミッション -->
                     <div class="tab-pane fade show active" id="mission" role="tabpanel" aria-labelledby="mission-tab">
@@ -129,20 +143,35 @@
                                     {% endif %}
                                 </div>
                             {% else %}
-                                <p>メンバーが確定してから生成ボタンを押してください</p>
-                                <form action="{% url 'create_missions' group.id %}" method="POST">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-primary">ミッションを生成</button>
+                                <p>参加しているメンバー全員が準備完了し次第、ミッション案を生成します。メンバーが確定してから準備完了ボタンを押してください。</p>
+                                <p>{{ ready_count }} / {{ total_members }} 人が準備完了</p>
+                                <form method="post" action="{% url 'toggle_ready' group.id %}">
+                                    <div class="d-grid gap-2 m-2">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-info">
+                                            {% if user_ready %}
+                                                準備完了を取り消す
+                                            {% else %}
+                                                準備完了
+                                            {% endif %}
+                                        </button>
+                                    </div>
                                 </form>
                             {% endif %}
                         {% endif %}
-                        <p>ミッション生成からの日数: {{ days_since_creation }} 日</p>
+                        <p>ミッション{{ days_since_creation }}日目</p>
                     </div>
                     <!-- タブ2: メンバー -->
                     <div class="tab-pane fade" id="members" role="tabpanel" aria-labelledby="members-tab">
+                        <h5>メンバー</h5>
                         <ul id="member-list" class="list-group">
                             {% for member in group_members %}
-                                <li class="list-group-item p-2">{{ member.user.username }}</li>
+                                <li class="list-group-item p-2">
+                                    {{ member.user.username }}
+                                    {% if member.user in ready_members_list %}
+                                        <span class="badge badge-success">準備完了</span>
+                                    {% endif %}
+                                </li>
                             {% endfor %}
                         </ul>
                     </div>
@@ -165,9 +194,9 @@
             <div class="message-input mt-3">
                 <form id="chat-form" class="d-flex">
                     <textarea
-                        type="text" 
-                        id="chat-message-input" 
-                        class="form-control me-2" 
+                        type="text"
+                        id="chat-message-input"
+                        class="form-control me-2"
                         placeholder="Type a message..."
                     ></textarea>
                     <button type="submit" class="btn btn-primary">Send</button>
