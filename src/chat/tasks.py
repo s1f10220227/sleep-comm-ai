@@ -330,7 +330,7 @@ def send_sleep_questionnaire():
         ai_message = response['choices'][0]['message']['content'].strip()
 
         # アンケートURLを含めた完全なメッセージを構築
-        questionnaire_url = "http://127.0.0.1:8080/chat/sleep_q/"
+        questionnaire_url = "https://som-net.net/chat/sleep_q/"
         message = (
             f"{ai_message}\n\n"
             f"📋 アンケートURL: {questionnaire_url}"
@@ -481,7 +481,7 @@ def send_group_sleep_analysis():
                 message += f"以下のメンバーは最新の睡眠アンケートにまだ回答していません：\n"
                 message += ", ".join(reminder_needed)
                 message += "\n回答をお願いします！\n"
-                message += "📋 アンケートURL: http://127.0.0.1:8080/chat/sleep_q/"
+                message += "📋 アンケートURL: https://som-net.net/chat/sleep_q/"
 
             # メッセージを送信
             Message.objects.create(
@@ -764,7 +764,7 @@ def send_final_message(group, latest_mission, ai_user):
             f"2. これにてミッション『{latest_mission.mission}』が完了したことを伝える\n"
             f"3. このグループが今日23:59に解散し、チャット履歴にアクセスできなくなることを警告する\n"
             f"4. 再度別のミッションに取り組みたい場合は、新しいグループを作成するよう案内する\n"
-            f"5. アプリを評価するよう依頼する (リンク: https://docs.google.com/forms/?authuser=0)\n"
+            f"5. アプリを評価するよう依頼する (リンク: https://forms.gle/YAYNxvyAkGyMgbnD6)\n"
             f"6. 感謝と締めの言葉で終わる\n"
             f"※絵文字を適度に使用してください。\n"
             f"※重要な部分は強調してください。\n"
