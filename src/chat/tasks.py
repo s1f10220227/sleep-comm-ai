@@ -762,8 +762,10 @@ def send_final_message(group, latest_mission, ai_user):
             f"以下の要件を満たしてください:\n"
             f"1. 過去3日間の努力に労いの言葉をかける\n"
             f"2. これにてミッション『{latest_mission.mission}』が完了したことを伝える\n"
-            f"3. このグループが今日23:59に解散し、チャット履歴にアクセスできなくなることを警告する\n"
-            f"4. 再度別のミッションに取り組みたい場合は、新しいグループを作成するよう案内する\n"
+            # f"3. このグループが今日23:59に解散し、チャット履歴にアクセスできなくなることを警告する\n"
+            f"3. 本来は、このグループは今日23:59に解散し、チャット履歴にアクセスできなくなるが、今は成果報告用のデータとして残すためにグループは解散されないことを伝える\n"
+            # f"4. 再度別のミッションに取り組みたい場合は、新しいグループを作成するよう案内する\n"
+            f"4. 今後数日間、引き続き睡眠アンケート用のURLが送信されるが、無視してもらっても構わないことを伝える\n"
             f"5. アプリを評価するよう依頼する (リンク: https://forms.gle/YAYNxvyAkGyMgbnD6)\n"
             f"6. 感謝と締めの言葉で終わる\n"
             f"※絵文字を適度に使用してください。\n"
@@ -810,43 +812,43 @@ def send_final_message(group, latest_mission, ai_user):
 
 
 # グループを解散する関数
-@shared_task
-def disband_groups():
-    try:
-        groups = Group.objects.all()
-        groups_to_disband = False  # 3日目のグループ存在フラグ
+# @shared_task
+# def disband_groups():
+#     try:
+#         groups = Group.objects.all()
+#         groups_to_disband = False  # 3日目のグループ存在フラグ
 
-        for group in groups:
-            # 最新のミッションを取得
-            latest_mission = Mission.objects.filter(group=group).order_by('-created_at').first()
+#         for group in groups:
+#             # 最新のミッションを取得
+#             latest_mission = Mission.objects.filter(group=group).order_by('-created_at').first()
 
-            if latest_mission:
-                days_since_creation = (localtime(timezone.now()).date() - localtime(latest_mission.created_at).date()).days + 1
+#             if latest_mission:
+#                 days_since_creation = (localtime(timezone.now()).date() - localtime(latest_mission.created_at).date()).days + 1
 
-                if days_since_creation >= 3:  # 3日目のグループを対象
-                    groups_to_disband = True  # 3日目のグループが存在
-                    try:
-                        # グループのメンバーが存在する限り、メンバーを削除
-                        while GroupMember.objects.filter(group=group).exists():
-                            group_member = GroupMember.objects.filter(group=group).first()
-                            if group_member:
-                                group_member.delete()
+#                 if days_since_creation >= 3:  # 3日目のグループを対象
+#                     groups_to_disband = True  # 3日目のグループが存在
+#                     try:
+#                         # グループのメンバーが存在する限り、メンバーを削除
+#                         while GroupMember.objects.filter(group=group).exists():
+#                             group_member = GroupMember.objects.filter(group=group).first()
+#                             if group_member:
+#                                 group_member.delete()
 
-                        # メンバーが1人以下になったらグループを削除
-                        if GroupMember.objects.filter(group=group).count() <= 1:
-                            group.delete()
-                            logger.info(f"Group {group.id} has been disbanded after 3 days")
+#                         # メンバーが1人以下になったらグループを削除
+#                         if GroupMember.objects.filter(group=group).count() <= 1:
+#                             group.delete()
+#                             logger.info(f"Group {group.id} has been disbanded after 3 days")
 
-                    except GroupMember.DoesNotExist:
-                        logger.warning(f"No members found for group {group.id}")
+#                     except GroupMember.DoesNotExist:
+#                         logger.warning(f"No members found for group {group.id}")
 
-        if not groups_to_disband:
-            logger.info("No groups to disband on day 3")
-        else:
-            logger.info("Group disbanding completed successfully")
+#         if not groups_to_disband:
+#             logger.info("No groups to disband on day 3")
+#         else:
+#             logger.info("Group disbanding completed successfully")
 
-        return "Group disbanding completed successfully"
+#         return "Group disbanding completed successfully"
 
-    except Exception as e:
-        logger.error(f"Error group disbanding: {str(e)}")
-        return f"Error group disbanding: {str(e)}"
+#     except Exception as e:
+#         logger.error(f"Error group disbanding: {str(e)}")
+#         return f"Error group disbanding: {str(e)}"
