@@ -31,10 +31,10 @@ app.conf.beat_schedule = {
         'schedule': crontab(hour=15, minute=0),  # 15:00 JST
     },
     # グループを解散
-    'disband-groups': {
-        'task': 'chat.tasks.disband_groups',
-        'schedule': crontab(hour=23, minute=59),  # 23:59 JST
-    },
+    # 'disband-groups': {
+    #     'task': 'chat.tasks.disband_groups',
+    #     'schedule': crontab(hour=23, minute=59),  # 23:59 JST
+    # },
 }
 
 app.conf.timezone = 'Asia/Tokyo'
