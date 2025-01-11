@@ -40,6 +40,16 @@ def home(request):
             # 今日の質問に回答済みの場合、回答を取得
             if has_answered_today:
                 answer = SleepAdvice.objects.filter(user=request.user).order_by('-created_at').first()
+
+                # 睡眠時間を時間と分に変換
+                total_seconds = answer.sleep_duration.total_seconds()
+                hours = int(total_seconds // 3600)
+                minutes = int((total_seconds % 3600) // 60)
+
+                # 時間計算の結果を追加
+                answer.hours = hours
+                answer.minutes = minutes
+
                 response_data['answer'] = answer
 
             # グループ情報と最新のメッセージ、他のグループとメンバーの一覧を含むテンプレートをレンダリング
@@ -149,7 +159,7 @@ def group_leave(request):
             # 現在のユーザーのグループメンバーシップを取得
             group_member = GroupMember.objects.get(user=request.user)
             group = group_member.group
-            
+
             # ユーザーの投票を取得
             existing_vote = Vote.objects.filter(user=request.user, group=group).first()
 
@@ -164,7 +174,7 @@ def group_leave(request):
             # グループメンバーシップを削除
             group_member.delete()
 
-            # グループの人数をチェックし、1人以下ならグループを削除 
+            # グループの人数をチェックし、1人以下ならグループを削除
             if GroupMember.objects.filter(group=group).count() <= 1:
                 group.delete()
         except GroupMember.DoesNotExist:

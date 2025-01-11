@@ -130,11 +130,11 @@
               <p>回答状況：<strong>回答済み</strong></p>
               <p>就寝時刻：<strong>{{ answer.sleep_time }}</strong></p>
               <p>起床時刻：<strong>{{ answer.wake_time }}</strong></p>
-              <p>睡眠時間：<strong>{{ answer.sleep_duration }}</strong></p>
-              <p>睡眠の質：<strong>{{ answer.sleep_quality }}</strong></p>
+              <p>睡眠時間：<strong>{{ answer.hours }}時間{{ answer.minutes }}分</strong></p>
+              <p>睡眠休養感：<strong>{{ answer.get_sleep_quality_display }}</strong></p>
               <p>寝る前にやったこと：<strong>{{ answer.pre_sleep_activities }}</strong></p>
               {% if is_member %}
-                <p>ミッション達成度：<strong>{{ answer.mission_achievement }}</strong></p>
+              <p>ミッション達成度：<strong>{{ answer.get_mission_achievement_display|default:"なし" }}</strong></p>
               {% else %}
                 <p>取り組みたいこと：<strong>{{ answer.topic_question }}</strong></p>
               {% endif %}
