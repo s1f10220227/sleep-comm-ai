@@ -20,29 +20,6 @@ def float_to_time_str(value):
     minutes = int((value - hours) * 60)
     return f"{hours:02d}:{minutes:02d}"
 
-# 睡眠時間を計算する関数
-def calculate_sleep_duration(sleep_time, wake_time, date):
-    if sleep_time is None or wake_time is None:
-        return 0
-
-    # 同じ日の日付で結合
-    sleep_datetime = datetime.combine(date, sleep_time)
-    wake_datetime = datetime.combine(date, wake_time)
-
-    # 起床時刻が就寝時刻よりも早い場合は翌日の起床とみなす
-    if wake_datetime < sleep_datetime:
-        wake_datetime += timedelta(days=1)
-
-    # 睡眠時間を計算
-    duration = wake_datetime - sleep_datetime
-    duration_hours = duration.total_seconds() / 3600
-
-    # 負の値を回避
-    if duration_hours < 0:
-        return 0
-
-    return duration_hours
-
 # Plotlyを用いてグラフを生成する関数
 def generate_plot(start_week, dates, values, ylabel, title, plot_type='scatter', special_case=None):
     fig = go.Figure()
@@ -157,13 +134,12 @@ def sleep_data(request):
             data = sleep_data_dict[date]
             sleep_times.append(data.sleep_time)
             wake_times.append(data.wake_time)
-            duration = calculate_sleep_duration(data.sleep_time, data.wake_time, date)
+            duration = data.sleep_duration.total_seconds() / 3600 if data.sleep_duration else None
             durations.append(duration)
         else:
             sleep_times.append(None)
             wake_times.append(None)
             durations.append(None)
-
 
     show = request.GET.get('show', 'duration')
     context = {}
