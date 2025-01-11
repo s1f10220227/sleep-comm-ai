@@ -4,6 +4,8 @@
 {% load custom_filters %}
 <!-- 他のパブリックグループのメンバーを表示するために使うカスタムフィルター -->
 
+{% load markdown_extras %}
+
 {% block title %}
   SomNet | ホーム
 {% endblock %}
@@ -57,7 +59,7 @@
               <!-- グループチャットの最新メッセージ表示 -->
               <h3>最新のメッセージ</h3>
               {% if latest_message %}
-                <p class="card-text"><strong>{{ latest_message.sender.username }}</strong>: {{ latest_message.content }}</p>
+                <p class="card-text"><strong>{{ latest_message.sender.username }}</strong>: {{ latest_message.content | markdown | urlize }}</p>
               {% else %}
                 <p class="card-text">まだメッセージがありません。</p>
               {% endif %}
