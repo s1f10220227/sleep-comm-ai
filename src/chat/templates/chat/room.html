@@ -32,7 +32,8 @@
                         {% if has_mission_options %}
                             <div class="mission-generated">
                                 <p>全員が投票を完了し次第、ミッションが確定されます</p>
-                                <p>投票が完了しない場合、{{ group.vote_deadline|localtime }}以降、確定ボタンで確定することも可能です。</p>
+                                <p>※投票していない人がいる場合、{{ group.vote_deadline|localtime }}以降、確定ボタンで確定することも可能です。</p>
+                                <p>※投票数が同じミッションがある場合、その中からランダムでミッションが確定されます。</p>
                                 <form action="{% url 'vote_mission' group.id %}" method="POST">
                                     {% csrf_token %}
                                     {% for option in mission_options %}
@@ -108,7 +109,8 @@
                             {% if has_mission_options %}
                                 <div class="mission-generated">
                                     <p>全員が投票を完了し次第、ミッションが確定されます</p>
-                                    <p>投票が完了しない場合、{{ group.vote_deadline|localtime }}以降、確定ボタンで確定することも可能です。</p>
+                                    <p>※投票していない人がいる場合、{{ group.vote_deadline|localtime }}以降、確定ボタンで確定することも可能です。</p>
+                                    <p>※投票数が同じミッションがある場合、その中からランダムでミッションが確定されます</p>
                                     <form action="{% url 'vote_mission' group.id %}" method="POST">
                                         {% csrf_token %}
                                         {% for option in mission_options %}

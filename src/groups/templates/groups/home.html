@@ -82,7 +82,7 @@
                 {% csrf_token %}
                 <div class="form-check">
                   <input type="checkbox" class="form-check-input" id="is_private" name="is_private">
-                  <label for="is_private" class="form-check-label"><strong>プライベートグループ</strong>（プライベートグループは招待コードを知っている人だけが参加できるグループです。）</label>
+                  <label for="is_private" class="form-check-label"><strong>プライベートグループにする</strong>（招待コードを知っている人だけが参加できるグループです）</label>
                 </div>
               </form>
             </div>
@@ -103,7 +103,7 @@
               <form id="join-group-form" method="post" action="{% url 'group_join' %}">
                 {% csrf_token %}
                 <div class="mb-3">
-                  <label for="invite_code" class="form-label"><strong>招待コード</strong>（招待コードを持っている場合は入力してください。入力しない場合は、パブリックグループにランダムに参加します。）
+                  <label for="invite_code" class="form-label"><strong>招待コード</strong>を持っている場合はここに入力してください。入力しない場合は、パブリックグループにランダムに参加します。
                   </label>
                   <input type="text" class="form-control" id="invite_code" name="invite_code">
                 </div>
