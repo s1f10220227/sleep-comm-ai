@@ -245,7 +245,7 @@ def sleep_q(request):
             # グループに睡眠レポートを送信
             send_sleep_report.delay(request.user.username, group.id)
 
-            return redirect('/progress/progress_check/')
+            return redirect('/progress/sleep_data/')
 
         return render(request, 'chat/sleep_q.html', {
             'advice': advice,
@@ -355,7 +355,7 @@ def sleep_q(request):
                 topic_question=topic_question,
             )
 
-            return redirect('/progress/progress_check/')
+            return redirect('/progress/sleep_data/')
 
         return render(request, 'chat/pre_sleep_q.html', {'advice': advice})
 

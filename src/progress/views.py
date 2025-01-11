@@ -129,7 +129,7 @@ def generate_plot(start_week, dates, values, ylabel, title, plot_type='scatter',
     return pio.to_html(fig, full_html=False)
 
 @login_required
-def progress_check(request):
+def sleep_data(request):
     """進捗チェックページの表示"""
     user = request.user
     logger.debug(f"User: {user}")
@@ -224,5 +224,5 @@ def progress_check(request):
         'next_week': next_week.strftime('%Y-%m-%d'),
     })
 
-    logger.debug("Rendering progress_check.html template with context.")
-    return render(request, 'progress/progress_check.html', context)
+    logger.debug("Rendering sleep_data.html template with context.")
+    return render(request, 'progress/sleep_data.html', context)
