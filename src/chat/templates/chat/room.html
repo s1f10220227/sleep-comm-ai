@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load tz %}
+{% load markdown_extras %}
 
 {% block title %}SomNet | グループチャット{% endblock %}
 
@@ -186,7 +187,7 @@
                     <div class="message mb-2">
                         <strong class="username text-primary">{{ message.sender.username }}</strong>
                         <small class="timestamp text-muted">{{ message.timestamp|date:"H:i" }}</small>
-                        <p class="mb-0">{{ message.content | urlize | linebreaksbr }}</p>
+                        <p class="mb-0">{{ message.content | markdown | urlize }}</p>
                     </div>
                 {% endfor %}
             </div>
