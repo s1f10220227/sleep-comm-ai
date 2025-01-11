@@ -24,7 +24,13 @@ chatSocket.onmessage = function(e) {
     // タイムスタンプを作成
     const timestampSpan = document.createElement('small');
     timestampSpan.className = 'timestamp text-muted';
-    timestampSpan.textContent = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    const now = new Date();
+    const formattedDate = now.getFullYear() + '-' +
+                        String(now.getMonth() + 1).padStart(2, '0') + '-' +
+                        String(now.getDate()).padStart(2, '0') + ' ' +
+                        String(now.getHours()).padStart(2, '0') + ':' +
+                        String(now.getMinutes()).padStart(2, '0');
+    timestampSpan.textContent = formattedDate;
 
     // メッセージ本文を作成
     const contentP = document.createElement('p');
