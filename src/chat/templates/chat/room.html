@@ -31,14 +31,14 @@
                     {% else %}
                         {% if has_mission_options %}
                             <div class="mission-generated">
-                                <p>全員が投票を完了し次第、ミッションが確定されます</p>
+                                <p>全員が投票を完了し次第、ミッションが確定されます。</p>
                                 <p>※投票していない人がいる場合、{{ group.vote_deadline|localtime }}以降、確定ボタンで確定することも可能です。</p>
                                 <p>※投票数が同じミッションがある場合、その中からランダムでミッションが確定されます。</p>
                                 <form action="{% url 'vote_mission' group.id %}" method="POST">
                                     {% csrf_token %}
                                     {% for option in mission_options %}
                                         <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="selected_mission" value="{{ option.id }}"
+                                            <input class="form-check-input" type="radio" name="selected_mission" value="{{ option.id }}" id="mission-option-{{ option.id }}"
                                                 {% if user_vote and user_vote.mission_option.id == option.id %}checked{% endif %}>
                                             <label class="form-check-label" for="mission-option-{{ option.id }}">
                                                 {{ option.text }} ({{ option.votes }} 票)
@@ -108,14 +108,14 @@
                         {% else %}
                             {% if has_mission_options %}
                                 <div class="mission-generated">
-                                    <p>全員が投票を完了し次第、ミッションが確定されます</p>
+                                    <p>全員が投票を完了し次第、ミッションが確定されます。</p>
                                     <p>※投票していない人がいる場合、{{ group.vote_deadline|localtime }}以降、確定ボタンで確定することも可能です。</p>
-                                    <p>※投票数が同じミッションがある場合、その中からランダムでミッションが確定されます</p>
+                                    <p>※投票数が同じミッションがある場合、その中からランダムでミッションが確定されます。</p>
                                     <form action="{% url 'vote_mission' group.id %}" method="POST">
                                         {% csrf_token %}
                                         {% for option in mission_options %}
                                             <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="selected_mission" value="{{ option.id }}"
+                                                <input class="form-check-input" type="radio" name="selected_mission" value="{{ option.id }}" id="mission-option-{{ option.id }}"
                                                     {% if user_vote and user_vote.mission_option.id == option.id %}checked{% endif %}>
                                                 <label class="form-check-label" for="mission-option-{{ option.id }}">
                                                     {{ option.text }} ({{ option.votes }} 票)
