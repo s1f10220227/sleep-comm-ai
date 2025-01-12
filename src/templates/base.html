@@ -3,116 +3,113 @@
 <html lang="ja" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <!-- ドキュメントの文字エンコーディングをUTF-8に設定 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- モバイルデバイスでの適切な表示とタッチズームを確保 -->
     <title>
         {% block title %}
-            <!-- 各ページのタイトルのプレースホルダー -->
             SomNet
         {% endblock %}
     </title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
-    <!-- スタイリングのためのBootstrap CSSへのリンク -->
     <style>
-      body {
-          background-color: #0d1117;
-          color: #ffffff;
-      }
+        body {
+            background-color: #0d1117;
+            color: #ffffff;
+        }
 
-      .navbar-tagline {
-          display: block;
-          font-size: 0.8rem;
-          color: #8b949e;
-      }
+        .navbar-tagline {
+            display: block;
+            font-size: 0.8rem;
+            color: #8b949e;
+        }
 
-      h1, h2, h3, h4, h5, h6 {
-          color: #ffffff;
-      }
+        h1, h2, h3, h4, h5, h6 {
+            color: #ffffff;
+        }
 
-      /* Card Styles */
-      .card {
-          background-color: #1e1e1e;
-          border: 1px solid #333333;
-          border-radius: 8px;
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
-          transition: transform 0.2s;
-      }
+        /* Card Styles */
+        .card {
+            background-color: #1e1e1e;
+            border: 1px solid #333333;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            transition: transform 0.2s;
+        }
 
-      .card:hover {
-          transform: scale(1.02);
-      }
+        .card:hover {
+            transform: scale(1.02);
+        }
 
-      .card-header {
-          background-color: #2c2c2c;
-          border-bottom: 1px solid #444444;
-      }
+        .card-header {
+            background-color: #2c2c2c;
+            border-bottom: 1px solid #444444;
+        }
 
-      .card-header h5 {
-          color: #ffffff;
-          margin: 0;
-      }
+        .card-header h5 {
+            color: #ffffff;
+            margin: 0;
+        }
 
-      .card-body {
-          color: #e0e0e0;
-      }
+        .card-body {
+            color: #e0e0e0;
+        }
 
-      /* Buttons */
-      .btn {
-          min-width: 120px;
-          margin-right: 10px;
-      }
+        /* Buttons */
+        .btn {
+            margin-left: 10px;
+            margin-right: 10px;
+        }
 
-      /* Links */
-      a {
-          color: #0d6efd;
-          text-decoration: none;
-      }
+        /* Links */
+        a {
+            color: #0d6efd;
+            text-decoration: none;
+        }
 
-      a:hover {
-          color: #0a58ca;
-          text-decoration: underline;
-      }
+        a:hover {
+            color: #0a58ca;
+            text-decoration: underline;
+        }
 
-      /* Tables */
-      table {
-          color: #e0e0e0;
-          background-color: #1e1e1e;
-      }
+        /* Tables */
+        table {
+            color: #e0e0e0;
+            background-color: #1e1e1e;
+        }
 
-      th, td {
-          border-color: #333333 !important;
-      }
+        th, td {
+            border-color: #333333 !important;
+        }
 
-      /* Scrollbars */
-      ::-webkit-scrollbar {
-          width: 12px;
-      }
+        /* Scrollbars */
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
 
-      ::-webkit-scrollbar-track {
-          background: #2c2c2c;
-      }
+        ::-webkit-scrollbar-track {
+            background: #2c2c2c;
+        }
 
-      ::-webkit-scrollbar-thumb {
-          background-color: #555555;
-          border-radius: 6px;
-          border: 3px solid #2c2c2c;
-      }
+        ::-webkit-scrollbar-thumb {
+            background-color: #555555;
+            border-radius: 6px;
+            border: 3px solid #2c2c2c;
+        }
 
-      /* Responsive Adjustments */
-      @media (max-width: 768px) {
-          .btn {
-              margin-bottom: 10px;
-              width: 100%;
-          }
-      }
-      footer {
-          background-color: #212529;
-          color: #8b949e;
-          padding: 1rem 0;
-          text-align: center;
-          border-top: 1px solid #30363d;
-      }
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .btn {
+                margin-bottom: 10px;
+                width: 100%;
+            }
+        }
+
+        footer {
+            background-color: #212529;
+            color: #8b949e;
+            padding: 1rem 0;
+            text-align: center;
+            border-top: 1px solid #30363d;
+        }
     </style>
 
     {% block extra_css %}
@@ -122,24 +119,18 @@
 
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <!-- Dark background navbar -->
         <div class="container-fluid">
             <a class="navbar-brand" href="{% url 'home' %}">
                 SomNet
                 <span class="navbar-tagline">AIと睡眠を改善するコミュニティ</span>
             </a>
-            <!-- ダッシュボードへのブランドリンク -->
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <!-- 小さな画面でナビバーを切り替えるためのボタン -->
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                <!-- ナビバーの折りたたみ可能なコンテンツ -->
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <!-- 左揃えのナビバーアイテム -->
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'home' %}">ホーム</a>
-                        <!-- ダッシュボードページへのリンク -->
                     </li>
                     <li class="nav-item">
                         {% get_user_group request.user as user_group %}
@@ -149,10 +140,8 @@
                             <span class="nav-link disabled">グループ (未参加)</span>
                         {% endif %}
                     </li>
-                    <!-- グループメニューページへのリンク -->
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'sleep_data' %}">睡眠データ</a>
-                        <!-- 睡眠データへのリンク -->
                     </li>
                 </ul>
                 <div class="d-flex align-items-center">
@@ -176,7 +165,6 @@
 
     <footer>
         <p>Copyright © 2024-2025 SomNet</p>
-        <!-- フッターコンテンツ -->
     </footer>
 
     {% block extra_js %}
@@ -184,8 +172,6 @@
     {% endblock %}
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
-    <!-- インタラクティブなコンポーネントのためのBootstrap JSへのリンク -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <!-- MarkdownをHTMLに変換するためのmarked.jsへのリンク -->
 </body>
 </html>
