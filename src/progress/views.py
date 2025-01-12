@@ -1,4 +1,3 @@
-import logging
 from datetime import datetime, timedelta, time
 from enum import Enum
 
@@ -11,22 +10,27 @@ from django.utils import timezone
 
 from chat.models import SleepAdvice
 
+# グラフの種類を定義する列挙型
 class PlotType(Enum):
-    TIME = 'time'
-    DURATION = 'duration'
-    RATING = 'rating'
+    TIME = 'time'          # 時刻表示用
+    DURATION = 'duration'  # 期間表示用
+    RATING = 'rating'      # 評価表示用
 
+# 時間を浮動小数点数に変換（例: 23:30 → 23.5）
 def time_to_float(t):
-    hours = t.hour + (24 if t.hour < 4 else 0)
+    hours = t.hour + (24 if t.hour < 4 else 0)  # 深夜4時までは次の日として扱う
     return hours + t.minute / 60
 
+# 時間を文字列に変換（例: 23.5 → "23:30"）
 def float_to_time_str(value):
     value = value - 24 if value >= 24 else value
     hours, minutes = int(value), int((value - int(value)) * 60)
     return f"{hours:02d}:{minutes:02d}"
 
+# グラフのY軸設定を生成
 def get_y_axis_config(plot_type, ylabel, values):
     if plot_type == PlotType.TIME:
+        # 就寝・起床時刻用の設定
         y_range = [20, 32] if '就寝' in ylabel else [4, 12]
         tick_vals = list(range(y_range[0], y_range[1] + 1))
         return dict(
@@ -38,6 +42,7 @@ def get_y_axis_config(plot_type, ylabel, values):
             zeroline=False
         )
     elif plot_type == PlotType.RATING:
+        # 評価用の設定（1-5段階）
         return dict(
             tickmode='array',
             tickvals=[1, 2, 3, 4, 5],
@@ -45,7 +50,8 @@ def get_y_axis_config(plot_type, ylabel, values):
             gridcolor='rgba(128, 128, 128, 0.2)',
             zeroline=False
         )
-    else:  # Duration
+    else:
+        # 睡眠時間用の設定
         max_value = max((v for v in values if v is not None), default=0)
         return dict(
             range=[0, max_value + 1],
@@ -53,6 +59,7 @@ def get_y_axis_config(plot_type, ylabel, values):
             zeroline=False
         )
 
+# グラフの値ラベルをフォーマット
 def format_value_labels(values, plot_type):
     if plot_type == PlotType.TIME:
         return [float_to_time_str(v) if v is not None else None for v in values]
@@ -61,18 +68,22 @@ def format_value_labels(values, plot_type):
     else:  # Rating
         return [str(int(v)) if v is not None else None for v in values]
 
-def generate_plot(start_week, dates, values, ylabel, title, plot_type, use_bar=False):
+# Plotlyを使ってグラフを生成
+def generate_plot(start_week, dates, values, ylabel, plot_type, use_bar=False):
     fig = go.Figure()
     all_dates = [start_week + timedelta(days=i) for i in range(7)]
     date_indices = [all_dates.index(date) if date in all_dates else None for date in dates]
 
+    # データが存在しない場合はグラフを表示しない
     if not date_indices or all(index is None for index in date_indices):
         return pio.to_html(fig, full_html=False)
 
+    # データを適切な形式に変換
     converted_values = [time_to_float(v) if isinstance(v, time) else v for v in values]
     y_axis = get_y_axis_config(plot_type, ylabel, converted_values)
     text_labels = format_value_labels(converted_values, plot_type)
 
+    # グラフを描画
     trace_data = [converted_values[i] if i in date_indices and date_indices[i] is not None else None for i in range(7)]
     trace_text = [text_labels[i] if i in date_indices and date_indices[i] is not None else None for i in range(7)]
 
@@ -101,7 +112,6 @@ def generate_plot(start_week, dates, values, ylabel, title, plot_type, use_bar=F
 
     japanese_weekdays = ['月', '火', '水', '木', '金', '土', '日']
     fig.update_layout(
-        title=dict(text=title, font=dict(size=18)),
         xaxis_title='日付',
         yaxis_title=ylabel,
         yaxis=y_axis,
@@ -122,29 +132,33 @@ def generate_plot(start_week, dates, values, ylabel, title, plot_type, use_bar=F
 
     return pio.to_html(fig, full_html=False)
 
+# 睡眠データを表示するビュー関数
 @login_required
 def sleep_data(request):
     user = request.user
     today = datetime.now().date()
+    # 表示する週の開始日を決定
     week_start_str = request.GET.get('week_start')
     start_week = datetime.strptime(week_start_str, '%Y-%m-%d').date() if week_start_str else today - timedelta(days=today.weekday())
     end_week = start_week + timedelta(days=6)
     week_dates = [start_week + timedelta(days=i) for i in range(7)]
 
+    # データベースから睡眠データを取得
     sleep_data = SleepAdvice.objects.filter(
         user=user, created_at__date__range=[start_week, end_week]
     ).order_by('created_at')
     sleep_data_dict = {timezone.localtime(data.created_at).date(): data for data in sleep_data}
 
-    # Prepare data arrays
+    # グラフ描画用のデータを準備
     data_arrays = {
-        'sleep_times': [],
-        'wake_times': [],
-        'durations': [],
-        'sleep_quality': [],
-        'mission_achievement': []
+        'sleep_times': [],         # 就寝時刻
+        'wake_times': [],          # 起床時刻
+        'durations': [],           # 睡眠時間
+        'sleep_quality': [],       # 睡眠休養感
+        'mission_achievement': []  # ミッション達成度
     }
 
+    # # 各日付のデータを配列に格納
     for date in week_dates:
         if date in sleep_data_dict:
             data = sleep_data_dict[date]
@@ -157,30 +171,20 @@ def sleep_data(request):
             for key in data_arrays:
                 data_arrays[key].append(None)
 
-    show = request.GET.get('show', 'duration')
+    # コンテキストを作成してテンプレートに渡す
     context = {
-        'show': show,
         'start_week': start_week.strftime('%Y-%m-%d'),
+        'end_week': end_week.strftime('%Y-%m-%d'),
         'prev_week': (start_week - timedelta(weeks=1)).strftime('%Y-%m-%d'),
         'next_week': (start_week + timedelta(weeks=1)).strftime('%Y-%m-%d'),
+        'sleep_time_plot': generate_plot(start_week, week_dates, data_arrays['sleep_times'], '就寝時刻', PlotType.TIME),
+        'wake_time_plot': generate_plot(start_week, week_dates, data_arrays['wake_times'], '起床時刻', PlotType.TIME),
+        'duration_plot': generate_plot(start_week, week_dates, data_arrays['durations'], '睡眠時間', PlotType.DURATION, use_bar=True),
+        'sleep_quality_plot': generate_plot(start_week, week_dates, data_arrays['sleep_quality'], '睡眠休養感', PlotType.RATING),
+        'mission_achievement_plot': generate_plot(start_week, week_dates, data_arrays['mission_achievement'], 'ミッション達成度', PlotType.RATING),
     }
 
-    if show == 'times':
-        context.update({
-            'sleep_time_plot': generate_plot(start_week, week_dates, data_arrays['sleep_times'], '就寝時刻', '就寝時刻のグラフ', PlotType.TIME),
-            'wake_time_plot': generate_plot(start_week, week_dates, data_arrays['wake_times'], '起床時刻', '起床時刻のグラフ', PlotType.TIME)
-        })
-    elif show == 'quality':
-        context.update({
-            'sleep_quality_plot': generate_plot(start_week, week_dates, data_arrays['sleep_quality'], '睡眠の質', '睡眠の質のグラフ', PlotType.RATING),
-            'mission_achievement_plot': generate_plot(start_week, week_dates, data_arrays['mission_achievement'], 'ミッション達成度', 'ミッション達成度のグラフ', PlotType.RATING)
-        })
-    else:  # duration
-        context.update({
-            'duration_plot': generate_plot(start_week, week_dates, data_arrays['durations'], '睡眠時間', '睡眠時間のグラフ', PlotType.DURATION, use_bar=True)
-        })
-
-    # Add advice cards
+    # アドバイスカードの作成
     context['advice_cards'] = []
     for advice in sleep_data.order_by('-created_at'):
         hours = int(advice.sleep_duration.total_seconds() // 3600) if advice.sleep_duration else 0

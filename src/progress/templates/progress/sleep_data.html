@@ -6,64 +6,113 @@
     SomNet | 睡眠データ
 {% endblock %}
 
-{% block content %}
-    <h1>1週間の睡眠データ</h1>
-
-    <!-- グラフ表示を切り替えるボタン -->
-    <div class="nav-buttons">
-        <a href="?show=duration&week_start={{ start_week }}" class="{% if show == 'duration' %}active{% endif %}">睡眠時間</a>
-        <a href="?show=times&week_start={{ start_week }}" class="{% if show == 'times' %}active{% endif %}">就寝時刻と起床時刻</a>
-    </div>
-
-    <!-- 週のナビゲーションボタン -->
-    <div class="navigation-buttons">
-        <a href="?week_start={{ prev_week }}&show={{ show }}" class="prev-week">＜</a>
-        <a href="?week_start={{ next_week }}&show={{ show }}" class="next-week">＞</a>
-    </div>
-
-    <!-- 条件に応じたグラフの表示 -->
-    {% if show == 'times' %}
-        <h2>就寝時刻のグラフ</h2>
-        {% if sleep_time_plot %}
-            {{ sleep_time_plot|safe }}
-        {% else %}
-            <p>就寝時刻のデータがありません。</p>
-        {% endif %}
-
-        <h2>起床時刻のグラフ</h2>
-        {% if wake_time_plot %}
-            {{ wake_time_plot|safe }}
-        {% else %}
-            <p>起床時刻のデータがありません。</p>
-        {% endif %}
-    {% elif show == 'duration' %}
-        <h2>睡眠時間のグラフ</h2>
-        {% if duration_plot %}
-            {{ duration_plot|safe }}
-        {% else %}
-            <p>睡眠時間のデータがありません。</p>
-        {% endif %}
-    {% endif %}
-
-    <!-- 睡眠アドバイスの表示 -->
-    <h2>睡眠アドバイス</h2>
-    <div class="advice-container">
-        {% for advice in advice_cards %}
-            <div class="advice-card">
-                <h3>{{ advice.date }}</h3>
-                {{ advice.advice|safe }}
-            </div>
-        {% empty %}
-            <p>睡眠アドバイスはまだありません。</p>
-        {% endfor %}
-    </div>
-
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'progress/css/sleep_data.css' %}">
 {% endblock %}
 
-{% block extra_css %}
-    <link rel="stylesheet" type="text/css" href="{% static 'progress/css/progress.css' %}">
+{% block content %}
+<div class="container my-5">
+    <h1 class="mb-4 text-center">1週間の睡眠データ</h1>
+
+    <!-- Navigation Buttons -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <a href="?week_start={{ prev_week }}" class="btn btn-primary">&laquo; 前の週</a>
+            <a href="?week_start={{ next_week }}" class="btn btn-primary">次の週 &raquo;</a>
+        </div>
+        <div>
+            <span class="badge bg-secondary">
+                {{ start_week }} ~ {{ end_week }}
+            </span>
+        </div>
+    </div>
+
+    <!-- Graphs Grid -->
+    <div class="row g-4">
+        <!-- 就寝時刻のグラフ -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100">
+                <div class="card-header text-center">
+                    <h5>就寝時刻</h5>
+                </div>
+                <div class="card-body">
+                    {{ sleep_time_plot|safe }}
+                </div>
+            </div>
+        </div>
+
+        <!-- 起床時刻のグラフ -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100">
+                <div class="card-header text-center">
+                    <h5>起床時刻</h5>
+                </div>
+                <div class="card-body">
+                    {{ wake_time_plot|safe }}
+                </div>
+            </div>
+        </div>
+
+        <!-- 睡眠時間のグラフ -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100">
+                <div class="card-header text-center">
+                    <h5>睡眠時間</h5>
+                </div>
+                <div class="card-body">
+                    {{ duration_plot|safe }}
+                </div>
+            </div>
+        </div>
+
+        <!-- 睡眠休養感のグラフ -->
+        <div class="col-md-6 col-lg-6">
+            <div class="card h-100">
+                <div class="card-header text-center">
+                    <h5>睡眠休養感</h5>
+                </div>
+                <div class="card-body">
+                    {{ sleep_quality_plot|safe }}
+                </div>
+            </div>
+        </div>
+
+        <!-- ミッション達成度のグラフ -->
+        <div class="col-md-6 col-lg-6">
+            <div class="card h-100">
+                <div class="card-header text-center">
+                    <h5>ミッション達成度</h5>
+                </div>
+                <div class="card-body">
+                    {{ mission_achievement_plot|safe }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advice Cards -->
+    <h2 class="mt-5">睡眠アドバイス</h2>
+    <div class="row">
+        {% for advice in advice_cards %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card advice-card h-100">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="card-title">{{ advice.date }}</h5>
+                    </div>
+                    <div class="card-body">
+                        {{ advice.advice|safe }}
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <p>睡眠アドバイスはありません。</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
-    <script src="{% static 'progress/js/progress.js' %}"></script>
+    <script src="{% static 'progress/js/sleep_data.js' %}"></script>
 {% endblock %}
