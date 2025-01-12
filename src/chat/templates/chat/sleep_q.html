@@ -1,6 +1,10 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'chat/css/sleep_q.css' %}">
+{% endblock %}
+
 {% block title %}
   SomNet | 睡眠アンケート
 {% endblock %}
@@ -84,16 +88,20 @@
       </div>
 
       <button type="submit" class="btn btn-primary">アンケートを送信</button>
-
-      <div id="loading" class="text-center" style="display: none;">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Loading...</span>
-        </div>
-        <p class="mt-2">AIが睡眠アドバイスを生成中です...</p>
-      </div>
     </form>
   {% endif %}
 </div>
 
+<div id="overlay" role="dialog" aria-modal="true" aria-labelledby="loadingMessage">
+    <div class="spinner-container">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2">AIが睡眠アドバイスを生成中です...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
 <script src="{% static 'chat/js/sleep_q.js' %}"></script>
 {% endblock %}
