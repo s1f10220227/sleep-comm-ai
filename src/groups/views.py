@@ -17,6 +17,7 @@ def home(request):
             # 参加しているグループの情報を取得
             group_member = GroupMember.objects.get(user=request.user)
             group = group_member.group
+            members = GroupMember.objects.filter(group=group)
             mission = Mission.objects.filter(group=group).order_by('-created_at').first()
             # 最新のメッセージを取得
             latest_message = Message.objects.filter(group=group).order_by('-timestamp').first()
@@ -28,6 +29,7 @@ def home(request):
 
             response_data = {
                 'group': group,
+                'members': members,
                 'mission': mission,
                 'is_member': True,
                 'latest_message': latest_message,

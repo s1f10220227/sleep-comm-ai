@@ -1,10 +1,16 @@
 {% extends 'base.html' %}
 <!-- base.htmlを継承 -->
 
+{% load static %}
+
 {% load custom_filters %}
 <!-- 他のパブリックグループのメンバーを表示するために使うカスタムフィルター -->
 
 {% load markdown_extras %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'groups/css/home.css' %}">
+{% endblock %}
 
 {% block title %}
   SomNet | ホーム
@@ -37,6 +43,12 @@
                 <!-- グループがプライベートで招待コードがある場合の表示 -->
                 <p>招待コード：<strong>{{ group.invite_code }}</strong></p>
               {% endif %}
+              <p>メンバー：</p>
+              <ul>
+                {% for member in members %}
+                <li>{{ member.user.username }}</li>
+              {% endfor %}
+              </ul>
             </div>
             <div class="card-footer">
               <!-- グループ離脱フォーム -->
@@ -186,3 +198,8 @@
   </div>
 {% endblock %}
 <!-- コンテンツブロックを定義 -->
+
+{% block extra_js%}
+  <script src="{% static 'groups/js/home.js' %}"></script>
+{% endblock %}
+<!-- 追加JSブロックを定義 -->
