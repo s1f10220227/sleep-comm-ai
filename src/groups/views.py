@@ -76,6 +76,17 @@ def home(request):
                 answer = SleepAdvice.objects.filter(user=request.user).order_by('-created_at').first()
                 response_data['answer'] = answer
 
+                # 睡眠時間を時間と分に変換
+                total_seconds = answer.sleep_duration.total_seconds()
+                hours = int(total_seconds // 3600)
+                minutes = int((total_seconds % 3600) // 60)
+
+                # 時間計算の結果を追加
+                answer.hours = hours
+                answer.minutes = minutes
+
+                response_data['answer'] = answer
+
             # グループメニューのテンプレートをレンダリング
             return render(request, 'groups/home.html', response_data)
     else:
