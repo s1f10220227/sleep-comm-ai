@@ -1,3 +1,15 @@
+// ローディングアニメーションを表示する関数
+function showLoading() {
+    document.getElementById('overlay').style.display = 'flex';
+    document.querySelector('button[type="submit"]').disabled = true;
+    return true;
+}
+
+// ローディングアニメーションを隠す関数
+function hideLoading() {
+    document.getElementById('overlay').style.display = 'none';
+}
+
 // ページが表示されたときの処理
 window.onpageshow = function(event) {
     if (event.persisted) {
@@ -47,15 +59,4 @@ function calculateSleepDuration() {
         document.getElementById('sleep_duration').innerHTML =
             '睡眠時間: --時間--分';
     }
-}
-
-// ローディングアニメーションを表示する関数
-function showLoading() {
-    document.getElementById('loading').style.display = 'block';
-    return true;
-}
-
-// ローディングアニメーションを隠す関数
-function hideLoading() {
-    document.getElementById('loading').style.display = 'none';
 }

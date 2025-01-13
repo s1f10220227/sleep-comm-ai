@@ -1,89 +1,182 @@
 {% load group_tags %}
 <!DOCTYPE html>
 <html lang="ja" data-bs-theme="dark">
-  <head>
-    <meta charset="UTF-8" />
-    <!-- ドキュメントの文字エンコーディングをUTF-8に設定 -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- モバイルデバイスでの適切な表示とタッチズームを確保 -->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>
-      {% block title %}
-        <!-- 各ページのタイトルのプレースホルダー -->
-        My Application
-      {% endblock %}
+        {% block title %}
+            SomNet
+        {% endblock %}
     </title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous" />
-    <!-- スタイリングのためのBootstrap CSSへのリンク -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <!-- BootstrapのCSSを読み込む -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Font Awesomeのアイコンを使用するためのリンク -->
     <style>
-      .navbar-tagline {
-        display: block; /* ブロック要素として表示 */
-        font-size: 0.8rem; /* 小さめのフォントサイズ */
-        color: #6c757d; /* グレーの色 */
-      }
+        body {
+            background-color: #0d1117;
+            color: #ffffff;
+        }
+
+        .navbar-tagline {
+            display: block;
+            font-size: 0.8rem;
+            color: #ffffff;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            color: #ffffff;
+        }
+
+        /* Card Styles */
+        .card {
+            background-color: #1e1e1e;
+            border: 1px solid #333333;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: scale(1.02);
+        }
+
+        .card-header {
+            background-color: #2c2c2c;
+            border-bottom: 1px solid #444444;
+        }
+
+        .card-header h5 {
+            color: #ffffff;
+            margin: 0;
+        }
+
+        .card-body {
+            color: #e0e0e0;
+        }
+
+        /* Buttons */
+        .btn {
+            margin-left: 10px;
+            margin-right: 10px;
+        }
+
+        /* Links */
+        a {
+            color: #0d6efd;
+            text-decoration: none;
+        }
+
+        a:hover {
+            color: #0a58ca;
+            text-decoration: underline;
+        }
+
+        /* Tables */
+        table {
+            color: #e0e0e0;
+            background-color: #1e1e1e;
+        }
+
+        th, td {
+            border-color: #333333 !important;
+        }
+
+        /* Scrollbars */
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #2c2c2c;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: #555555;
+            border-radius: 6px;
+            border: 3px solid #2c2c2c;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .btn {
+                margin-bottom: 10px;
+                width: 100%;
+            }
+        }
+
+        footer {
+            background-color: #212529;
+            color: #ffffff;
+            padding: 1rem 0;
+            text-align: center;
+            border-top: 1px solid #30363d;
+        }
     </style>
-  </head>
-  <body>
-    <nav class="navbar navbar-expand-lg bg-body-tertiary">
-      <!-- ライト背景のナビバーコンポーネント -->
-      <div class="container-fluid">
-        <a class="navbar-brand" href="{% url 'home' %}">
-          SomNet
-          <span class="navbar-tagline">AIと睡眠を改善するコミュニティ</span>
-        </a>
-        <!-- ダッシュボードへのブランドリンク -->
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
-        <!-- 小さな画面でナビバーを切り替えるためのボタン -->
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <!-- ナビバーの折りたたみ可能なコンテンツ -->
-          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-            <!-- 左揃えのナビバーアイテム -->
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'home' %}">ホーム</a>
-              <!-- ダッシュボードページへのリンク -->
-            </li>
-            <li class="nav-item">
-              {% get_user_group request.user as user_group %}
-              {% if user_group %}
-                <a class="nav-link" href="{% url 'room' user_group.id %}">グループ</a>
-              {% else %}
-                <span class="nav-link disabled">グループ (未参加)</span>
-              {% endif %}
-            </li>
-            <!-- グループメニューページへのリンク -->
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'progress_check' %}">睡眠データ</a>
-              <!-- 睡眠データへのリンク -->
-            </li>
-          </ul>
-          <div class="navbar-right">
-            {% if user.is_authenticated %}
-              <span class="navbar-text">{{ user.username }}</span>
-              <a class="btn btn-outline-danger ms-2" href="{% url 'logout' %}">ログアウト</a>
-            {% else %}
-              <a class="btn btn-outline-primary ms-2" href="{% url 'login' %}">ログイン</a>
-              <a class="btn btn-outline-success ms-2" href="{% url 'signup' %}">サインアップ</a>
-            {% endif %}
-          </div>
+
+    {% block extra_css %}
+        <!-- 各ページの追加CSSのプレースホルダー -->
+    {% endblock %}
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'home' %}">
+                SomNet
+                <span class="navbar-tagline">AIと睡眠を改善するコミュニティ</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'home' %}">ホーム</a>
+                    </li>
+                    <li class="nav-item">
+                        {% get_user_group request.user as user_group %}
+                        {% if user_group %}
+                            <a class="nav-link" href="{% url 'room' user_group.id %}">グループ</a>
+                        {% else %}
+                            <span class="nav-link disabled">グループ (未参加)</span>
+                        {% endif %}
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'sleep_data' %}">睡眠データ</a>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center">
+                    {% if user.is_authenticated %}
+                        <span class="navbar-text me-3">{{ user.username }}</span>
+                        <a class="btn btn-outline-danger" href="{% url 'logout' %}">ログアウト</a>
+                    {% else %}
+                        <a class="btn btn-outline-primary me-2" href="{% url 'login' %}">ログイン</a>
+                        <a class="btn btn-outline-success" href="{% url 'signup' %}">サインアップ</a>
+                    {% endif %}
+                </div>
+            </div>
         </div>
-      </div>
     </nav>
 
-    <main>
-      {% block content %}
-        <!-- 各ページのコンテンツのプレースホルダー -->
-      {% endblock %}
+    <main class="container my-4">
+        {% block content %}
+            <!-- 各ページのコンテンツのプレースホルダー -->
+        {% endblock %}
     </main>
 
     <footer>
-      <p>© 2024 My Application</p>
-      <!-- フッターコンテンツ -->
+        <p>Copyright © 2024-2025 SomNet</p>
     </footer>
 
-    {% block extra_css %}
-      <!-- 各ページのコンテンツのプレースホルダー -->
+    {% block extra_js %}
+        <!-- 各ページの追加JSのプレースホルダー -->
     {% endblock %}
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
-    <!-- インタラクティブなコンポーネントのためのBootstrap JSへのリンク -->
-  </body>
+    <!-- BootstrapのJSを読み込む -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- MarkedのJSを読み込む -->
+</body>
 </html>

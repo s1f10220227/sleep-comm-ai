@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'accounts/css/login_signup.css' %}">
+{% endblock %}
+
+{% block title %}SomNet | ログイン{% endblock %}
+
+{% block content %}
+<div class="container d-flex justify-content-center align-items-center" style="min-height: calc(100vh - 180px);">
+    <div class="card p-4" style="width: 100%; max-width: 400px;">
+        <div class="card-header text-center border-bottom-0 bg-transparent">
+            <h2 class="mb-0">ログイン</h2>
+        </div>
+
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+
+                <!-- ユーザー名 -->
+                <div class="mb-3">
+                    <label for="username" class="form-label">ユーザー名</label>
+                    <input type="text" class="form-control bg-dark text-light border-secondary" id="username" name="username" required>
+                </div>
+
+                <!-- パスワード -->
+                <div class="mb-3">
+                    <label for="password" class="form-label">パスワード</label>
+                    <input type="password" class="form-control bg-dark text-light border-secondary" id="password" name="password" required>
+                </div>
+
+                <!-- ログインボタン -->
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary">ログイン</button>
+                </div>
+            </form>
+
+            <div class="text-center mt-3">
+                <p class="mb-0">
+                    まだアカウントをお持ちでない方は<br>
+                    <a href="{% url 'signup' %}" class="text-primary">サインアップ</a>
+                    してください
+                </p>
+            </div>
+
+            {% if error_message %}
+                <div class="alert alert-danger mt-3" role="alert">
+                    {{ error_message }}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

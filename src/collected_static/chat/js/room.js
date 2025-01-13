@@ -24,11 +24,17 @@ chatSocket.onmessage = function(e) {
     // タイムスタンプを作成
     const timestampSpan = document.createElement('small');
     timestampSpan.className = 'timestamp text-muted';
-    timestampSpan.textContent = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    const now = new Date();
+    const formattedDate = now.getFullYear() + '-' +
+                        String(now.getMonth() + 1).padStart(2, '0') + '-' +
+                        String(now.getDate()).padStart(2, '0') + ' ' +
+                        String(now.getHours()).padStart(2, '0') + ':' +
+                        String(now.getMinutes()).padStart(2, '0');
+    timestampSpan.textContent = formattedDate;
 
     // メッセージ本文を作成
     const contentP = document.createElement('p');
-    contentP.innerHTML = parseLinksAndLineBreaks(data.message); // メッセージ内のリンクと改行を変換
+    contentP.innerHTML = parseMarkdown(data.message); // Markdown変換を使用
     contentP.className = 'mb-0'
 
     // 作成した要素を親要素に追加
@@ -48,27 +54,48 @@ chatSocket.onclose = function(e) {
     console.error('Chat socket closed unexpectedly');
 };
 
+// チャットメッセージの入力フォームを取得
+const messageInput = document.querySelector('#chat-message-input');
+
+// チャットメッセージの入力フォームにキーダウンイベントを追加
+messageInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        // Shiftキーが押されている場合は改行
+        if (e.shiftKey) {
+            return;
+        }
+        // メッセージを送信
+        e.preventDefault();
+        const message = messageInput.value.trim();
+        if (message) {
+            chatSocket.send(JSON.stringify({
+                'message': message,
+                'username': username
+            }));
+            messageInput.value = '';
+        }
+    }
+});
+
+// チャットフォームの送信イベントをキャッチ
 document.querySelector('#chat-form').onsubmit = function(e) {
     e.preventDefault();
-    const messageInputDom = document.querySelector('#chat-message-input');
-    const message = messageInputDom.value;
-    chatSocket.send(JSON.stringify({
-        'message': message,
-        'username': username
-    }));
-    messageInputDom.value = '';
+    const message = messageInput.value.trim();
+    if (message) {
+        chatSocket.send(JSON.stringify({
+            'message': message,
+            'username': username
+        }));
+        messageInput.value = '';
+    }
 };
 
-
-// メッセージ内のリンクと改行をHTMLリンクおよび改行タグに変換
-function parseLinksAndLineBreaks(message) {
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-
-    // リンク変換
-    const withLinks = message.replace(urlRegex, function(url) {
-        return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+// Markdownレンダリング用の関数
+function parseMarkdown(text) {
+    // marked.jsライブラリを使用してMarkdownをレンダリング
+    return marked.parse(text, {
+        breaks: true,
+        gfm: true,
+        sanitize: true
     });
-
-    // 改行変換
-    return withLinks.replace(/\n/g, '<br>');
 }
