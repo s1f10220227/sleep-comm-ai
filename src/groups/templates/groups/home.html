@@ -69,7 +69,7 @@
             </div>
             <div class="card-body">
               <!-- グループチャットの最新メッセージ表示 -->
-              <h3>最新のメッセージ</h3>
+              <h4>最新のメッセージ</h4>
               {% if latest_message %}
                 <p class="card-text"><strong>{{ latest_message.sender.username }}</strong>: {{ latest_message.content | markdown | urlize }}</p>
               {% else %}
@@ -148,7 +148,7 @@
               {% if is_member %}
               <p>ミッション達成度：<strong>{{ answer.get_mission_achievement_display|default:"なし" }}</strong></p>
               {% else %}
-                <p>取り組みたいこと：<strong>{{ answer.topic_question }}</strong></p>
+                <p>取り組みたいこと：<strong>{{ answer.topic_question|default:"なし" }}</strong></p>
               {% endif %}
             {% else %}
               <p>回答状況：<strong>未回答</strong></p>
