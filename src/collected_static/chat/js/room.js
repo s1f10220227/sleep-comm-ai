@@ -54,17 +54,42 @@ chatSocket.onclose = function(e) {
     console.error('Chat socket closed unexpectedly');
 };
 
+// Get the textarea element
+const messageInput = document.querySelector('#chat-message-input');
+
+// Add event listener for keydown
+messageInput.addEventListener('keydown', function(e) {
+    // Check if the pressed key is Enter
+    if (e.key === 'Enter') {
+        // If Shift + Enter is pressed, allow new line
+        if (e.shiftKey) {
+            return; // Continue with default behavior (new line)
+        }
+        // If only Enter is pressed, prevent default and send message
+        e.preventDefault();
+        const message = messageInput.value.trim();
+        if (message) {
+            chatSocket.send(JSON.stringify({
+                'message': message,
+                'username': username
+            }));
+            messageInput.value = '';
+        }
+    }
+});
+
+// Modify the existing form submit handler
 document.querySelector('#chat-form').onsubmit = function(e) {
     e.preventDefault();
-    const messageInputDom = document.querySelector('#chat-message-input');
-    const message = messageInputDom.value;
-    chatSocket.send(JSON.stringify({
-        'message': message,
-        'username': username
-    }));
-    messageInputDom.value = '';
+    const message = messageInput.value.trim();
+    if (message) {
+        chatSocket.send(JSON.stringify({
+            'message': message,
+            'username': username
+        }));
+        messageInput.value = '';
+    }
 };
-
 
 // Markdownレンダリング用の関数
 function parseMarkdown(text) {
