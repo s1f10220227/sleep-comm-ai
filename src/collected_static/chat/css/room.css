@@ -193,7 +193,18 @@
 
 /* Send button styling */
 #chat-form button {
-  min-width: 80px;
+  min-width: 60px;
+  width: 60px;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Send button icon styles */
+.btn-primary .fa-paper-plane {
+  font-size: 1.5rem;
+  line-height: 1;
 }
 
 /* Additional padding for the footer to prevent overlap */
