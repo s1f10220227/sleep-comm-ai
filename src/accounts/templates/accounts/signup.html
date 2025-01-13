@@ -1,6 +1,10 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'accounts/css/login_signup.css' %}">
+{% endblock %}
+
 {% block title %}SomNet | サインアップ{% endblock %}
 
 {% block content %}
@@ -53,7 +57,7 @@
                     <div class="form-check">
                         <input type="checkbox" id="privacy-policy-checkbox" name="privacy_policy" class="form-check-input" {% if request.POST.privacy_policy %}checked{% endif %} required>
                         <label for="privacy-policy-checkbox" class="form-check-label">
-                            プライバシーポリシーに同意します。
+                            プライバシーポリシーに同意します
                         </label>
                     </div>
                 </div>
