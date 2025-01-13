@@ -4,39 +4,48 @@
 {% block title %}SomNet | ログイン{% endblock %}
 
 {% block content %}
-<div class="container d-flex justify-content-center align-items-center vh-100">
-    <div class="card p-4 shadow-sm" style="width: 100%; max-width: 400px;">
-        <h2 class="text-center mb-4">ログイン</h2>
+<div class="container d-flex justify-content-center align-items-center" style="min-height: calc(100vh - 180px);">
+    <div class="card p-4" style="width: 100%; max-width: 400px;">
+        <div class="card-header text-center border-bottom-0 bg-transparent">
+            <h2 class="mb-0">ログイン</h2>
+        </div>
 
-        <form method="post">
-            {% csrf_token %}
-            <!-- ユーザー名 -->
-            <div class="mb-3">
-                <label for="username" class="form-label">ユーザー名:</label>
-                <input type="text" class="form-control" id="username" name="username" required>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+
+                <!-- ユーザー名 -->
+                <div class="mb-3">
+                    <label for="username" class="form-label">ユーザー名</label>
+                    <input type="text" class="form-control bg-dark text-light border-secondary" id="username" name="username" required>
+                </div>
+
+                <!-- パスワード -->
+                <div class="mb-3">
+                    <label for="password" class="form-label">パスワード</label>
+                    <input type="password" class="form-control bg-dark text-light border-secondary" id="password" name="password" required>
+                </div>
+
+                <!-- ログインボタン -->
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary">ログイン</button>
+                </div>
+            </form>
+
+            <div class="text-center mt-3">
+                <p class="mb-0">
+                    まだアカウントをお持ちでない方は、
+                    <a href="{% url 'signup' %}" class="text-primary">サインアップ</a>
+                    してください。
+                </p>
             </div>
 
-            <!-- パスワード -->
-            <div class="mb-3">
-                <label for="password" class="form-label">パスワード:</label>
-                <input type="password" class="form-control" id="password" name="password" required>
-            </div>
-
-            <!-- ログインボタン -->
-            <button type="submit" class="btn btn-primary w-100">ログイン</button>
-        </form>
-
-        <p class="text-center mt-3">まだアカウントをお持ちでない方は、<a href="{% url 'signup' %}">サインアップ</a>してください。</p>
-
-        {% if error_message %}
-            <div class="alert alert-danger mt-3" role="alert">
-                {{ error_message }}
-            </div>
-        {% endif %}
+            {% if error_message %}
+                <div class="alert alert-danger mt-3" role="alert">
+                    {{ error_message }}
+                </div>
+            {% endif %}
+        </div>
     </div>
 </div>
-
-<!-- Bootstrap 5 JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
 {% endblock %}
