@@ -65,10 +65,6 @@ a {
     transition: color 0.3s ease;
 }
 
-a:hover {
-    color: #0099ff !important;
-}
-
 /* Checkbox */
 .form-check-input {
     width: 1.2em;
