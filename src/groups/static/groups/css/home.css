@@ -228,3 +228,113 @@
 .card {
     animation: fadeIn 0.5s ease-out;
 }
+
+/* Landing Page Styles */
+.landing-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.hero-section {
+    margin-top: 2rem;
+    animation: fadeIn 1s ease-out;
+}
+
+.main-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #58a6ff;
+    margin-bottom: 1rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.hero-subtitle {
+    font-size: 1.5rem;
+    color: #8b949e;
+    font-weight: 300;
+}
+
+.intro-card {
+    background-color: rgba(30, 30, 30, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(88, 166, 255, 0.2);
+}
+
+.lead-text {
+    font-size: 1.4rem;
+    color: #58a6ff;
+    font-weight: 500;
+    line-height: 1.8;
+    text-align: center;
+}
+
+.main-description {
+    font-size: 1.2rem;
+    color: #c9d1d9;
+    line-height: 1.8;
+}
+
+.feature-card {
+    height: 100%;
+    background-color: rgba(30, 30, 30, 0.8);
+    border: 1px solid rgba(88, 166, 255, 0.1);
+}
+
+.feature-icon {
+    font-size: 2rem;
+    color: #58a6ff;
+    text-align: center;
+}
+
+.feature-title {
+    font-size: 1.4rem;
+    color: #58a6ff;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.feature-text {
+    color: #c9d1d9;
+    line-height: 1.6;
+    text-align: center;
+}
+
+.cta-card {
+    background-color: rgba(35, 134, 54, 0.1);
+    border: 1px solid rgba(35, 134, 54, 0.2);
+}
+
+.cta-title {
+    color: #238636;
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+.cta-text {
+    color: #c9d1d9;
+    font-size: 1.2rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .main-title {
+        font-size: 2rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1.2rem;
+    }
+
+    .lead-text {
+        font-size: 1.2rem;
+    }
+
+    .main-description {
+        font-size: 1.1rem;
+    }
+
+    .landing-container {
+        padding: 1rem;
+    }
+}

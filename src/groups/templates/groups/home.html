@@ -189,10 +189,75 @@
         </div>
       </div>
     {% else %}
-      <div class="jumbotron">
-        <h1 class="display-4 mb-4">サービスの紹介</h1>
-        <p class="lead">このサービスでは、あなたの睡眠習慣を改善するための様々な機能を提供しています。ログインして、詳細を確認してください。</p>
+    <div class="landing-container">
+      <div class="hero-section text-center mb-5">
+        <h1 class="main-title mb-4">『眠りを変える。仲間と共に。』</h1>
+        <p class="hero-subtitle">Sleep Better, Together.</p>
       </div>
+
+      <div class="feature-cards">
+        <div class="row justify-content-center">
+          <!-- メイン説明カード -->
+          <div class="col-12 mb-5">
+            <div class="card intro-card">
+              <div class="card-body">
+                <p class="lead-text mb-4">
+                  毎日の睡眠、なんとなく不満はあるけれど、<br>
+                  一人では変えられない。そんな経験ありませんか？
+                </p>
+                <p class="main-description">
+                  SomNetは、AIがあなたと仲間の睡眠改善をサポートする新しいカタチのWebアプリです。
+                  最大5人のグループで取り組む3日間のミッションを通じて、楽しみながら睡眠の質を向上させることができます。
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 特徴カード1 -->
+          <div class="col-md-6 mb-4">
+            <div class="card feature-card">
+              <div class="card-body">
+                <div class="feature-icon mb-3">
+                  <i class="fas fa-users"></i>
+                </div>
+                <h3 class="feature-title">仲間と共に改善</h3>
+                <p class="feature-text">
+                  知人を誘って参加するのはもちろん、同じように睡眠改善に意欲的な新しい仲間とマッチングすることも可能です。
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 特徴カード2 -->
+          <div class="col-md-6 mb-4">
+            <div class="card feature-card">
+              <div class="card-body">
+                <div class="feature-icon mb-3">
+                  <i class="fas fa-robot"></i>
+                </div>
+                <h3 class="feature-title">AIアドバイザー</h3>
+                <p class="feature-text">
+                  グループごとに専属のAIアドバイザーが付き、メンバー全員の状況を考慮した最適な睡眠改善プランを提案します。
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- CTAセクション -->
+          <div class="col-12 mt-4">
+            <div class="card cta-card text-center">
+              <div class="card-body">
+                <h2 class="cta-title mb-4">さあ、新しい睡眠体験を始めましょう</h2>
+                <p class="cta-text mb-4">
+                  あなたの眠りを変える第一歩は、SomNetの3日間から始まります。
+                </p>
+                <a href="{% url 'signup' %}" class="btn btn-primary btn-lg">無料で始める</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     {% endif %}
     </div>
   </div>
