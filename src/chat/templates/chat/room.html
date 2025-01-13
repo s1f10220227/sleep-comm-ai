@@ -3,6 +3,10 @@
 {% load tz %}
 {% load markdown_extras %}
 
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'chat/css/room.css' %}">
+{% endblock %}
+
 {% block title %}SomNet | グループチャット{% endblock %}
 
 {% block content %}
@@ -208,7 +212,9 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
     const groupId = '{{ group.id }}';
     const username = '{{ request.user.username }}';
@@ -218,5 +224,4 @@
     };
 </script>
 <script src="{% static 'chat/js/room.js' %}"></script>
-
 {% endblock %}
