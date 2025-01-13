@@ -54,18 +54,17 @@ chatSocket.onclose = function(e) {
     console.error('Chat socket closed unexpectedly');
 };
 
-// Get the textarea element
+// チャットメッセージの入力フォームを取得
 const messageInput = document.querySelector('#chat-message-input');
 
-// Add event listener for keydown
+// チャットメッセージの入力フォームにキーダウンイベントを追加
 messageInput.addEventListener('keydown', function(e) {
-    // Check if the pressed key is Enter
     if (e.key === 'Enter') {
-        // If Shift + Enter is pressed, allow new line
+        // Shiftキーが押されている場合は改行
         if (e.shiftKey) {
-            return; // Continue with default behavior (new line)
+            return;
         }
-        // If only Enter is pressed, prevent default and send message
+        // メッセージを送信
         e.preventDefault();
         const message = messageInput.value.trim();
         if (message) {
@@ -78,7 +77,7 @@ messageInput.addEventListener('keydown', function(e) {
     }
 });
 
-// Modify the existing form submit handler
+// チャットフォームの送信イベントをキャッチ
 document.querySelector('#chat-form').onsubmit = function(e) {
     e.preventDefault();
     const message = messageInput.value.trim();
