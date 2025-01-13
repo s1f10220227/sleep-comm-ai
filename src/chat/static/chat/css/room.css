@@ -18,6 +18,10 @@
   height: calc(100vh - 235px);
 }
 
+#chat-messages strong {
+  color: #58a6ff;
+}
+
 .message {
   background-color: #1c2128;
   border-radius: 8px;
