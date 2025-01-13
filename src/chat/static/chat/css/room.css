@@ -1,73 +1,202 @@
+/* Chat Room Specific Styles */
 .chat-container {
-  display: flex;
-  height: calc(100vh - 56px);
-}
-
-.sidebar {
-  width: 250px;
-  background-color: #2f3136;
-  color: #ffffff;
-  padding: 20px;
-  overflow-y: auto;
-}
-
-.chat-area {
-  flex-grow: 1;
+  position: relative;
+  height: calc(100vh - 180px);
   display: flex;
   flex-direction: column;
 }
 
+/* Message Area Styles */
 #chat-messages {
-  flex-grow: 1;
+  background-color: #161b22;
+  border: 1px solid #30363d !important;
+  border-radius: 8px;
+  padding: 1.5rem;
   overflow-y: auto;
-  padding: 20px;
-  background-color: #36393f;
+  scrollbar-width: thin;
+  margin-bottom: 80px;
+  height: calc(100vh - 235px);
 }
 
 .message {
-  margin-bottom: 15px;
+  background-color: #1c2128;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+  transition: background-color 0.2s;
+}
+
+.message:hover {
+  background-color: #22272e;
 }
 
 .message .username {
-  font-weight: bold;
-  color: #7289da;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #58a6ff;
 }
 
 .message .timestamp {
-  font-size: 0.8em;
-  color: #72767d;
-  margin-left: 10px;
+  font-size: 0.8rem;
+  margin-left: 8px;
+  color: #8b949e;
 }
 
 .message p {
-  margin: 5px 0 0;
-  color: #dcddde;
+  margin-top: 8px;
+  line-height: 1.5;
+  color: #c9d1d9;
+  word-break: break-word;
 }
 
+/* Input Area Styles */
 .message-input {
-  padding: 20px;
-  background-color: #40444b;
-}
-
-#chat-form {
-  display: flex;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  background-color: #161b22;
+  padding: 12px 16px;
+  z-index: 1000;
+  border-top: 1px solid #30363d;
 }
 
 #chat-message-input {
+  background-color: #0d1117;
+  border: 1px solid #30363d;
+  color: #c9d1d9;
+  border-radius: 6px;
+  resize: none;
+  min-height: 60px;
+  padding: 12px;
+  font-size: 0.95rem;
   flex-grow: 1;
-  padding: 10px;
-  border: none;
-  border-radius: 5px;
-  background-color: #40444b;
-  color: #dcddde;
 }
 
-#chat-form button {
-  margin-left: 10px;
-  padding: 10px 20px;
-  background-color: #7289da;
-  color: white;
+#chat-message-input:focus {
+  border-color: #58a6ff;
+  box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.2);
+}
+
+/* Sidebar Styles */
+.list-group-item {
+  background-color: #1c2128;
+  border: 1px solid #30363d;
+  color: #c9d1d9;
+  margin-bottom: 4px;
+  border-radius: 6px;
+}
+
+.list-group-item:hover {
+  background-color: #22272e;
+}
+
+.badge-info {
+  background-color: #238636;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 12px;
+  float: right;
+}
+
+/* Mission Area Styles */
+.mission-generated {
+  background-color: #1c2128;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.form-check {
+  margin: 12px 0;
+}
+
+.form-check-input:checked {
+  background-color: #238636;
+  border-color: #238636;
+}
+
+.form-check-label {
+  color: #c9d1d9;
+  padding-left: 8px;
+}
+
+/* Mobile Tab Styles */
+.nav-tabs {
+  border-bottom: 1px solid #30363d;
+}
+
+.nav-tabs .nav-link {
+  color: #8b949e;
   border: none;
-  border-radius: 5px;
-  cursor: pointer;
+  padding: 8px 16px;
+}
+
+.nav-tabs .nav-link.active {
+  color: #58a6ff;
+  background-color: transparent;
+  border-bottom: 2px solid #58a6ff;
+}
+
+/* Alert Styles */
+.alert {
+  background-color: #1c2128;
+  border-color: #f85149;
+  color: #f85149;
+}
+
+/* Button Styles */
+.btn-primary {
+  background-color: #238636;
+  border-color: #238636;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover {
+  background-color: #1f752f;
+    border-color: #1f752f;
+}
+
+.btn-primary:active,
+.btn-primary:focus {
+    background-color: #1b6b2c !important;
+    border-color: #1b6b2c !important;
+    box-shadow: 0 0 0 0.25rem rgba(35, 134, 54, 0.2) !important;
+}
+
+.btn-info {
+  background-color: #1f6feb;
+  border-color: #1f6feb;
+  color: white;
+}
+
+.btn-info:hover {
+  background-color: #1b5cc7;
+  border-color: #1b5cc7;
+}
+
+.btn-info:active,
+.btn-info:focus {
+  background-color: #174ba3 !important;
+  border-color: #174ba3 !important;
+  box-shadow: 0 0 0 0.25rem rgba(31, 111, 235, 0.2) !important;
+}
+
+/* Chat form layout */
+#chat-form {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  display: flex;
+  gap: 12px;
+}
+
+/* Send button styling */
+#chat-form button {
+  min-width: 80px;
+}
+
+/* Additional padding for the footer to prevent overlap */
+footer {
+  margin-bottom: 80px;
 }
