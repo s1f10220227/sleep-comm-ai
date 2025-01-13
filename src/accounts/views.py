@@ -51,10 +51,10 @@ def login_view(request):
             login(request, user)
             return redirect('home')  # ログイン成功後にホームへリダイレクト
         else:
-            return render(request, 'accounts/login_signup.html', {
+            return render(request, 'accounts/login.html', {
                 'error_message': 'ログインに失敗しました。'
             })
-    return render(request, 'accounts/login_signup.html')
+    return render(request, 'accounts/login.html')
 
 def logout_view(request):
     logout(request)
