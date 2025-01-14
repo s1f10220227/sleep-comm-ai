@@ -1,0 +1,152 @@
+/* Card styling */
+.card {
+    background: #1a1a1a;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(4px);
+    border-radius: 15px;
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card-header h2 {
+    color: #ffffff;
+    font-size: 2rem;
+    font-weight: 600;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Form controls */
+.form-control, .form-select {
+    padding: 12px;
+    border-radius: 8px;
+    background-color: #2a2a2a !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
+    border-color: #0d6efd !important;
+    background-color: #2d2d2d !important;
+}
+
+/* Labels */
+.form-label {
+    color: #e0e0e0;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+/* Buttons */
+.btn-primary {
+    padding: 12px;
+    font-weight: 600;
+    border-radius: 8px;
+    background-color: #1f6feb;
+    border-color: #1f6feb;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(13, 110, 253, 0.4);
+    background-color: #1b5cc7;
+    border-color: #1b5cc7;
+}
+
+/* Links */
+a {
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+/* Checkbox */
+.form-check-input {
+    width: 1.2em;
+    height: 1.2em;
+    margin-top: 0.25em;
+    cursor: pointer;
+}
+
+.form-check-label {
+    color: #e0e0e0;
+    cursor: pointer;
+}
+
+/* Scrollable content */
+.scrollable-content {
+    scrollbar-width: thin;
+    scrollbar-color: #666666 #2a2a2a;
+}
+
+.scrollable-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.scrollable-content::-webkit-scrollbar-track {
+    background: #2a2a2a;
+    border-radius: 4px;
+}
+
+.scrollable-content::-webkit-scrollbar-thumb {
+    background: #666666;
+    border-radius: 4px;
+}
+
+.scrollable-content::-webkit-scrollbar-thumb:hover {
+    background: #888888;
+}
+
+/* Alert messages */
+.alert-danger {
+    background-color: rgba(220, 53, 69, 0.1);
+    border: 1px solid rgba(220, 53, 69, 0.2);
+    color: #ff6b6b;
+    border-radius: 8px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .card {
+        margin: 1rem;
+    }
+
+    .card-header h2 {
+        font-size: 1.75rem;
+    }
+}
+
+/* Animation for form elements */
+.form-control, .form-select, .btn {
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Placeholder text */
+::placeholder {
+    color: #666666 !important;
+    opacity: 1;
+}
+
+:-ms-input-placeholder {
+    color: #666666 !important;
+}
+
+::-ms-input-placeholder {
+    color: #666666 !important;
+}

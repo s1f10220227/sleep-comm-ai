@@ -1,11 +1,19 @@
 {% extends 'base.html' %}
 <!-- base.htmlを継承 -->
 
+{% load static %}
+
 {% load custom_filters %}
 <!-- 他のパブリックグループのメンバーを表示するために使うカスタムフィルター -->
 
+{% load markdown_extras %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'groups/css/home.css' %}">
+{% endblock %}
+
 {% block title %}
-  ホーム
+  SomNet | ホーム
 {% endblock %}
 <!-- タイトルブロックを定義 -->
 
@@ -35,6 +43,12 @@
                 <!-- グループがプライベートで招待コードがある場合の表示 -->
                 <p>招待コード：<strong>{{ group.invite_code }}</strong></p>
               {% endif %}
+              <p>メンバー：</p>
+              <ul>
+                {% for member in members %}
+                <li>{{ member.user.username }}</li>
+              {% endfor %}
+              </ul>
             </div>
             <div class="card-footer">
               <!-- グループ離脱フォーム -->
@@ -55,9 +69,9 @@
             </div>
             <div class="card-body">
               <!-- グループチャットの最新メッセージ表示 -->
-              <h3>最新のメッセージ</h3>
+              <h4>最新のメッセージ</h4>
               {% if latest_message %}
-                <p class="card-text"><strong>{{ latest_message.sender.username }}</strong>: {{ latest_message.content }}</p>
+                <p class="card-text"><strong>{{ latest_message.sender.username }}</strong>: {{ latest_message.content | markdown | urlize }}</p>
               {% else %}
                 <p class="card-text">まだメッセージがありません。</p>
               {% endif %}
@@ -82,7 +96,7 @@
                 {% csrf_token %}
                 <div class="form-check">
                   <input type="checkbox" class="form-check-input" id="is_private" name="is_private">
-                  <label for="is_private" class="form-check-label"><strong>プライベートグループ</strong>（プライベートグループは招待コードを知っている人だけが参加できるグループです。）</label>
+                  <label for="is_private" class="form-check-label"><strong>プライベートグループにする</strong>（招待コードを知っている人だけが参加できるグループです）</label>
                 </div>
               </form>
             </div>
@@ -103,7 +117,7 @@
               <form id="join-group-form" method="post" action="{% url 'group_join' %}">
                 {% csrf_token %}
                 <div class="mb-3">
-                  <label for="invite_code" class="form-label"><strong>招待コード</strong>（招待コードを持っている場合は入力してください。入力しない場合は、パブリックグループにランダムに参加します。）
+                  <label for="invite_code" class="form-label"><strong>招待コード</strong>を持っている場合はここに入力してください。入力しない場合は、パブリックグループにランダムに参加します。
                   </label>
                   <input type="text" class="form-control" id="invite_code" name="invite_code">
                 </div>
@@ -128,13 +142,13 @@
               <p>回答状況：<strong>回答済み</strong></p>
               <p>就寝時刻：<strong>{{ answer.sleep_time }}</strong></p>
               <p>起床時刻：<strong>{{ answer.wake_time }}</strong></p>
-              <p>睡眠時間：<strong>{{ answer.sleep_duration }}</strong></p>
-              <p>睡眠の質：<strong>{{ answer.sleep_quality }}</strong></p>
+              <p>睡眠時間：<strong>{{ answer.hours }}時間{{ answer.minutes }}分</strong></p>
+              <p>睡眠休養感：<strong>{{ answer.get_sleep_quality_display }}</strong></p>
               <p>寝る前にやったこと：<strong>{{ answer.pre_sleep_activities }}</strong></p>
               {% if is_member %}
-                <p>ミッション達成度：<strong>{{ answer.mission_achievement }}</strong></p>
+              <p>ミッション達成度：<strong>{{ answer.get_mission_achievement_display|default:"なし" }}</strong></p>
               {% else %}
-                <p>取り組みたいこと：<strong>{{ answer.topic_question }}</strong></p>
+                <p>取り組みたいこと：<strong>{{ answer.topic_question|default:"なし" }}</strong></p>
               {% endif %}
             {% else %}
               <p>回答状況：<strong>未回答</strong></p>
@@ -175,12 +189,82 @@
         </div>
       </div>
     {% else %}
-      <div class="jumbotron">
-        <h1 class="display-4 mb-4">サービスの紹介</h1>
-        <p class="lead">このサービスでは、あなたの睡眠習慣を改善するための様々な機能を提供しています。ログインして、詳細を確認してください。</p>
+    <div class="landing-container">
+      <div class="hero-section text-center mb-5">
+        <h1 class="main-title mb-4">『眠りを変える。仲間と共に。』</h1>
+        <p class="hero-subtitle">Sleep Better, Together.</p>
       </div>
+
+      <div class="feature-cards">
+        <div class="row justify-content-center">
+          <!-- メイン説明カード -->
+          <div class="col-12 mb-5">
+            <div class="card intro-card">
+              <div class="card-body">
+                <p class="lead-text mb-4">
+                  毎日の睡眠、なんとなく不満はあるけれど、<br>
+                  一人では変えられない。そんな経験ありませんか？
+                </p>
+                <p class="main-description">
+                  SomNetは、AIがあなたと仲間の睡眠改善をサポートする新しいカタチのWebアプリです。
+                  最大5人のグループで取り組む3日間のミッションを通じて、楽しみながら睡眠の質を向上させることができます。
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 特徴カード1 -->
+          <div class="col-md-6 mb-4">
+            <div class="card feature-card">
+              <div class="card-body">
+                <div class="feature-icon mb-3">
+                  <i class="fas fa-users"></i>
+                </div>
+                <h3 class="feature-title">仲間と共に改善</h3>
+                <p class="feature-text">
+                  知人を誘って参加するのはもちろん、同じように睡眠改善に意欲的な新しい仲間とマッチングすることも可能です。
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 特徴カード2 -->
+          <div class="col-md-6 mb-4">
+            <div class="card feature-card">
+              <div class="card-body">
+                <div class="feature-icon mb-3">
+                  <i class="fas fa-robot"></i>
+                </div>
+                <h3 class="feature-title">AIアドバイザー</h3>
+                <p class="feature-text">
+                  グループごとに専属のAIアドバイザーが付き、メンバー全員の状況を考慮した最適な睡眠改善プランを提案します。
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- CTAセクション -->
+          <div class="col-12 mt-4">
+            <div class="card cta-card text-center">
+              <div class="card-body">
+                <h2 class="cta-title mb-4">さあ、新しい睡眠体験を始めましょう</h2>
+                <p class="cta-text mb-4">
+                  あなたの眠りを変える第一歩は、SomNetの3日間から始まります。
+                </p>
+                <a href="{% url 'signup' %}" class="btn btn-primary btn-lg">無料で始める</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     {% endif %}
     </div>
   </div>
 {% endblock %}
 <!-- コンテンツブロックを定義 -->
+
+{% block extra_js%}
+  <script src="{% static 'groups/js/home.js' %}"></script>
+{% endblock %}
+<!-- 追加JSブロックを定義 -->

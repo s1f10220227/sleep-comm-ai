@@ -1,8 +1,13 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load tz %}
+{% load markdown_extras %}
 
-{% block title %}Chat Room{% endblock %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'chat/css/room.css' %}">
+{% endblock %}
+
+{% block title %}SomNet | グループチャット{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -30,13 +35,14 @@
                     {% else %}
                         {% if has_mission_options %}
                             <div class="mission-generated">
-                                <p>全員が投票を完了し次第、ミッションが確定されます</p>
-                                <p>投票が完了しない場合、{{ group.vote_deadline|localtime }}以降、確定ボタンで確定することも可能です。</p>
+                                <p>全員が投票を完了し次第、ミッションが確定されます。</p>
+                                <p>※投票していない人がいる場合、{{ group.vote_deadline|localtime }}以降、確定ボタンで確定することも可能です。</p>
+                                <p>※投票数が同じミッションがある場合、その中からランダムでミッションが確定されます。</p>
                                 <form action="{% url 'vote_mission' group.id %}" method="POST">
                                     {% csrf_token %}
                                     {% for option in mission_options %}
                                         <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="selected_mission" value="{{ option.id }}"
+                                            <input class="form-check-input" type="radio" name="selected_mission" value="{{ option.id }}" id="mission-option-{{ option.id }}"
                                                 {% if user_vote and user_vote.mission_option.id == option.id %}checked{% endif %}>
                                             <label class="form-check-label" for="mission-option-{{ option.id }}">
                                                 {{ option.text }} ({{ option.votes }} 票)
@@ -106,13 +112,14 @@
                         {% else %}
                             {% if has_mission_options %}
                                 <div class="mission-generated">
-                                    <p>全員が投票を完了し次第、ミッションが確定されます</p>
-                                    <p>投票が完了しない場合、{{ group.vote_deadline|localtime }}以降、確定ボタンで確定することも可能です。</p>
+                                    <p>全員が投票を完了し次第、ミッションが確定されます。</p>
+                                    <p>※投票していない人がいる場合、{{ group.vote_deadline|localtime }}以降、確定ボタンで確定することも可能です。</p>
+                                    <p>※投票数が同じミッションがある場合、その中からランダムでミッションが確定されます。</p>
                                     <form action="{% url 'vote_mission' group.id %}" method="POST">
                                         {% csrf_token %}
                                         {% for option in mission_options %}
                                             <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="selected_mission" value="{{ option.id }}"
+                                                <input class="form-check-input" type="radio" name="selected_mission" value="{{ option.id }}" id="mission-option-{{ option.id }}"
                                                     {% if user_vote and user_vote.mission_option.id == option.id %}checked{% endif %}>
                                                 <label class="form-check-label" for="mission-option-{{ option.id }}">
                                                     {{ option.text }} ({{ option.votes }} 票)
@@ -185,8 +192,8 @@
                 {% for message in chat_messages %}
                     <div class="message mb-2">
                         <strong class="username text-primary">{{ message.sender.username }}</strong>
-                        <small class="timestamp text-muted">{{ message.timestamp|date:"H:i" }}</small>
-                        <p class="mb-0">{{ message.content | urlize | linebreaksbr }}</p>
+                        <small class="timestamp text-muted">{{ message.timestamp|date:"Y-m-d H:i" }}</small>
+                        <p class="mb-0">{{ message.content | markdown | urlize }}</p>
                     </div>
                 {% endfor %}
             </div>
@@ -197,15 +204,19 @@
                         type="text"
                         id="chat-message-input"
                         class="form-control me-2"
-                        placeholder="Type a message..."
+                        placeholder="メッセージを入力してください...（Shift + Enterで改行、Enterで送信）"
                     ></textarea>
-                    <button type="submit" class="btn btn-primary">Send</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
                 </form>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
     const groupId = '{{ group.id }}';
     const username = '{{ request.user.username }}';
@@ -215,5 +226,4 @@
     };
 </script>
 <script src="{% static 'chat/js/room.js' %}"></script>
-
 {% endblock %}

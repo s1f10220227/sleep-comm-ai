@@ -12,47 +12,72 @@ def signup(request):
         gender = request.POST.get('gender')
         age = request.POST.get('age')
 
-        # チェックボックスが選択されているか確認
+        # プライバシーポリシーの確認
         if not privacy_policy_checked:
-            return render(request, 'accounts/signup.html', {'error_message': 'プライバシーポリシーに同意する必要があります。', 'username': username, 'gender': gender, 'age': age})
-        
-        # 追加
-        # 変更箇所 1: ユーザーネームがすでに存在するか確認
+            return render(request, 'accounts/signup.html', {
+                'error_message': 'プライバシーポリシーへの同意が必要です。サービスをご利用いただくために、プライバシーポリシーをご確認の上、チェックボックスにチェックを入れてください。',
+                'username': username,
+                'gender': gender,
+                'age': age
+            })
+
         if CustomUser.objects.filter(username=username).exists():
-            return render(request, 'accounts/signup.html', {'error_message': 'このユーザー名はすでに使用されています。', 'username': username, 'gender': gender, 'age': age})
-        
-        if password == password_confirm:
+            return render(request, 'accounts/signup.html', {
+                'error_message': 'このユーザー名は既に使用されています。別のユーザー名を選択してください。',
+                'username': username,
+                'gender': gender,
+                'age': age
+            })
+
+        if password != password_confirm:
+            return render(request, 'accounts/signup.html', {
+                'error_message': 'パスワードが一致しません。パスワードをもう一度入力してください。',
+                'username': username,
+                'gender': gender,
+                'age': age
+            })
+
+        try:
             # 年齢が未回答の場合は None として扱う
             age = age if age else None
             # ユーザーを作成
-            user = CustomUser.objects.create_user(username=username, password=password, gender=gender, age=age)
+            user = CustomUser.objects.create_user(
+                username=username,
+                password=password,
+                gender=gender,
+                age=age
+            )
             user.save()
-            return redirect('login')  # サインアップ成功後にログインページへリダイレクト
-        else:
-            return render(request, 'accounts/signup.html', {'error_message': 'パスワードが一致しません。', 'username': username, 'gender': gender, 'age': age})
-    return render(request, 'accounts/signup.html')
+            return redirect('login')
+        except Exception as e:
+            return render(request, 'accounts/signup.html', {
+                'error_message': 'アカウント作成中にエラーが発生しました。もう一度お試しください。',
+                'username': username,
+                'gender': gender,
+                'age': age
+            })
 
-# サインアップのビューです。POSTリクエストを受け取った際に、
-# ユーザー名、パスワード、パスワード確認、プライバシーポリシーの同意チェックを処理します。
-# パスワードが一致し、プライバシーポリシーが同意されていればユーザーを作成し、
-# ログインページにリダイレクトします。エラーがあれば、再度サインアップページを表示します。
+    return render(request, 'accounts/signup.html')
 
 def login_view(request):
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
+
+        if not username or not password:
+            return render(request, 'accounts/login.html', {
+                'error_message': 'ユーザー名とパスワードを入力してください。'
+            })
+
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            return redirect('home')  # ログイン成功後にホームへリダイレクト
+            return redirect('home')
         else:
-            # ログイン失敗時にエラーメッセージを渡す
-            return render(request, 'accounts/login_signup.html', {'error_message': 'ログインに失敗しました。'})
-    return render(request, 'accounts/login_signup.html')
-
-# ログインのページに対応するビューです。
-# POSTリクエストの場合、認証を試み、成功すればプロフィールページにリダイレクト、
-# 失敗すればエラーメッセージを表示します。
+            return render(request, 'accounts/login.html', {
+                'error_message': 'ユーザー名またはパスワードが正しくありません。もう一度確認してください。'
+            })
+    return render(request, 'accounts/login.html')
 
 def logout_view(request):
     logout(request)
@@ -60,5 +85,3 @@ def logout_view(request):
 
 def privacy_policy(request):
     return render(request, 'accounts/privacy_policy.html')
-
-# プライバシーポリシーページのビューです。単に`accounts/privacy_policy.html`テンプレートを表示します。

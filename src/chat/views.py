@@ -24,7 +24,7 @@ from django.views.decorators.http import require_POST
 
 # アプリケーション固有のモジュール
 from .models import (
-    Message, Mission, MissionOption, SleepAdvice, Vote, 
+    Message, Mission, MissionOption, SleepAdvice, Vote,
     Missiongenerate, MissiongenerateVote
 )
 from groups.models import Group, GroupMember
@@ -77,7 +77,7 @@ def room(request, group_id):
     # 準備完了しているメンバーのリストを取得
     ready_members = MissiongenerateVote.objects.filter(group=group).values_list('user', flat=True)
     ready_members_list = User.objects.filter(id__in=ready_members)
-    ready_count = ready_members_list.count() 
+    ready_count = ready_members_list.count()
     total_members = group_members.count() - 1  # AI Assistantを除く
 
     # 投票締め切りを過ぎているかどうかを計算
@@ -245,7 +245,7 @@ def sleep_q(request):
             # グループに睡眠レポートを送信
             send_sleep_report.delay(request.user.username, group.id)
 
-            return redirect('/progress/progress_check/')
+            return redirect('/progress/sleep_data/')
 
         return render(request, 'chat/sleep_q.html', {
             'advice': advice,
@@ -355,10 +355,10 @@ def sleep_q(request):
                 topic_question=topic_question,
             )
 
-            return redirect('/progress/progress_check/')
+            return redirect('/progress/sleep_data/')
 
         return render(request, 'chat/pre_sleep_q.html', {'advice': advice})
-    
+
 # ミッション生成の準備完了をトグルするビュー
 @login_required
 def toggle_ready(request, group_id):
