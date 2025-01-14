@@ -24,7 +24,7 @@ from django.views.decorators.http import require_POST
 
 # アプリケーション固有のモジュール
 from .models import (
-    Message, Mission, MissionOption, SleepAdvice, Vote, 
+    Message, Mission, MissionOption, SleepAdvice, Vote,
     Missiongenerate, MissiongenerateVote
 )
 from groups.models import Group, GroupMember
@@ -77,7 +77,7 @@ def room(request, group_id):
     # 準備完了しているメンバーのリストを取得
     ready_members = MissiongenerateVote.objects.filter(group=group).values_list('user', flat=True)
     ready_members_list = User.objects.filter(id__in=ready_members)
-    ready_count = ready_members_list.count() 
+    ready_count = ready_members_list.count()
     total_members = group_members.count() - 1  # AI Assistantを除く
 
     # 投票締め切りを過ぎているかどうかを計算
@@ -245,7 +245,7 @@ def sleep_q(request):
             # グループに睡眠レポートを送信
             send_sleep_report.delay(request.user.username, group.id)
 
-            return redirect('/progress/progress_check/')
+            return redirect('/progress/sleep_data/')
 
         return render(request, 'chat/sleep_q.html', {
             'advice': advice,
@@ -355,10 +355,10 @@ def sleep_q(request):
                 topic_question=topic_question,
             )
 
-            return redirect('/progress/progress_check/')
+            return redirect('/progress/sleep_data/')
 
         return render(request, 'chat/pre_sleep_q.html', {'advice': advice})
-    
+
 # ミッション生成の準備完了をトグルするビュー
 @login_required
 def toggle_ready(request, group_id):
@@ -398,11 +398,16 @@ def create_missions(request, group_id):
     combined_topics = "。".join(latest_topics)
     prompt = (
         f"以下は、これから取り組みたい睡眠に関するトピックです：{combined_topics}。\n\n"
-        "これらを元に、全員に共通する改善点や挑戦できるミッションを5つ、生成してください。\n"
-        "ミッションは以下の条件を満たすようにしてください：\n"
+        "これらのトピックを踏まえ、全員に共通して取り組める、睡眠改善に繋がるミッションを5つ考えてください。\n\n"
+        "ミッションを作成する際は、以下の点を特に注意してください。\n"
+        "- 睡眠に直接関連するトピックのみを考慮してください。例えば、「就寝時間」、「起床時間」、「睡眠環境」、「就寝前の行動」、「カフェイン摂取」などは睡眠に直接関連するトピックです。一方、「逆立ち」や「寝る前の激しい運動」、「仕事の進捗」などは睡眠に直接関連するトピックとは言えません。\n"
+        "- 睡眠に悪影響を及ぼす可能性のある内容は絶対に避けてください。例えば、就寝前の激しい運動、カフェインの過剰摂取、アルコールの摂取などは避けるべきです。\n\n"
+        "ミッションは以下の条件を必ず満たすようにしてください：\n"
         "1. 全員が実行可能であること。\n"
-        "2. 睡眠に関する具体的な内容であること。\n"
-        "3. 各ミッションは20文字程度で簡潔に表現すること。\n\n"
+        "2. 睡眠に悪影響を及ぼす可能性のある内容は避けること\n"
+        "3. 直接的に睡眠に関する具体的な内容であること。\n"
+        "4. 各ミッションは20文字以内で簡潔に表現すること。\n\n"
+        "例えば、『就寝前スマホ断ち』や『朝起きたら日光を浴びる』のようなミッションを想定しています。\n\n"
         "以下のフォーマットに従って、改行で区切ったリスト形式で出力してください：\n"
         "ミッション1\n"
         "ミッション2\n"

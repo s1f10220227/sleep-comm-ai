@@ -94,15 +94,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def generate_ai_response(self, user_message):
         try:
-            input=(f"以下の質問に50字程度で簡潔に回答してください。{user_message}。なお、睡眠に関係しない質問であった場合は回答しないでください。")
+            input=(
+                f"以下の質問や相談に対して簡潔に回答してください。なお、睡眠に関係のない質問や相談であった場合は回答しないでください。\n"
+                f"{user_message}"
+                )
             response = openai.ChatCompletion.create(
                 model="gpt-4o-mini",
                 messages=[{"role": "system", "content": "You are a sleep expert who provides advice on healthy sleep habits."},
                         {"role": "user", "content": input}],
                 api_key=OPENAI_API_KEY,
                 api_base=OPENAI_API_BASE,
-                max_tokens=50,
-                temperature=0.2,
             )
             ai_response = response['choices'][0]['message']['content'].strip()
             logging.debug(f"AI API response: {ai_response}")

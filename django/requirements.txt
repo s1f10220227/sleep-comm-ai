@@ -12,3 +12,4 @@ django-environ
 celery
 redis
 markdown
+django-import-export

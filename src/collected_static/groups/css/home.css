@@ -1,0 +1,340 @@
+/* General card enhancements */
+.card {
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+}
+
+.card-header {
+    padding: 1rem 1.25rem;
+}
+
+.card-header h2 {
+    font-size: 1.5rem;
+    margin: 0;
+    font-weight: 600;
+}
+
+/* Mission and group info styling */
+.card-body strong {
+    color: #58a6ff;
+}
+
+.card-body p {
+    margin-bottom: 0.8rem;
+    line-height: 1.6;
+}
+
+/* Button styling */
+.btn {
+    padding: 0.6rem 1.2rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    text-decoration: underline;
+}
+
+.btn-success {
+    background-color: #1f6feb;
+    border-color: #1f6feb;
+}
+
+.btn-success:hover {
+    background-color: #1b5cc7;
+    border-color: #1b5cc7;
+}
+
+.btn-success:active,
+.btn-success:focus {
+    background-color: #174ba3 !important;
+    border-color: #174ba3 !important;
+    box-shadow: 0 0 0 0.25rem rgba(31, 111, 235, 0.2) !important;
+}
+
+.btn-danger {
+    background-color: #da3633;
+    border-color: #da3633;
+}
+
+.btn-danger:hover {
+    background-color: #c23230;
+    border-color: #c23230;
+    text-decoration: underline;
+}
+
+.btn-primary {
+    background-color: #238636;
+    border-color: #238636;
+}
+
+.btn-primary:hover {
+    background-color: #1f752f;
+    border-color: #1f752f;
+}
+
+.btn-primary:active,
+.btn-primary:focus {
+    background-color: #1b6b2c !important;
+    border-color: #1b6b2c !important;
+    box-shadow: 0 0 0 0.25rem rgba(35, 134, 54, 0.2) !important;
+}
+
+.btn-info {
+    background-color: #8B5CF6;
+    border-color: #8B5CF6;
+    color: #ffffff;
+}
+
+.btn-info:hover {
+    background-color: #7c4ef3;
+    border-color: #7c4ef3;
+    color: #ffffff;
+}
+
+.btn-info:active,
+.btn-info:focus {
+    background-color: #6d40e0 !important;
+    border-color: #6d40e0 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 0 0.25rem rgba(139, 92, 246, 0.2) !important;
+}
+
+/* Form styling */
+.form-control {
+    background-color: #21262d;
+    border: 1px solid #30363d;
+    color: #c9d1d9;
+    padding: 0.75rem;
+}
+
+.form-control:focus {
+    background-color: #2d333b;
+    border-color: #8B5CF6;
+    box-shadow: 0 0 0 0.2rem rgba(139, 92, 246, 0.25);
+    color: #ffffff;
+}
+
+.form-check-input {
+    background-color: #21262d;
+    border: 1px solid #30363d;
+}
+
+.form-check-input:checked {
+    background-color: #1f6feb;
+    border-color: #1f6feb;
+}
+
+/* List group styling */
+.list-group-item {
+    background-color: #21262d;
+    border: 1px solid #30363d;
+    color: #c9d1d9;
+    padding: 1rem;
+}
+
+.list-group-item ul {
+    margin-top: 0.5rem;
+    margin-bottom: 0;
+    padding-left: 1.5rem;
+}
+
+.list-group-item li {
+    color: #8b949e;
+}
+
+/* Jumbotron styling */
+.jumbotron {
+    background-color: #21262d;
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.display-4 {
+    color: #58a6ff;
+    font-weight: 600;
+}
+
+.lead {
+    color: #c9d1d9;
+    font-size: 1.2rem;
+    line-height: 1.6;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card-header h2 {
+        font-size: 1.3rem;
+    }
+
+    .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+
+    .jumbotron {
+        padding: 1.5rem;
+    }
+
+    .display-4 {
+        font-size: 2rem;
+    }
+}
+
+/* Card height consistency */
+.row.g-4 {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.col-lg-6 {
+    display: flex;
+}
+
+.card.h-100 {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-body {
+    flex: 1 1 auto;
+}
+
+/* Animation effects */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Landing Page Styles */
+.landing-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.hero-section {
+    margin-top: 2rem;
+    animation: fadeIn 1s ease-out;
+}
+
+.main-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #58a6ff;
+    margin-bottom: 1rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.hero-subtitle {
+    font-size: 1.5rem;
+    color: #8b949e;
+    font-weight: 300;
+}
+
+.intro-card {
+    background-color: rgba(30, 30, 30, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(88, 166, 255, 0.2);
+}
+
+.lead-text {
+    font-size: 1.4rem;
+    color: #58a6ff;
+    font-weight: 500;
+    line-height: 1.8;
+    text-align: center;
+}
+
+.main-description {
+    font-size: 1.2rem;
+    color: #c9d1d9;
+    line-height: 1.8;
+}
+
+.feature-card {
+    height: 100%;
+    background-color: rgba(30, 30, 30, 0.8);
+    border: 1px solid rgba(88, 166, 255, 0.1);
+}
+
+.feature-icon {
+    font-size: 2rem;
+    color: #58a6ff;
+    text-align: center;
+}
+
+.feature-title {
+    font-size: 1.4rem;
+    color: #58a6ff;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.feature-text {
+    color: #c9d1d9;
+    line-height: 1.6;
+    text-align: center;
+}
+
+.cta-card {
+    background-color: rgba(35, 134, 54, 0.1);
+    border: 1px solid rgba(35, 134, 54, 0.2);
+}
+
+.cta-title {
+    color: #238636;
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+.cta-text {
+    color: #c9d1d9;
+    font-size: 1.2rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .main-title {
+        font-size: 2rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1.2rem;
+    }
+
+    .lead-text {
+        font-size: 1.2rem;
+    }
+
+    .main-description {
+        font-size: 1.1rem;
+    }
+
+    .landing-container {
+        padding: 1rem;
+    }
+}
