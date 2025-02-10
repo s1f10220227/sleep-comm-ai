@@ -117,7 +117,7 @@ def check_today_data(user):
     today = localtime(timezone.now()).date()  # 日本時間で今日の日付を取得
     return SleepAdvice.objects.filter(user=user, created_at__date=today).exists()
 
-# ビュー関数
+# 睡眠アンケートページを表示するビュー
 @login_required
 def sleep_q(request):
     if GroupMember.objects.filter(user=request.user).exists():
