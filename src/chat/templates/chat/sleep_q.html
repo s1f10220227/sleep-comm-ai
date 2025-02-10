@@ -11,6 +11,7 @@
 
 {% block content %}
 <div class="container">
+  <input type="hidden" id="hasMission" value="{{ latest_mission|yesno:'true,false' }}">
   <h1 class="mb-4">睡眠アンケート</h1>
 
   {% if advice == '今日は回答済みです' %}
@@ -87,7 +88,7 @@
         </div>
       </div>
 
-      <button type="submit" class="btn btn-primary">アンケートを送信</button>
+      <button type="submit" class="btn btn-primary" id="submitSurvey">アンケートを送信</button>
     </form>
   {% endif %}
 </div>

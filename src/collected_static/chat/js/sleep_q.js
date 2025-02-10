@@ -1,3 +1,16 @@
+document.addEventListener('DOMContentLoaded', function() {
+    const submitButton = document.getElementById('submitSurvey');
+    const hasMission = document.getElementById('hasMission').value;
+
+    submitButton.addEventListener('click', function(e) {
+        if (hasMission !== 'true') {
+            e.preventDefault(); // Prevent form submission
+            alert('ミッションを設定してからアンケートを送信してください。');
+            return false;
+        }
+    });
+});
+
 // ローディングアニメーションを表示する関数
 function showLoading() {
     document.getElementById('overlay').style.display = 'flex';
