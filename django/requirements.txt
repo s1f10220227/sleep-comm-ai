@@ -13,3 +13,4 @@ celery
 redis
 markdown
 django-import-export
+whitenoise
