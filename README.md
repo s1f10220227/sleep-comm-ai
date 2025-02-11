@@ -3,7 +3,7 @@
   <p>https://som-net.net/</p>
 
   <a href="https://www.youtube.com/watch?v=WlOwan4SMek">
-    <img src="https://github.com/user-attachments/assets/3a82677f-d9ef-4b5a-bc6e-abd86f1acd9d" alt="AIと睡眠を改善するコミュニティ「SomNet」紹介動画-サムネイル" width="640" height="360">
+    <img src="https://github.com/user-attachments/assets/3a82677f-d9ef-4b5a-bc6e-abd86f1acd9d" alt="AIと睡眠を改善するコミュニティ「SomNet」紹介動画-サムネイル">
   </a>
 </div>
 
