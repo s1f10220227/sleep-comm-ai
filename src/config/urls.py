@@ -26,5 +26,4 @@ urlpatterns = [
     path('groups/', include('groups.urls')),
     path('chat/', include('chat.urls')),
     path('progress/', include('progress.urls')),
-    path('results/', include('results.urls')),
 ]

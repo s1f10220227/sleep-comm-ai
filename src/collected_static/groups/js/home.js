@@ -1,4 +1,29 @@
 document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('videoModal');
+    const closeButton = document.querySelector('.close-button');
+
+    // アクセスしてから3秒後にモーダルを表示
+    setTimeout(function() {
+        modal.classList.add('fade-in');
+        modal.style.display = 'flex';
+    }, 3000);
+
+    // 閉じるボタンでモーダルを閉じる
+    closeButton.onclick = function() {
+        modal.style.display = 'none';
+        modal.classList.remove('fade-in');
+    };
+
+    // モーダルの外側をクリックしてもモーダルを閉じる
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = 'none';
+            modal.classList.remove('fade-in');
+        }
+    };
+});
+
+document.addEventListener('DOMContentLoaded', function() {
     // グループを離脱ボタンがクリックされたとき
     const leaveButtons = document.querySelectorAll('button.btn.btn-danger');
 

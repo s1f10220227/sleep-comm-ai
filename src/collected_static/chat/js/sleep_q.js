@@ -1,3 +1,13 @@
+// ミッションが設定されているかをチェックしてから送信する関数
+function checkMissionAndSubmit() {
+    if (!window.missionExists) {
+        alert("ミッションを設定してから睡眠アンケートを送信してください。");
+        return false; // ミッションが設定されていない場合は送信をキャンセル
+    }
+    // ミッションが設定されている場合はローディングアニメーションを表示
+    return showLoading();
+}
+
 // ローディングアニメーションを表示する関数
 function showLoading() {
     document.getElementById('overlay').style.display = 'flex';
