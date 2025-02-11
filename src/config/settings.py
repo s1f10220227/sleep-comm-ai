@@ -37,6 +37,7 @@ DEBUG = env.bool('DEBUG', default=False)
 
 ALLOWED_HOSTS = [
     'som-net.net',
+    'somnet.onrender.com'
 ]
 
 # Application definition
@@ -106,12 +107,12 @@ CHANNEL_LAYERS = {
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 DATABASES = {
-    'default': env.db()
+    'default': env.db('DATABASE_URL')
 }
 
 
-CELERY_BROKER_URL = f'redis://:{env("REDIS_PASSWORD")}@redis:6379/0'
-CELERY_RESULT_BACKEND = f'redis://:{env("REDIS_PASSWORD")}@redis:6379/0'
+CELERY_BROKER_URL = env('REDIS_URL')  # RenderのREDIS_URLを使う
+CELERY_RESULT_BACKEND = env('REDIS_URL')  # 同様にRedisのURLを使う
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
