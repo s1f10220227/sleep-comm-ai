@@ -165,6 +165,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CSRF_TRUSTED_ORIGINS = [
     'https://som-net.net',     # 実際の本番URLを追加
+    'https://somnet.onrender.com'
 ]
 
 # カスタムユーザーモデルの設定
