@@ -26,7 +26,7 @@ env = environ.Env()
 env.read_env(os.path.join(BASE_DIR, '.env'))
 
 # for openai
-OPENAI_API_KEY = env('OPENAI_API_KEY') 
+OPENAI_API_KEY = env('OPENAI_API_KEY')
 OPENAI_API_BASE = env('OPENAI_API_BASE')
 
 # SECURITY WARNING: keep the secret key used in production secret!
@@ -53,7 +53,6 @@ INSTALLED_APPS = [
     'progress',
     'channels',
     'chat',
-    'results',
     'import_export'
 ]
 

@@ -16,7 +16,7 @@ class Group(models.Model):
     # 初期メッセージを送信したかどうかを示すフラグ
     init_message_sent = models.BooleanField(default=False)
     # 参加締め切りのフラグ
-    is_join_closed = models.BooleanField(default=False) 
+    is_join_closed = models.BooleanField(default=False)
 
 # グループメンバーモデル
 class GroupMember(models.Model):

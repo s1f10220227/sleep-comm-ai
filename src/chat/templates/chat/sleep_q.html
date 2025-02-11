@@ -16,7 +16,11 @@
   {% if advice == '今日は回答済みです' %}
     <div class="alert alert-info">{{ advice }}</div>
   {% else %}
-    <form method="post" onsubmit="showLoading()">
+    <script>
+      window.missionExists = {{ mission_exists|yesno:"true,false" }};
+    </script>
+
+    <form method="post" onsubmit="return checkMissionAndSubmit();">
       {% csrf_token %}
       <div class="mb-3">
         <label for="sleep_time" class="form-label">就寝時刻</label>
@@ -86,7 +90,6 @@
           </div>
         </div>
       </div>
-
       <button type="submit" class="btn btn-primary">アンケートを送信</button>
     </form>
   {% endif %}
