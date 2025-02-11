@@ -127,7 +127,12 @@ def sleep_q(request):
 
         # 最新のミッションを取得
         latest_mission = Mission.objects.filter(group=group).order_by('-created_at').first()
-        mission_text = latest_mission.mission if latest_mission else "設定されていません"
+        if latest_mission:
+            mission_text = latest_mission.mission
+            mission_exists = True
+        else:
+            mission_text = "設定されていません"
+            mission_exists = False
 
         advice = None
 
@@ -249,7 +254,9 @@ def sleep_q(request):
 
         return render(request, 'chat/sleep_q.html', {
             'advice': advice,
-            'mission_text': mission_text})
+            'mission_text': mission_text,
+            'mission_exists': mission_exists,
+            })
 
     else:
         # グループに加入していない場合
