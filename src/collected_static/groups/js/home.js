@@ -2,11 +2,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const modal = document.getElementById('videoModal');
     const closeButton = document.querySelector('.close-button');
 
-    // アクセス後2秒後にモーダルを表示
+    // アクセスしてから3秒後にモーダルを表示
     setTimeout(function() {
         modal.classList.add('fade-in');
         modal.style.display = 'flex';
-    }, 2000);
+    }, 3000);
 
     // 閉じるボタンでモーダルを閉じる
     closeButton.onclick = function() {
